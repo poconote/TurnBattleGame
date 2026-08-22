@@ -305,7 +305,7 @@ button:disabled { cursor: not-allowed; opacity: .45; }
 .candidate-heading span { color: var(--muted); font-size: 10px; }
 .candidate-list { display: flex; flex: 0 0 135px; flex-direction: column; gap: 4px; max-height: 135px; overflow: auto; padding-right: 3px; }
 .candidate-item { display: grid; grid-template-columns: 22px 1fr auto; align-items: center; gap: 8px; width: 100%; padding: 6px 9px; border: 1px solid transparent; border-radius: 8px; text-align: left; background: rgba(255,255,255,.025); cursor: pointer; }
-.candidate-item:hover, .candidate-item.active { border-color: var(--line); background: rgba(255,255,255,.055); }
+.candidate-item:hover, .candidate-item:focus-visible, .candidate-item.active { border-color: var(--line); background: rgba(255,255,255,.055); }
 .candidate-item.winner { border-color: rgba(75,216,242,.25); }
 .candidate-rank { color: var(--muted); font-size: 10px; }
 .candidate-name { font-size: 12px; }

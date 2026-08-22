@@ -123,13 +123,18 @@
       document.querySelector("#decision-actor").textContent = `${actor.name}の判断`;
       document.querySelector("#decision-choice").textContent = `${decision.selected.action.battleName || decision.selected.action.name} → ${this.targetLabel(decision.selected.targets)}`;
       document.querySelector("#decision-score").textContent = decision.selected.finalScore;
-      this.candidateList.innerHTML = decision.candidates.map((candidate, index) => `<button class="candidate-item ${index === 0 ? "winner active" : ""}" data-index="${index}">
+      this.candidateList.innerHTML = decision.candidates.map((candidate, index) => `<button class="candidate-item ${index === 0 ? "winner active" : ""}" data-index="${index}" aria-controls="breakdown" aria-label="${this.escape(`${candidate.action.battleName || candidate.action.name}の評価内訳を表示`)}">
         <span class="candidate-rank">${candidate.available ? index + 1 : "–"}</span><span class="candidate-name">${this.escape(candidate.action.battleName || candidate.action.name)}<small>${candidate.available ? this.escape(this.targetLabel(candidate.targets)) : this.escape(candidate.reasons[0].label)}</small></span><span class="candidate-score">${candidate.available ? `${candidate.finalScore}点` : "不可"}</span></button>`).join("");
-      this.candidateList.querySelectorAll(".candidate-item").forEach(button => button.addEventListener("click", () => {
-        this.candidateList.querySelectorAll(".candidate-item").forEach(item => item.classList.remove("active"));
-        button.classList.add("active");
-        this.showBreakdown(decision.candidates[Number(button.dataset.index)]);
-      }));
+      this.candidateList.querySelectorAll(".candidate-item").forEach(button => {
+        const showCandidateSettings = () => {
+          this.candidateList.querySelectorAll(".candidate-item").forEach(item => item.classList.remove("active"));
+          button.classList.add("active");
+          this.showBreakdown(decision.candidates[Number(button.dataset.index)]);
+        };
+        button.addEventListener("mouseenter", showCandidateSettings);
+        button.addEventListener("focus", showCandidateSettings);
+        button.addEventListener("click", showCandidateSettings);
+      });
       this.showBreakdown(decision.candidates[0]);
       this.render();
     }
