@@ -6,7 +6,7 @@
 
 Windowsでは `start.bat` をダブルクリックしてください。ローカルサーバーとブラウザが起動します。終了時は「DQ4demo Server」ウィンドウを閉じてください。
 
-`index.html` を直接ブラウザで開くこともできます。ビルドやパッケージのインストールは不要です。
+標準データをJSONから読み込むため、`index.html`を直接開かず、`start.bat`、VS Codeのローカルサーバー、またはGitHub Pagesから起動してください。ビルドやパッケージのインストールは不要です。
 
 ## 戦闘操作
 
@@ -21,6 +21,8 @@ Windowsでは `start.bat` をダブルクリックしてください。ローカ
 ## データエディター
 
 戦闘画面右上の「データ編集」から開きます。
+
+初回起動時は`data/default-game-data.json`を読み込みます。ブラウザに保存済みデータがある場合はlocalStorageの`dq-ai-battle-data-v1`を優先するため、既存の編集内容は失われません。「GitHub標準値を読込」を選ぶと最新の標準JSONを再取得しますが、「保存」するまではlocalStorageを書き換えません。
 
 - 職業：Lv別ステータス、参加状態、使用技と習得Lvを編集できます。
 - 敵：固定のHP、MP、攻撃力、守備力、素早さ、使用技、属性耐性を編集できます。敵自身はLv別成長しません。
@@ -50,7 +52,8 @@ Windowsでは `start.bat` をダブルクリックしてください。ローカ
 
 ## ソース構成
 
-- `js/default-data.js`：標準ゲームデータ
+- `data/default-game-data.json`：職業、敵、技、敵グループなどの標準ゲームデータ
+- `js/default-data.js`：標準JSONの取得と初期化
 - `js/data-store.js`：保存、読込、検証、参照確認
 - `js/models.js`：キャラクター、敵知識、ログ
 - `js/battle-ai.js`：候補生成と評価関数

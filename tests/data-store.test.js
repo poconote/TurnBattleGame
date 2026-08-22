@@ -10,9 +10,17 @@ const context = {
 };
 context.window = context;
 vm.createContext(context);
-for (const file of ["default-data.js", "data-store.js"]) vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js", file), "utf8"), context);
+vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js", "default-data.js"), "utf8"), context);
+context.DQ.setDefaultGameData(JSON.parse(fs.readFileSync(path.join(__dirname, "..", "data", "default-game-data.json"), "utf8")));
+vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js", "data-store.js"), "utf8"), context);
 
 const store = new context.DQ.GameDataStore("test-data");
+const browserSaved = JSON.parse(JSON.stringify(context.DQ.DEFAULT_GAME_DATA));
+browserSaved.enemies[0].maxHp = 777;
+memory.set("dq-ai-battle-data-v1", JSON.stringify(browserSaved));
+if (context.DQ.GameDataStore.readCurrentSavedData().enemies[0].maxHp !== 777) throw new Error("初期化前に現在形式のブラウザ保存データを検出できませんでした。");
+memory.set("dq-ai-battle-data-v1", JSON.stringify({ schemaVersion: 1 }));
+if (context.DQ.GameDataStore.readCurrentSavedData() !== null) throw new Error("旧形式の保存データより標準JSONが優先されませんでした。");
 const draft = store.createDraft();
 draft.enemies[0].maxHp = 123;
 store.setData(draft);

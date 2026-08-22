@@ -350,12 +350,21 @@
         this.showNotice("この項目を保存しました。技・使用者・作戦・AI設定は現在の戦闘にも反映済みです。基本ステータスは次の戦闘から反映されます。");
       } catch (error) { this.showErrors(String(error.message).split("\n")); }
     }
-    restore() {
+    async restore() {
       if (!confirm("編集中の内容を破棄して標準データへ戻しますか？")) return;
-      this.draft = DQ.cloneData(DQ.DEFAULT_GAME_DATA);
-      this.trackOriginalIds();
-      this.selectedIndex = 0;
-      this.render();
+      const button = document.querySelector("#editor-defaults");
+      button.disabled = true;
+      try {
+        this.draft = await this.store.fetchFreshDefaults();
+        this.trackOriginalIds();
+        this.selectedIndex = 0;
+        this.render();
+        this.showNotice("GitHubの標準データを読み込みました。保存するまで現在の保存データは変更されません。");
+      } catch (error) {
+        this.showErrors(String(error.message).split("\n"));
+      } finally {
+        button.disabled = false;
+      }
     }
     exportJson() {
       const blob = new Blob([JSON.stringify(this.draft, null, 2)], { type: "application/json" });

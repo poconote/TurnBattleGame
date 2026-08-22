@@ -2,11 +2,27 @@
   "use strict";
 
   const clone = value => JSON.parse(JSON.stringify(value));
+  const STORAGE_KEY = "dq-ai-battle-data-v1";
+  const CURRENT_SCHEMA_VERSION = 9;
 
   class GameDataStore {
-    constructor(storageKey = "dq-ai-battle-data-v1") {
+    constructor(storageKey = STORAGE_KEY) {
+      if (!DQ.DEFAULT_GAME_DATA) throw new Error("標準ゲームデータが読み込まれていません。");
+      const defaultErrors = this.validate(DQ.DEFAULT_GAME_DATA);
+      if (defaultErrors.length) throw new Error(`起動データが正しくありません。\n${defaultErrors.join("\n")}`);
       this.storageKey = storageKey;
       this.data = this.load();
+    }
+
+    static readCurrentSavedData(storageKey = STORAGE_KEY) {
+      try {
+        const raw = localStorage.getItem(storageKey);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        return Number(parsed?.schemaVersion || 1) >= CURRENT_SCHEMA_VERSION ? parsed : null;
+      } catch {
+        return null;
+      }
     }
 
     load() {
@@ -34,10 +50,18 @@
       return this.data;
     }
 
-    restoreDefaults() {
-      this.data = clone(DQ.DEFAULT_GAME_DATA);
+    async restoreDefaults() {
+      this.data = await this.fetchFreshDefaults();
       localStorage.setItem(this.storageKey, JSON.stringify(this.data));
       return this.data;
+    }
+
+    async fetchFreshDefaults() {
+      const defaults = await DQ.fetchDefaultGameData();
+      const errors = this.validate(defaults);
+      if (errors.length) throw new Error(`GitHubの標準データが正しくありません。\n${errors.join("\n")}`);
+      DQ.setDefaultGameData(defaults);
+      return clone(defaults);
     }
 
     setSelectedEncounter(encounterId) {
@@ -47,7 +71,7 @@
     }
 
     migrate(data) {
-      if (!data || Number(data.schemaVersion || 1) >= 9) return data;
+      if (!data || Number(data.schemaVersion || 1) >= CURRENT_SCHEMA_VERSION) return data;
       const defaults = clone(DQ.DEFAULT_GAME_DATA);
       data.actions ||= [];
       data.jobs ||= [];
@@ -106,7 +130,7 @@
       data.selectedEncounterId = data.encounters.some(encounter => encounter.id === data.selectedEncounterId)
         ? data.selectedEncounterId
         : data.encounters.some(encounter => encounter.id === defaults.selectedEncounterId) ? defaults.selectedEncounterId : data.encounters[0]?.id;
-      data.schemaVersion = 9;
+      data.schemaVersion = CURRENT_SCHEMA_VERSION;
       return data;
     }
 

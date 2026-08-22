@@ -55,7 +55,9 @@ if (!battleUiSource.includes('addEventListener("click", showCandidateSettings)')
 const indexSource = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
 if (!indexSource.includes('<details class="action-settings-details">') || !indexSource.includes('id="action-setting-rows"')) throw new Error("技の設定値が折りたたみ表示になっていません。");
 
-for (const file of ["default-data.js", "data-store.js", "models.js", "battle-ai.js", "battle.js", "battle-ui.js", "editor-ui.js", "main.js"]) {
+vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js", "default-data.js"), "utf8"), context, { filename: "default-data.js" });
+context.DQ.setDefaultGameData(JSON.parse(fs.readFileSync(path.join(__dirname, "..", "data", "default-game-data.json"), "utf8")));
+for (const file of ["data-store.js", "models.js", "battle-ai.js", "battle.js", "battle-ui.js", "editor-ui.js", "main.js"]) {
   vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js", file), "utf8"), context, { filename: file });
 }
 

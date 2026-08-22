@@ -245,6 +245,8 @@ h3 { font-size: 14px; }
 .battle-divider span { height: 1px; flex: 1; background: linear-gradient(90deg, transparent, var(--line), transparent); }
 .ally-heading { margin-top: 0; }
 .card-help { margin: 0; color: var(--muted); font-size: 11px; }
+.startup-error { grid-column: 1 / -1; display: grid; gap: 5px; padding: 18px; border: 1px solid rgba(240,108,117,.35); border-radius: 10px; color: var(--red); background: rgba(240,108,117,.07); }
+.startup-error span { color: var(--muted); font-size: 11px; }
 
 .control-bar {
   display: grid;
