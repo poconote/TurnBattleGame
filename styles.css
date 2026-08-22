@@ -238,8 +238,8 @@ h3 { font-size: 14px; }
 .status-resistance-list li { display: grid; grid-template-columns: 1fr auto; column-gap: 5px; align-items: center; font-size: 10px; }
 .status-resistance-list li b { font-size: 9px; }
 .status-resistance-list li small { grid-column: 1 / -1; color: var(--muted); font-size: 8px; }
-.status-resistance-list li.weak b, .status-resistance-list li.slightly-weak b { color: var(--red); }
-.status-resistance-list li.resistant b, .status-resistance-list li.strong-resistant b { color: var(--blue); }
+.status-resistance-list li.weak b, .status-resistance-list li.slightly-weak b { color: var(--cyan); }
+.status-resistance-list li.resistant b, .status-resistance-list li.strong-resistant b { color: var(--red); }
 
 .battle-divider { display: flex; align-items: center; gap: 12px; margin: 8px 0 6px; color: var(--muted); font-size: 10px; }
 .battle-divider span { height: 1px; flex: 1; background: linear-gradient(90deg, transparent, var(--line), transparent); }
@@ -330,6 +330,8 @@ button:disabled { cursor: not-allowed; opacity: .45; }
 .action-setting-rows { padding: 0 5px; }
 .evaluation-heading { margin: 1px 0 3px; color: var(--purple); font-size: 10px; font-weight: 800; letter-spacing: .08em; }
 .breakdown-row.setting b { color: var(--cyan); }
+.breakdown-row.setting.resistant-setting span,
+.breakdown-row.setting.resistant-setting b { color: var(--red); }
 .formula-row { display: flex; justify-content: space-between; margin-top: 8px; padding: 10px 0 0; border-top: 1px dashed var(--line); font-size: 13px; }
 .formula-row strong { color: var(--cyan); font-size: 17px; }
 

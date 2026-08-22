@@ -103,6 +103,10 @@ for (const file of ["default-data.js", "data-store.js", "models.js", "battle-ai.
   if (!hyadoSettings.includes("基礎威力") || !hyadoSettings.includes("属性倍率") || !hyadoSettings.includes("予想ダメージ")) {
     throw new Error("AI診断に技の威力・属性倍率・予想ダメージが表示されませんでした。");
   }
+  const resistedHyado = magicDecision.candidates.find(candidate => candidate.action.id === "hyado" && candidate.targets[0]?.templateId === "slime");
+  if (!resistedHyado || !battle.ui.actionSettingRows(resistedHyado).includes("resistant-setting")) {
+    throw new Error("AI診断の耐性倍率に赤色表示用の状態が設定されませんでした。");
+  }
   const giraScore = magicDecision.candidates.find(candidate => candidate.action.id === "gira")?.finalScore;
   const meraScore = Math.max(...magicDecision.candidates.filter(candidate => candidate.action.id === "mera").map(candidate => candidate.finalScore));
   if (!(giraScore > meraScore)) throw new Error("敵3体へのギラが単体メラより高く評価されませんでした。");

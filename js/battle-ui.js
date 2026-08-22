@@ -185,21 +185,21 @@
       (settings.outcomes || []).forEach(outcome => {
         if ((settings.type === "magic" || settings.type === "attack") && settings.element) {
           const state = outcome.resistance > 1 ? "弱点" : outcome.resistance < 1 ? "耐性" : "通常";
-          rows.push([`属性倍率（${outcome.targetName}）`, `×${Number(outcome.resistance).toFixed(2)}・${state}`]);
+          rows.push([`属性倍率（${outcome.targetName}）`, `×${Number(outcome.resistance).toFixed(2)}・${state}`, outcome.resistance < 1 ? "resistant-setting" : ""]);
         }
         if (settings.type === "magic" || settings.type === "attack") {
           rows.push([`予想ダメージ（${outcome.targetName}）`, `${outcome.expectedDamage}（${outcome.damageMin}～${outcome.damageMax}）`]);
         }
         if (settings.type === "heal") rows.push([`予想回復（${outcome.targetName}）`, `${outcome.expectedHeal}（${outcome.healMin}～${outcome.healMax}）`]);
         if (settings.type === "instantDeath") {
-          rows.push([`即死倍率（${outcome.targetName}）`, `×${Number(outcome.resistance).toFixed(2)}`]);
+          rows.push([`即死倍率（${outcome.targetName}）`, `×${Number(outcome.resistance).toFixed(2)}`, outcome.resistance < 1 ? "resistant-setting" : ""]);
           rows.push([`予想成功率（${outcome.targetName}）`, `${(Number(outcome.successRate) * 100).toFixed(1)}%`]);
         }
       });
       if ((settings.type === "magic" || settings.type === "attack") && (settings.outcomes || []).length > 1) {
         rows.push(["総予想ダメージ", settings.outcomes.reduce((sum, outcome) => sum + Number(outcome.expectedDamage || 0), 0)]);
       }
-      return rows.map(([label, value]) => `<div class="breakdown-row setting"><span>${this.escape(label)}</span><b>${this.escape(value)}</b></div>`).join("");
+      return rows.map(([label, value, stateClass = ""]) => `<div class="breakdown-row setting ${stateClass}"><span>${this.escape(label)}</span><b>${this.escape(value)}</b></div>`).join("");
     }
     targetLabel(targets) {
       if (!targets.length) return "対象なし";
