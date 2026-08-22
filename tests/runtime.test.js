@@ -74,6 +74,10 @@ for (const file of ["default-data.js", "data-store.js", "models.js", "battle-ai.
   if (!warriorCard.includes("status-popover") || !warriorCard.includes("攻撃力") || !warriorCard.includes("使える技") || !warriorCard.includes("炎斬り")) {
     throw new Error("戦闘カードにステータスと習得済みの技が表示されませんでした。");
   }
+  const slimeCard = battle.ui.card(battle.getCharacter("slime"));
+  if (!slimeCard.includes("弱点・耐性倍率") || !slimeCard.includes("×1.25") || !slimeCard.includes("弱点")) {
+    throw new Error("敵カードに属性の弱点・耐性倍率が表示されませんでした。");
+  }
   warrior.currentHp = warrior.maxHp - 1;
   priest.currentHp = Math.floor(priest.maxHp * 0.47);
   mage.currentHp = Math.floor(mage.maxHp * 0.26);
@@ -89,6 +93,14 @@ for (const file of ["default-data.js", "data-store.js", "models.js", "battle-ai.
   mage.level = 7;
   mage.actions = mage.allActions.filter(actionId => Number(mage.actionLevels[actionId] ?? 1) <= mage.level);
   const magicDecision = battle.ai.decide(mage);
+  const hyadoCandidate = magicDecision.candidates.find(candidate => candidate.action.id === "hyado");
+  if (!hyadoCandidate?.settings || hyadoCandidate.settings.element !== "ice" || !hyadoCandidate.settings.outcomes.length || hyadoCandidate.settings.outcomes[0].expectedDamage !== battle.estimateMagicDamage(hyadoCandidate.action, hyadoCandidate.targets[0])) {
+    throw new Error("AI診断へ魔法の属性倍率・予想ダメージ設定が渡されませんでした。");
+  }
+  const hyadoSettings = battle.ui.actionSettingRows(hyadoCandidate);
+  if (!hyadoSettings.includes("基礎威力") || !hyadoSettings.includes("属性倍率") || !hyadoSettings.includes("予想ダメージ")) {
+    throw new Error("AI診断に技の威力・属性倍率・予想ダメージが表示されませんでした。");
+  }
   const giraScore = magicDecision.candidates.find(candidate => candidate.action.id === "gira")?.finalScore;
   const meraScore = Math.max(...magicDecision.candidates.filter(candidate => candidate.action.id === "mera").map(candidate => candidate.finalScore));
   if (!(giraScore > meraScore)) throw new Error("敵3体へのギラが単体メラより高く評価されませんでした。");

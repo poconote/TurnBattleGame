@@ -13,9 +13,9 @@
         if (!action) continue;
         const targets = this.getTargets(actor, action);
         if (actor.currentMp < action.mpCost) {
-          candidates.push(this.unavailable(action, "MPが足りない"));
+          candidates.push(this.unavailable(actor, action, targets, "MPが足りない"));
         } else if (!targets.length) {
-          candidates.push(this.unavailable(action, "有効な対象がいない"));
+          candidates.push(this.unavailable(actor, action, targets, "有効な対象がいない"));
         } else if (isGroupTarget(action)) {
           candidates.push(this.evaluate(actor, action, targets));
         } else {
@@ -32,8 +32,8 @@
       };
     }
 
-    unavailable(action, reason) {
-      return { action, targets: [], available: false, finalScore: -Infinity, reasons: [{ label: reason, value: "使用不可" }] };
+    unavailable(actor, action, targets, reason) {
+      return { action, targets, available: false, finalScore: -Infinity, reasons: [{ label: reason, value: "使用不可" }], settings: this.describeAction(actor, action, targets) };
     }
 
     getTargets(actor, action) {
@@ -74,7 +74,46 @@
       const random = this.randomInt(this.battle.data.ai.randomMin, this.battle.data.ai.randomMax);
       score += random;
       reasons.push({ label: "ランダム補正", value: random, kind: "add" });
-      return { action, targets, available: true, finalScore: Math.round(score), reasons };
+      return { action, targets, available: true, finalScore: Math.round(score), reasons, settings: this.describeAction(actor, action, targets) };
+    }
+
+    describeAction(actor, action, targets) {
+      const settings = {
+        type: action.type,
+        mpCost: Number(action.mpCost || 0),
+        target: action.target,
+        baseScore: Number(action.baseScore || 0),
+        power: Number(action.power || 0),
+        powerMultiplier: Number(action.powerMultiplier ?? 1),
+        element: action.element || null,
+        successRate: Number(action.successRate || 0),
+        effectStat: action.effectStat || null,
+        effectMode: action.effectMode || null,
+        effectValue: Number(action.effectValue || 0),
+        duration: Number(action.duration || 0),
+        maxStacks: Number(action.maxStacks || 0),
+        outcomes: [],
+      };
+      settings.outcomes = targets.map(target => {
+        const resistance = action.element ? Number(target.resistances[action.element] ?? 1) : 1;
+        if (action.type === "magic") {
+          const expectedDamage = this.battle.estimateMagicDamage(action, target);
+          return { targetId: target.id, targetName: target.name, resistance, expectedDamage, damageMin: Math.max(1, Math.round(expectedDamage * 0.9)), damageMax: Math.max(1, Math.round(expectedDamage * 1.1)) };
+        }
+        if (action.type === "attack") {
+          const expectedDamage = this.battle.estimatePhysicalDamage(actor, target, action);
+          return { targetId: target.id, targetName: target.name, resistance, expectedDamage, damageMin: Math.max(1, Math.round(expectedDamage * 0.88)), damageMax: Math.max(1, Math.round(expectedDamage * 1.12)) };
+        }
+        if (action.type === "heal") {
+          const missingHp = Math.max(0, target.maxHp - target.currentHp);
+          return { targetId: target.id, targetName: target.name, expectedHeal: Math.min(missingHp, settings.power), healMin: Math.min(missingHp, Math.round(settings.power * 0.92)), healMax: Math.min(missingHp, Math.round(settings.power * 1.08)) };
+        }
+        if (action.type === "instantDeath") {
+          return { targetId: target.id, targetName: target.name, resistance: Number(target.resistances.instantDeath ?? 1), successRate: settings.successRate * Number(target.resistances.instantDeath ?? 1) };
+        }
+        return { targetId: target.id, targetName: target.name };
+      });
+      return settings;
     }
 
     evaluateAttack(actor, action, target, reasons) {

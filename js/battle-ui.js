@@ -90,6 +90,13 @@
         const available = unit.alive && unit.currentMp >= mpCost;
         return `<li class="${available ? "" : "unavailable"}"><span>${this.escape(action.battleName || action.name)}</span><b>MP ${mpCost}${available ? "" : "・不足"}</b></li>`;
       }).join("");
+      const resistanceRows = unit.side === "enemy" ? Object.entries(unit.resistances).map(([element, multiplier]) => {
+        const labels = { fire: "炎", ice: "氷", wind: "風", bang: "爆発", instantDeath: "即死" };
+        const value = Number(multiplier);
+        const state = value >= 1.15 ? "weak" : value > 1 ? "slightly-weak" : value <= 0.75 ? "strong-resistant" : value < 1 ? "resistant" : "normal";
+        const stateLabel = { weak: "弱点", "slightly-weak": "やや弱点", "strong-resistant": "強耐性", resistant: "耐性", normal: "通常" }[state];
+        return `<li class="${state}"><span>${labels[element] || this.escape(element)}</span><b>×${value.toFixed(2)}</b><small>${stateLabel}</small></li>`;
+      }).join("") : "";
       return `<div id="${this.escape(popoverId)}" class="status-popover" role="tooltip">
         <div class="status-popover-title"><span>STATUS</span><b>${this.escape(unit.name)}</b></div>
         <dl class="status-detail-grid">
@@ -100,6 +107,7 @@
           <div><dt>素早さ</dt><dd>${statValue(unit.speed, unit.effectiveSpeed)}</dd></div>
           ${unit.side === "ally" ? `<div><dt>レベル</dt><dd>${unit.level}</dd></div>` : ""}
         </dl>
+        ${unit.side === "enemy" ? `<div class="status-action-title">弱点・耐性倍率</div><ul class="status-resistance-list">${resistanceRows}</ul>` : ""}
         <div class="status-action-title">使える技</div>
         <ul class="status-action-list">${actionRows || "<li><span>なし</span></li>"}</ul>
       </div>`;
@@ -141,13 +149,58 @@
     showBreakdown(candidate) {
       document.querySelector("#breakdown-action").textContent = candidate.action.battleName || candidate.action.name;
       document.querySelector("#breakdown-target").textContent = candidate.available ? `対象：${this.targetLabel(candidate.targets)}` : "使用不可";
-      document.querySelector("#breakdown-rows").innerHTML = candidate.reasons.map(reason => {
+      const settings = this.actionSettingRows(candidate);
+      const reasons = candidate.reasons.map(reason => {
         let value = reason.value;
         if (reason.kind === "multiply") value = `×${Number(value).toFixed(2)}`;
         else if (typeof value === "number") value = `${value >= 0 ? "+" : ""}${Math.round(value)}`;
         return `<div class="breakdown-row ${reason.kind === "multiply" ? "multiplier" : ""}"><span>${this.escape(reason.label)}</span><b>${value}</b></div>`;
       }).join("");
+      document.querySelector("#breakdown-rows").innerHTML = `<div class="breakdown-section-title">技の設定値</div>${settings}<div class="breakdown-section-title evaluation">AI評価の内訳</div>${reasons}`;
       document.querySelector("#breakdown-total").textContent = candidate.available ? `${candidate.finalScore}点` : "使用不可";
+    }
+    actionSettingRows(candidate) {
+      const action = candidate.action;
+      const settings = candidate.settings || {};
+      const typeLabels = { attack: "物理攻撃", heal: "回復", magic: "攻撃魔法", support: "補助", instantDeath: "即死" };
+      const targetLabels = { enemyOne: "敵1体", allEnemies: "敵全体", allyOne: "味方1人", allAllies: "味方全体", self: "自分" };
+      const elementLabels = { fire: "炎", ice: "氷", wind: "風", bang: "爆発" };
+      const statLabels = { attack: "攻撃力", defense: "守備力", speed: "素早さ" };
+      const rows = [
+        ["行動タイプ", typeLabels[settings.type] || settings.type || "不明"],
+        ["消費MP", settings.mpCost ?? Number(action.mpCost || 0)],
+        ["対象設定", targetLabels[settings.target] || settings.target || "不明"],
+        ["基本評価", `${settings.baseScore ?? Number(action.baseScore || 0)}点`],
+      ];
+      if (settings.element) rows.push(["属性", elementLabels[settings.element] || settings.element]);
+      if (settings.type === "magic") rows.push(["基礎威力", settings.power]);
+      if (settings.type === "attack") rows.push(["技威力倍率", `×${Number(settings.powerMultiplier || 1).toFixed(2)}`]);
+      if (settings.type === "heal") rows.push(["基礎回復量", settings.power]);
+      if (settings.type === "support") {
+        rows.push(["強化対象", statLabels[settings.effectStat] || settings.effectStat || "不明"]);
+        rows.push(["強化量", settings.effectMode === "multiply" ? `×${Number(settings.effectValue).toFixed(2)}` : `+${settings.effectValue}`]);
+        rows.push(["効果ターン", settings.duration]);
+        rows.push(["最大重ね掛け", settings.maxStacks]);
+      }
+      if (settings.type === "instantDeath") rows.push(["基本成功率", `${(Number(settings.successRate) * 100).toFixed(1)}%`]);
+      (settings.outcomes || []).forEach(outcome => {
+        if ((settings.type === "magic" || settings.type === "attack") && settings.element) {
+          const state = outcome.resistance > 1 ? "弱点" : outcome.resistance < 1 ? "耐性" : "通常";
+          rows.push([`属性倍率（${outcome.targetName}）`, `×${Number(outcome.resistance).toFixed(2)}・${state}`]);
+        }
+        if (settings.type === "magic" || settings.type === "attack") {
+          rows.push([`予想ダメージ（${outcome.targetName}）`, `${outcome.expectedDamage}（${outcome.damageMin}～${outcome.damageMax}）`]);
+        }
+        if (settings.type === "heal") rows.push([`予想回復（${outcome.targetName}）`, `${outcome.expectedHeal}（${outcome.healMin}～${outcome.healMax}）`]);
+        if (settings.type === "instantDeath") {
+          rows.push([`即死倍率（${outcome.targetName}）`, `×${Number(outcome.resistance).toFixed(2)}`]);
+          rows.push([`予想成功率（${outcome.targetName}）`, `${(Number(outcome.successRate) * 100).toFixed(1)}%`]);
+        }
+      });
+      if ((settings.type === "magic" || settings.type === "attack") && (settings.outcomes || []).length > 1) {
+        rows.push(["総予想ダメージ", settings.outcomes.reduce((sum, outcome) => sum + Number(outcome.expectedDamage || 0), 0)]);
+      }
+      return rows.map(([label, value]) => `<div class="breakdown-row setting"><span>${this.escape(label)}</span><b>${this.escape(value)}</b></div>`).join("");
     }
     targetLabel(targets) {
       if (!targets.length) return "対象なし";
