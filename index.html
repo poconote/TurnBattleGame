@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#111827">
+  <title>さくせんAI バトルラボ</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <main class="main-grid">
+      <section class="battle-panel panel">
+        <div class="battle-heading">
+          <div>
+            <span class="section-kicker enemy-kicker">ENEMY PARTY</span>
+            <h2>モンスター</h2>
+          </div>
+          <div class="battle-meta">
+            <button id="open-editor" class="editor-open-button">⚙ データ編集</button>
+            <div class="turn-display">
+              <span>TURN</span>
+              <strong id="turn-number">1</strong>
+            </div>
+            <div id="battle-status" class="status-pill">戦闘中</div>
+          </div>
+        </div>
+
+        <div id="enemy-party" class="party-grid enemy-party" aria-label="敵パーティー"></div>
+
+        <div class="battle-divider">
+          <span></span><b>VS</b><span></span>
+        </div>
+
+        <div class="battle-heading ally-heading">
+          <div>
+            <span class="section-kicker ally-kicker">YOUR PARTY</span>
+            <h2>なかまたち</h2>
+          </div>
+          <p class="card-help">マウスを重ねると能力・技／選ぶと直近の判断を表示</p>
+        </div>
+        <div id="ally-party" class="party-grid ally-party" aria-label="味方パーティー"></div>
+
+        <div class="control-bar">
+          <label class="encounter-control">
+            <span>敵グループ</span>
+            <select id="encounter-select" aria-label="敵グループを選択"></select>
+          </label>
+          <label class="strategy-control">
+            <span>さくせん</span>
+            <select id="strategy-select">
+              <option value="balanced">バランスよく</option>
+              <option value="aggressive">ガンガンいこうぜ</option>
+              <option value="defensive">いのちだいじに</option>
+            </select>
+          </label>
+          <div class="speed-control" title="自動戦闘の進行速度">
+            <span>速度</span>
+            <button class="speed-button" data-speed="1200">×0.5</button>
+            <button class="speed-button active" data-speed="800">×1</button>
+            <button class="speed-button" data-speed="450">×2</button>
+          </div>
+          <div class="action-buttons">
+            <button id="step-action" class="primary-button">▶ STEP 1人</button>
+            <button id="next-turn" class="secondary-button">1ターン実行</button>
+            <button id="auto-battle" class="secondary-button">自動戦闘</button>
+            <button id="reset-battle" class="icon-button" title="戦闘をリセット" aria-label="戦闘をリセット">↻</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="inspector-panel panel">
+        <div class="inspector-header">
+          <div>
+            <span class="section-kicker ai-kicker">AI DECISION</span>
+            <h2>AI判断</h2>
+          </div>
+          <span id="decision-turn" class="decision-turn">待機中</span>
+        </div>
+
+        <div id="decision-empty" class="empty-state">
+          <div class="brain-icon">◇</div>
+          <p>ターンを実行すると、AIが比較した<br>すべての行動と評価理由を表示します。</p>
+        </div>
+
+        <div id="decision-content" class="decision-content hidden">
+          <div class="choice-summary">
+            <div class="actor-badge" id="decision-actor-icon">僧</div>
+            <div>
+              <span id="decision-actor">僧侶の判断</span>
+              <strong id="decision-choice">ベホイミ → 戦士</strong>
+            </div>
+            <div class="score-orb"><b id="decision-score">0</b><span>点</span></div>
+          </div>
+
+          <div class="candidate-heading">
+            <h3>候補ランキング</h3>
+            <span>選択して内訳を表示</span>
+          </div>
+          <div id="candidate-list" class="candidate-list"></div>
+
+          <div id="breakdown" class="breakdown">
+            <div class="breakdown-title">
+              <h3 id="breakdown-action">評価内訳</h3>
+              <span id="breakdown-target"></span>
+            </div>
+            <div id="breakdown-rows"></div>
+            <div class="formula-row">
+              <span>最終評価</span>
+              <strong id="breakdown-total">0点</strong>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <section class="log-panel panel">
+        <div class="log-header">
+          <div>
+            <span class="section-kicker log-kicker">BATTLE RECORD</span>
+            <h2>戦闘ログ</h2>
+          </div>
+          <button id="clear-log" class="text-button">ログを消去</button>
+        </div>
+        <div id="battle-log" class="battle-log" aria-live="polite"></div>
+      </section>
+
+      <section class="knowledge-panel panel">
+        <div class="knowledge-header">
+          <div>
+            <span class="section-kicker knowledge-kicker">ENEMY KNOWLEDGE</span>
+            <h2>耐性の学習</h2>
+          </div>
+          <span class="memory-note">この戦闘のみ</span>
+        </div>
+        <p class="knowledge-description">即死魔法の成否からAIが敵ごとの有効度を推測します。</p>
+        <div id="knowledge-list" class="knowledge-list"></div>
+      </section>
+    </main>
+  </div>
+
+  <div id="result-overlay" class="result-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="result-title">
+    <div class="result-card">
+      <span id="result-label">BATTLE RESULT</span>
+      <h2 id="result-title">勝利！</h2>
+      <p id="result-message"></p>
+      <button id="result-close" class="primary-button">ログを見る</button>
+    </div>
+  </div>
+
+  <div id="editor-overlay" class="editor-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="editor-title">
+    <div class="editor-shell">
+      <header class="editor-header">
+        <div><span class="section-kicker ai-kicker">GAME DATA EDITOR</span><h2 id="editor-title">戦闘データエディター</h2></div>
+        <button id="close-editor" class="icon-button" aria-label="閉じる">×</button>
+      </header>
+      <nav id="editor-tabs" class="editor-tabs">
+        <button data-tab="jobs" class="active">職業</button>
+        <button data-tab="enemies">敵</button>
+        <button data-tab="encounters">敵グループ</button>
+        <button data-tab="actions">技・魔法</button>
+        <button data-tab="strategies">作戦</button>
+        <button data-tab="ai">AI設定</button>
+      </nav>
+      <div class="editor-workspace">
+        <aside class="editor-list-pane">
+          <div class="editor-list-actions"><button id="editor-add">＋ 新規</button><button id="editor-duplicate">複製</button></div>
+          <div id="editor-entity-list" class="editor-entity-list"></div>
+        </aside>
+        <section class="editor-form-pane">
+          <div id="editor-form" class="editor-form"></div>
+          <div id="editor-errors" class="editor-errors hidden"></div>
+        </section>
+      </div>
+      <footer class="editor-footer">
+        <div class="editor-file-actions">
+          <button id="editor-export" class="text-button">JSON出力</button>
+          <button id="editor-import" class="text-button">JSON読込</button>
+          <input id="editor-import-file" type="file" accept="application/json,.json" hidden>
+          <button id="editor-defaults" class="text-button danger-text">標準値に戻す</button>
+        </div>
+        <div class="editor-commit-actions">
+          <button id="editor-delete" class="secondary-button danger-button">削除</button>
+          <button id="editor-cancel" class="secondary-button">キャンセル</button>
+          <button id="editor-save-only" class="secondary-button">この項目を保存</button>
+          <button id="editor-save" class="primary-button">保存して戦闘へ反映</button>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <script src="js/default-data.js"></script>
+  <script src="js/data-store.js"></script>
+  <script src="js/models.js"></script>
+  <script src="js/battle-ai.js"></script>
+  <script src="js/battle.js"></script>
+  <script src="js/battle-ui.js"></script>
+  <script src="js/editor-ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
