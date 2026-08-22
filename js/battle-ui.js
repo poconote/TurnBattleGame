@@ -139,8 +139,6 @@
           button.classList.add("active");
           this.showBreakdown(decision.candidates[Number(button.dataset.index)]);
         };
-        button.addEventListener("mouseenter", showCandidateSettings);
-        button.addEventListener("focus", showCandidateSettings);
         button.addEventListener("click", showCandidateSettings);
       });
       this.showBreakdown(decision.candidates[0]);
@@ -156,7 +154,8 @@
         else if (typeof value === "number") value = `${value >= 0 ? "+" : ""}${Math.round(value)}`;
         return `<div class="breakdown-row ${reason.kind === "multiply" ? "multiplier" : ""}"><span>${this.escape(reason.label)}</span><b>${value}</b></div>`;
       }).join("");
-      document.querySelector("#breakdown-rows").innerHTML = `<div class="breakdown-section-title">技の設定値</div>${settings}<div class="breakdown-section-title evaluation">AI評価の内訳</div>${reasons}`;
+      document.querySelector("#action-setting-rows").innerHTML = settings;
+      document.querySelector("#breakdown-rows").innerHTML = reasons;
       document.querySelector("#breakdown-total").textContent = candidate.available ? `${candidate.finalScore}点` : "使用不可";
     }
     actionSettingRows(candidate) {

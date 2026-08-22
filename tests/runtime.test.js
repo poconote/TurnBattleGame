@@ -49,9 +49,11 @@ context.window = context;
 vm.createContext(context);
 
 const battleUiSource = fs.readFileSync(path.join(__dirname, "..", "js", "battle-ui.js"), "utf8");
-if (!battleUiSource.includes('addEventListener("mouseenter", showCandidateSettings)') || !battleUiSource.includes('addEventListener("focus", showCandidateSettings)')) {
-  throw new Error("AI診断の候補にマウスオーバー・フォーカス操作が設定されていません。");
+if (!battleUiSource.includes('addEventListener("click", showCandidateSettings)') || battleUiSource.includes('addEventListener("mouseenter", showCandidateSettings)')) {
+  throw new Error("AI診断の候補がクリック選択だけで切り替わる設定になっていません。");
 }
+const indexSource = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+if (!indexSource.includes('<details class="action-settings-details">') || !indexSource.includes('id="action-setting-rows"')) throw new Error("技の設定値が折りたたみ表示になっていません。");
 
 for (const file of ["default-data.js", "data-store.js", "models.js", "battle-ai.js", "battle.js", "battle-ui.js", "editor-ui.js", "main.js"]) {
   vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js", file), "utf8"), context, { filename: file });

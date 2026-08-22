@@ -324,8 +324,11 @@ button:disabled { cursor: not-allowed; opacity: .45; }
 .breakdown-row { display: flex; justify-content: space-between; padding: 3px 0; color: var(--muted); font-size: 11px; }
 .breakdown-row b { color: var(--text); font-weight: 700; }
 .breakdown-row.multiplier b { color: var(--purple); }
-.breakdown-section-title { margin: 1px 0 3px; color: var(--cyan); font-size: 10px; font-weight: 800; letter-spacing: .08em; }
-.breakdown-section-title.evaluation { margin-top: 9px; padding-top: 8px; border-top: 1px dashed var(--line); color: var(--purple); }
+.action-settings-details { margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px dashed var(--line); }
+.action-settings-details summary { padding: 6px 8px; border: 1px solid rgba(75,216,242,.28); border-radius: 7px; color: var(--cyan); background: rgba(75,216,242,.06); cursor: pointer; font-size: 10px; font-weight: 800; letter-spacing: .06em; }
+.action-settings-details[open] summary { margin-bottom: 6px; }
+.action-setting-rows { padding: 0 5px; }
+.evaluation-heading { margin: 1px 0 3px; color: var(--purple); font-size: 10px; font-weight: 800; letter-spacing: .08em; }
 .breakdown-row.setting b { color: var(--cyan); }
 .formula-row { display: flex; justify-content: space-between; margin-top: 8px; padding: 10px 0 0; border-top: 1px dashed var(--line); font-size: 13px; }
 .formula-row strong { color: var(--cyan); font-size: 17px; }
