@@ -77,6 +77,16 @@ for (const file of ["data-store.js", "models.js", "battle-ai.js", "battle.js", "
   const priest = battle.getCharacter("priest");
   const warrior = battle.getCharacter("warrior");
   const mage = battle.getCharacter("mage");
+  const enemyActor = battle.getLiving("enemy")[0];
+  const enemyAttack = battle.getAction("attack");
+  const tiedAllyTargets = [warrior, priest, mage].map(target => ({ score: 50, targets: [target] }));
+  if (battle.ai.chooseBestTargetOption(enemyActor, enemyAttack, tiedAllyTargets, 0).targets[0] !== warrior
+    || battle.ai.chooseBestTargetOption(enemyActor, enemyAttack, tiedAllyTargets, 0.99).targets[0] !== mage) {
+    throw new Error("同点時の敵対象選択に前衛5・中衛3・後衛1のウェイトが反映されませんでした。");
+  }
+  if (warrior.formationIndex !== 0 || priest.formationIndex !== 1 || mage.formationIndex !== 2) {
+    throw new Error("味方の前衛・中衛・後衛が戦闘開始時に設定されませんでした。");
+  }
   warrior.currentHp = 1;
   priest.lastDecision = null;
   battle.actionQueue = [{ actor: priest, initiative: 0 }];
@@ -90,7 +100,7 @@ for (const file of ["data-store.js", "models.js", "battle-ai.js", "battle.js", "
     throw new Error("行動順へ設定した素早さ乱数倍率が反映されませんでした。");
   }
   const warriorCard = battle.ui.card(warrior);
-  if (!warriorCard.includes("status-popover") || !warriorCard.includes("攻撃力") || !warriorCard.includes("使える技") || !warriorCard.includes("炎斬り")) {
+  if (!warriorCard.includes("status-popover") || !warriorCard.includes("攻撃力") || !warriorCard.includes("使える技") || !warriorCard.includes("炎斬り") || !warriorCard.includes("前衛") || !warriorCard.includes("狙われやすさ")) {
     throw new Error("戦闘カードにステータスと習得済みの技が表示されませんでした。");
   }
   const slimeCard = battle.ui.card(battle.getCharacter("slime"));
@@ -203,7 +213,9 @@ for (const file of ["data-store.js", "models.js", "battle-ai.js", "battle.js", "
   testingMage.actions = ["mera"];
   const selectedMera = battle.ai.decide(testingMage).selected;
   testingMage.actions = savedMageActions;
-  if (!selectedMera.targetOptions[0].targetIds.includes(selectedMera.targets[0].id)) {
+  const selectedMeraOption = selectedMera.targetOptions.find(option => option.targetIds.includes(selectedMera.targets[0].id));
+  const highestMeraScore = Math.max(...selectedMera.targetOptions.map(option => option.score));
+  if (!selectedMeraOption || selectedMeraOption.score !== highestMeraScore) {
     throw new Error("技の決定後に最高評価グループから実際の対象を選べませんでした。");
   }
   if (editor.store.getData().selectedEncounterId !== "slimePair") throw new Error("選択した敵グループを保存できませんでした。");

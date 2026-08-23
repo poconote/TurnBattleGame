@@ -12,7 +12,8 @@
     reset() {
       this.stopAuto();
       this.data = this.store.getData();
-      const allies = this.data.jobs.filter(job => job.enabled).slice(0, 3).map(job => new DQ.Character(job, "ally"));
+      const allies = this.data.jobs.filter(job => job.enabled).slice(0, 3)
+        .map((job, formationIndex) => new DQ.Character(job, "ally", { formationIndex }));
       const encounters = this.data.encounters || [];
       if (!encounters.some(encounter => encounter.id === this.encounterId)) {
         this.encounterId = encounters.some(encounter => encounter.id === this.data.selectedEncounterId)

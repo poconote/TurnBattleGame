@@ -67,10 +67,12 @@
           healMin: outcome.healMin,
           healMax: outcome.healMax,
           successRate: outcome.successRate,
+          formationLabel: this.formationLabel(group.targets[0]),
+          targetWeight: this.enemyFormationWeight(group.targets[0]),
           evaluated,
         };
       }).sort((a, b) => b.score - a.score);
-      const best = options[0];
+      const best = this.chooseBestTargetOption(actor, action, options);
       const candidate = best.evaluated;
       candidate.targetGroup = best.targets;
       candidate.targetLabel = best.label;
@@ -85,6 +87,7 @@
         const signature = JSON.stringify({
           templateId: target.templateId,
           side: target.side,
+          formationIndex: target.formationIndex,
           currentHp: target.currentHp,
           maxHp: target.maxHp,
           attack: target.effectiveAttack,
@@ -99,6 +102,35 @@
         groups.get(signature).push(target);
       });
       return [...groups.values()].map(groupTargets => ({ targets: groupTargets }));
+    }
+
+    chooseBestTargetOption(actor, action, options, randomValue = Math.random()) {
+      const bestScore = Math.max(...options.map(option => option.score));
+      const tied = options.filter(option => option.score === bestScore);
+      if (tied.length === 1) return tied[0];
+      const weights = tied.map(option => actor.side === "enemy" && action.target === "enemyOne"
+        ? this.enemyFormationWeight(option.targets[0]) : 1);
+      const total = weights.reduce((sum, weight) => sum + weight, 0);
+      let roll = Math.max(0, Math.min(0.999999999, Number(randomValue))) * total;
+      for (let index = 0; index < tied.length; index += 1) {
+        roll -= weights[index];
+        if (roll < 0) return tied[index];
+      }
+      return tied[tied.length - 1];
+    }
+
+    formationLabel(target) {
+      return target?.side === "ally" ? (["前衛", "中衛", "後衛"][target.formationIndex] || "隊列外") : null;
+    }
+
+    enemyFormationWeight(target) {
+      if (target?.side !== "ally") return 1;
+      const rules = this.battle.data.ai.targetSelection || {};
+      return [
+        Number(rules.enemyFrontWeight ?? 5),
+        Number(rules.enemyMiddleWeight ?? 3),
+        Number(rules.enemyBackWeight ?? 1),
+      ][target.formationIndex] || 1;
     }
 
     groupLabel(targets) {

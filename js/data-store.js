@@ -3,7 +3,7 @@
 
   const clone = value => JSON.parse(JSON.stringify(value));
   const STORAGE_KEY = "dq-ai-battle-data-v1";
-  const CURRENT_SCHEMA_VERSION = 10;
+  const CURRENT_SCHEMA_VERSION = 11;
 
   class GameDataStore {
     constructor(storageKey = STORAGE_KEY) {
@@ -90,6 +90,7 @@
       const oldAI = data.ai || {};
       data.ai = clone(defaults.ai);
       for (const key of ["randomMin", "randomMax"]) if (oldAI[key] != null) data.ai[key] = oldAI[key];
+      for (const key of ["turnOrder", "targetSelection"]) data.ai[key] = { ...data.ai[key], ...(oldAI[key] || {}) };
       for (const key of ["attack", "heal", "magic", "support", "instantDeath"]) data.ai[key] = { ...data.ai[key], ...(oldAI[key] || {}) };
       data.ai.support.activePenalty = Math.min(Number(data.ai.support.activePenalty ?? -120), -120);
 
@@ -144,8 +145,16 @@
       if (!data.ai || !Array.isArray(data.ai.heal?.thresholds)) errors.push("AI設定が不足しています。");
       const orderMin = Number(data.ai?.turnOrder?.minMultiplier);
       const orderMax = Number(data.ai?.turnOrder?.maxMultiplier);
+      const formationWeights = [
+        data.ai?.targetSelection?.enemyFrontWeight,
+        data.ai?.targetSelection?.enemyMiddleWeight,
+        data.ai?.targetSelection?.enemyBackWeight,
+      ].map(Number);
       if (!Number.isFinite(orderMin) || !Number.isFinite(orderMax) || orderMin <= 0 || orderMax <= 0 || orderMin > orderMax) {
         errors.push("行動順の素早さ乱数倍率が不正です。");
+      }
+      if (formationWeights.some(weight => !Number.isFinite(weight) || weight <= 0)) {
+        errors.push("敵から狙われる隊列ウェイトは、すべて0より大きくしてください。");
       }
       for (const key of ["actions", "jobs", "enemies", "encounters", "strategies"]) {
         const ids = data[key].map(item => item.id);

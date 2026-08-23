@@ -97,6 +97,8 @@
         const stateLabel = { weak: "弱点", "slightly-weak": "やや弱点", "strong-resistant": "強耐性", resistant: "耐性", normal: "通常" }[state];
         return `<li class="${state}"><span>${labels[element] || this.escape(element)}</span><b>×${value.toFixed(2)}</b><small>${stateLabel}</small></li>`;
       }).join("") : "";
+      const formationLabel = unit.side === "ally" ? this.battle.ai.formationLabel(unit) : null;
+      const formationWeight = unit.side === "ally" ? this.battle.ai.enemyFormationWeight(unit) : null;
       return `<div id="${this.escape(popoverId)}" class="status-popover" role="tooltip">
         <div class="status-popover-title"><span>STATUS</span><b>${this.escape(unit.name)}</b></div>
         <dl class="status-detail-grid">
@@ -106,6 +108,7 @@
           <div><dt>守備力</dt><dd>${statValue(unit.defense, unit.effectiveDefense)}</dd></div>
           <div><dt>素早さ</dt><dd>${statValue(unit.speed, unit.effectiveSpeed)}</dd></div>
           ${unit.side === "ally" ? `<div><dt>レベル</dt><dd>${unit.level}</dd></div>` : ""}
+          ${unit.side === "ally" ? `<div><dt>隊列</dt><dd>${formationLabel}</dd></div><div><dt>狙われやすさ</dt><dd>×${formationWeight}</dd></div>` : ""}
         </dl>
         ${unit.side === "enemy" ? `<div class="status-action-title">弱点・耐性倍率</div><ul class="status-resistance-list">${resistanceRows}</ul>` : ""}
         <div class="status-action-title">使える技</div>

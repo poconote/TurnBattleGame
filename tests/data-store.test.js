@@ -38,6 +38,10 @@ const invalidEncounter = store.createDraft();
 invalidEncounter.encounters[0].members = [{ enemyId: "slime", count: 4 }];
 if (!store.validate(invalidEncounter).some(error => error.includes("1～3体"))) throw new Error("敵グループの最大数を検証できませんでした。");
 
+const invalidFormation = store.createDraft();
+invalidFormation.ai.targetSelection.enemyBackWeight = 0;
+if (!store.validate(invalidFormation).some(error => error.includes("隊列ウェイト"))) throw new Error("隊列ウェイトの不正値を検出できませんでした。");
+
 const legacy = JSON.parse(JSON.stringify(context.DQ.DEFAULT_GAME_DATA));
 legacy.schemaVersion = 1;
 for (const actor of legacy.jobs) {
@@ -56,9 +60,11 @@ legacy.actions = legacy.actions.filter(action => action.id !== "baikilt");
 legacy.jobs.find(job => job.id === "mage").actions = legacy.jobs.find(job => job.id === "mage").actions.filter(id => id !== "baikilt");
 delete legacy.actions.find(action => action.id === "sukurlt").effectStat;
 delete legacy.ai.support.statValueDivisor;
+legacy.ai.turnOrder.minMultiplier = 0.8;
+delete legacy.ai.targetSelection;
 memory.set("legacy-data", JSON.stringify(legacy));
 const migrated = new context.DQ.GameDataStore("legacy-data").getData();
-if (migrated.schemaVersion !== 10 || migrated.ai.turnOrder.minMultiplier !== 0.75 || !migrated.actions.some(action => action.id === "baikilt") || !migrated.actions.some(action => action.id === "flameSlash") || migrated.actions.find(action => action.id === "sukurlt").effectStat !== "defense" || !migrated.jobs[0].levelStats["20"] || migrated.enemies[0].levelStats || !migrated.encounters.length || migrated.jobs.find(job => job.id === "warrior").aiTraits.buffAffinity.attack !== 1.5 || migrated.jobs.find(job => job.id === "mage").actionLevels.baikilt !== 21) {
+if (migrated.schemaVersion !== 11 || migrated.ai.turnOrder.minMultiplier !== 0.8 || migrated.ai.targetSelection.enemyBackWeight !== 1 || !migrated.actions.some(action => action.id === "baikilt") || !migrated.actions.some(action => action.id === "flameSlash") || migrated.actions.find(action => action.id === "sukurlt").effectStat !== "defense" || !migrated.jobs[0].levelStats["20"] || migrated.enemies[0].levelStats || !migrated.encounters.length || migrated.jobs.find(job => job.id === "warrior").aiTraits.buffAffinity.attack !== 1.5 || migrated.jobs.find(job => job.id === "mage").actionLevels.baikilt !== 21) {
   throw new Error("旧保存データを補助効果対応形式へ移行できませんでした。");
 }
 console.log("Data validation and persistence: OK");

@@ -49,6 +49,8 @@
 
   const AI_FIELDS = [
     ["turnOrder.minMultiplier", "行動順：素早さ倍率の最小値"], ["turnOrder.maxMultiplier", "行動順：素早さ倍率の最大値"],
+    ["targetSelection.enemyFrontWeight", "敵の対象選択：前衛ウェイト"], ["targetSelection.enemyMiddleWeight", "敵の対象選択：中衛ウェイト"],
+    ["targetSelection.enemyBackWeight", "敵の対象選択：後衛ウェイト"],
     ["randomMin", "行動評価：ランダム最小値"], ["randomMax", "行動評価：ランダム最大値"],
     ["attack.lowHpThreshold", "攻撃：瀕死判定HP率"], ["attack.lowHpBonus", "攻撃：瀕死敵への加点"], ["attack.lethalBonus", "攻撃：撃破見込み加点"],
     ["attack.elementWeakBonus", "物理スキル：弱点属性加点"], ["attack.elementResistPenalty", "物理スキル：属性耐性減点"],

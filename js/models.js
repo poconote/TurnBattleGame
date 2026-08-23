@@ -10,6 +10,7 @@
       this.name = options.name || data.battleName || data.name;
       this.icon = data.icon || data.name.slice(0, 1);
       this.side = side;
+      this.formationIndex = Number(options.formationIndex ?? -1);
       this.role = data.id;
       this.level = level;
       this.recommendedLevel = Number(data.recommendedLevel || 1);

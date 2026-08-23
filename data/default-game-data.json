@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 10,
+  "schemaVersion": 11,
   "actions": [
     {
       "id": "attack",
@@ -1506,6 +1506,11 @@
     "turnOrder": {
       "minMultiplier": 0.75,
       "maxMultiplier": 1.25
+    },
+    "targetSelection": {
+      "enemyFrontWeight": 5,
+      "enemyMiddleWeight": 3,
+      "enemyBackWeight": 1
     },
     "randomMin": -10,
     "randomMax": 10,
