@@ -32,7 +32,7 @@ class FakeElement {
   querySelectorAll() { return []; }
   click() {}
   focus() { documentStub.activeElement = this; }
-  getBoundingClientRect() { return this.rect || { left: 200, top: 100, width: 620, height: 700 }; }
+  getBoundingClientRect() { return this.rect || { left: 200, top: 100, width: 480, height: 700 }; }
 }
 
 const elements = new Map();
@@ -69,6 +69,7 @@ const stylesSource = fs.readFileSync(path.join(__dirname, "..", "styles.css"), "
 if (!indexSource.includes('id="character-detail-overlay"') || !indexSource.includes('id="character-detail-close"') || !indexSource.includes('id="character-detail-content"')) throw new Error("キャラクター詳細モーダルがありません。");
 if (!battleUiSource.includes("event.target === this.detailOverlay") || !battleUiSource.includes('event.key === "Escape"')) throw new Error("キャラクター詳細を枠外クリックまたはEscで閉じられません。");
 if (!stylesSource.includes(".character-detail-content { min-height: 0; overflow-y: auto;")) throw new Error("キャラクター詳細の内部スクロールが設定されていません。");
+if (!stylesSource.includes("width: min(480px, 100%)")) throw new Error("キャラクター詳細の初期幅がコンパクトになっていません。");
 if (/\.character-detail-overlay\s*\{[^}]*backdrop-filter/.test(stylesSource) || !battleUiSource.includes('addEventListener("pointerdown"') || !battleUiSource.includes("startCharacterDetailDrag")) throw new Error("背景をぼかさずキャラクター詳細をドラッグできる設定になっていません。");
 if (!indexSource.includes('<details class="action-settings-details">') || !indexSource.includes('id="action-setting-rows"')) throw new Error("技の設定値が折りたたみ表示になっていません。");
 if (!indexSource.includes('id="result-continue"') || !indexSource.includes('id="result-encounter"') || !indexSource.includes('id="result-recovery"')) throw new Error("戦闘結果画面に連戦・回復操作がありません。");
@@ -178,7 +179,7 @@ for (const file of ["action-schema.js", "data-store.js", "models.js", "battle-ev
   }
   battle.ui.startCharacterDetailDrag({ pointerId: 1, button: 0, clientX: 320, clientY: 120, target: new FakeElement(), preventDefault() {} });
   battle.ui.moveCharacterDetail({ pointerId: 1, clientX: 1000, clientY: 790, preventDefault() {} });
-  if (battle.ui.detailDialog.style.left !== "572px" || battle.ui.detailDialog.style.top !== "92px" || !battle.ui.detailDialog.classList.contains("dragging")) {
+  if (battle.ui.detailDialog.style.left !== "712px" || battle.ui.detailDialog.style.top !== "92px" || !battle.ui.detailDialog.classList.contains("dragging")) {
     throw new Error("キャラクター詳細を画面内に収めながらドラッグ移動できませんでした。");
   }
   battle.ui.endCharacterDetailDrag({ pointerId: 1 });
