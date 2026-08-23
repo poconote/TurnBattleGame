@@ -67,12 +67,6 @@
 
     setStrategy(strategy) {
       this.strategy = strategy;
-      this.actionQueue = this.actionQueue.map(item => {
-        const decision = this.ai.decide(item.actor);
-        item.actor.lastDecision = decision;
-        return { actor: item.actor, decision, initiative: item.initiative ?? this.rollInitiative(item.actor) };
-      }).filter(item => item.decision.selected);
-      this.sortActionQueue();
     }
 
     refreshData() {
@@ -112,7 +106,9 @@
         while (this.actionQueue.length && !this.ended) {
           const item = this.actionQueue.shift();
           if (!item.actor.alive) continue;
-          await this.executeDecision(item.actor, item.decision);
+          const decision = this.decideAtActionTime(item.actor);
+          if (!decision.selected) continue;
+          await this.executeDecision(item.actor, decision);
           this.checkBattleEnd();
         }
         if (!this.ended) this.finishTurn();
@@ -133,7 +129,11 @@
           const next = this.actionQueue.shift();
           if (next.actor.alive) item = next;
         }
-        if (item) { await this.executeDecision(item.actor, item.decision); this.checkBattleEnd(); }
+        if (item) {
+          const decision = this.decideAtActionTime(item.actor);
+          if (decision.selected) await this.executeDecision(item.actor, decision);
+          this.checkBattleEnd();
+        }
         if (!this.ended && !this.actionQueue.length) this.finishTurn();
         this.ui.render();
       } catch (error) { this.handleError(error); }
@@ -142,12 +142,15 @@
 
     prepareTurn() {
       this.log.add(`── TURN ${this.turn} ──`, "turn");
-      this.actionQueue = [...this.getLiving("ally"), ...this.getLiving("enemy")].map(actor => {
-        const decision = this.ai.decide(actor);
-        actor.lastDecision = decision;
-        return { actor, decision, initiative: this.rollInitiative(actor) };
-      }).filter(item => item.decision.selected);
+      this.actionQueue = [...this.getLiving("ally"), ...this.getLiving("enemy")]
+        .map(actor => ({ actor, initiative: this.rollInitiative(actor) }));
       this.sortActionQueue();
+    }
+
+    decideAtActionTime(actor) {
+      const decision = this.ai.decide(actor);
+      actor.lastDecision = decision;
+      return decision;
     }
 
     rollInitiative(actor, randomValue = Math.random()) {
@@ -160,8 +163,7 @@
     }
 
     sortActionQueue() {
-      this.actionQueue.sort((a, b) => Number(b.decision.selected.action.priority || 0) - Number(a.decision.selected.action.priority || 0)
-        || b.initiative - a.initiative || Math.random() - 0.5);
+      this.actionQueue.sort((a, b) => b.initiative - a.initiative || Math.random() - 0.5);
     }
 
     finishTurn() {

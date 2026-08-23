@@ -30,7 +30,7 @@
         ["type", "行動タイプ", "select", [["attack", "物理攻撃・物理スキル"], ["heal", "回復"], ["magic", "攻撃魔法"], ["support", "補助"], ["instantDeath", "即死"]]],
         ["target", "対象", "select", [["enemyOne", "敵単体"], ["allEnemies", "敵全体"], ["allyOne", "味方単体"], ["allAllies", "味方全体"], ["self", "自分"]]],
         ["mpCost", "消費MP", "number"], ["power", "威力・回復量", "number-step"], ["baseScore", "基本評価", "number-step"],
-        ["powerMultiplier", "物理攻撃倍率", "number-step"], ["priority", "行動優先度", "number-step"], ["recoilRate", "反動率（0～1）", "number-step"],
+        ["powerMultiplier", "物理攻撃倍率", "number-step"], ["priority", "行動優先度（現在未使用）", "number-step"], ["recoilRate", "反動率（0～1）", "number-step"],
         ["element", "属性", "select", [["", "なし"], ["fire", "炎"], ["ice", "氷"], ["wind", "風"], ["bang", "爆発"]]], ["successRate", "成功率（0～1）", "number-step"],
         ["effectStat", "補助効果の能力", "select", [["", "なし"], ["attack", "攻撃力"], ["defense", "守備力"], ["speed", "素早さ"]]],
         ["effectMode", "補助効果の計算", "select", [["add", "加算"], ["multiply", "倍率"]]],

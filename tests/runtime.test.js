@@ -70,10 +70,20 @@ for (const file of ["data-store.js", "models.js", "battle-ai.js", "battle.js", "
   battle.pause = () => Promise.resolve();
   await battle.stepAction();
   if (battle.actionQueue.length !== 5) throw new Error("STEPで1人分だけ進みませんでした。");
+  if (battle.actionQueue.some(item => item.decision) || battle.characters.filter(actor => actor.lastDecision).length !== 1) {
+    throw new Error("全員の行動をターン開始時に決めず、行動直前に1人ずつ判断する処理になっていません。");
+  }
 
   const priest = battle.getCharacter("priest");
   const warrior = battle.getCharacter("warrior");
   const mage = battle.getCharacter("mage");
+  warrior.currentHp = 1;
+  priest.lastDecision = null;
+  battle.actionQueue = [{ actor: priest, initiative: 0 }];
+  await battle.stepAction();
+  if (priest.lastDecision?.selected?.action.type !== "heal") {
+    throw new Error("行動直前に発生した瀕死状態を見て回復行動を選べませんでした。");
+  }
   const slowInitiative = battle.rollInitiative(warrior, 0);
   const fastInitiative = battle.rollInitiative(warrior, 1);
   if (slowInitiative !== warrior.effectiveSpeed * 0.75 || fastInitiative !== warrior.effectiveSpeed * 1.25) {
