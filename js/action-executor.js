@@ -25,8 +25,10 @@
         });
         if (effect.kind === "heal") outcomes.forEach(outcome => this.battle.log.add(`${actor.name}は${actionName}を唱えた。${outcome.target.name}のHPが${outcome.amount}回復。`, "heal"));
         if (effect.kind === "modifyStat" && outcomes.length) {
-          const decreased = outcomes[0].mode === "multiply" ? Number(outcomes[0].value) < 1 : Number(outcomes[0].value) < 0;
-          this.battle.log.add(`${actor.name}は${actionName}を使った。${outcomes.map(outcome => outcome.target.name).join("、")}の${this.battle.statLabel(outcomes[0].stat)}が${decreased ? "下がった" : "上がった"}！`, decreased ? "magic" : "heal");
+          const direction = this.statChangeDirection(outcomes[0]);
+          const changeLabel = direction === "up" ? "上がった" : direction === "down" ? "下がった" : "変わらなかった";
+          const logType = direction === "up" ? "heal" : direction === "down" ? "magic" : "system";
+          this.battle.log.add(`${actor.name}は${actionName}を使った。${outcomes.map(outcome => outcome.target.name).join("、")}の${this.battle.statLabel(outcomes[0].stat)}が${changeLabel}！`, logType);
         }
         if (effect.kind === "instantDeath") outcomes.forEach(outcome => {
           if (outcome.skipped) return;
@@ -57,6 +59,15 @@
         if (effect.kind === "recoil") outcomes.filter(outcome => outcome.amount > 0).forEach(outcome => this.battle.log.add(`${actor.name}は反動で${outcome.amount}ダメージを受けた。`, "danger"));
       });
       return result;
+    }
+
+    statChangeDirection(outcome) {
+      const value = Number(outcome.value);
+      const neutral = outcome.mode === "multiply" ? 1 : 0;
+      if (value === neutral) return "none";
+      const lowerIsStronger = ["magicResistance", "breathResistance", "damageResistance"].includes(outcome.stat);
+      const strengthIncreased = lowerIsStronger ? value < neutral : value > neutral;
+      return strengthIncreased ? "up" : "down";
     }
   }
 

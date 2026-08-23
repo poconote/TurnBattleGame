@@ -460,9 +460,24 @@ for (const file of ["action-schema.js", "data-store.js", "models.js", "battle-ev
   statusWarrior.buffs.magicResistance.value = 1;
   statusWarrior.buffs.magicResistance.turns = 0;
   const magicBeforeBarrier = battle.effectEngine.previewAction(statusEnemy, battle.getAction("merami"), [statusWarrior]).totalExpectedDamage;
-  battle.effectEngine.applyAction(statusPriest, battle.getAction("magicBarrier"), battle.getLiving("ally"), () => 0.5);
+  const resistanceLogStart = documentStub.querySelector("#battle-log").children.length;
+  battle.actionExecutor.execute(statusPriest, battle.getAction("magicBarrier"), battle.getLiving("ally"));
   const magicAfterBarrier = battle.effectEngine.previewAction(statusEnemy, battle.getAction("merami"), [statusWarrior]).totalExpectedDamage;
   if (magicAfterBarrier > Math.ceil(magicBeforeBarrier * 0.51)) throw new Error("マジックバリアの呪文軽減が反映されませんでした。");
+  battle.actionExecutor.execute(statusPriest, battle.getAction("fubaha"), battle.getLiving("ally"));
+  battle.actionExecutor.execute(statusWarrior, battle.getAction("greatDefense"), [statusWarrior]);
+  const resistanceLogs = documentStub.querySelector("#battle-log").children.slice(resistanceLogStart).map(entry => entry.textContent);
+  if (!resistanceLogs.some(message => message.includes("呪文耐性が上がった"))
+    || !resistanceLogs.some(message => message.includes("ブレス耐性が上がった"))
+    || !resistanceLogs.some(message => message.includes("ダメージ耐性が上がった"))
+    || resistanceLogs.some(message => message.includes("耐性が下がった"))) {
+    throw new Error("軽減倍率が下がる耐性強化を、耐性上昇としてログ表示できませんでした。");
+  }
+  if (battle.actionExecutor.statChangeDirection({ stat: "magicResistance", mode: "multiply", value: 1.5 }) !== "down"
+    || battle.actionExecutor.statChangeDirection({ stat: "attack", mode: "multiply", value: 0.5 }) !== "down"
+    || battle.actionExecutor.statChangeDirection({ stat: "defense", mode: "add", value: 20 }) !== "up") {
+    throw new Error("通常能力と耐性能力の増減方向を正しく判定できませんでした。");
+  }
 
   const swordDance = battle.getAction("swordDance");
   const swordDancePreview = battle.effectEngine.previewAction(statusWarrior, swordDance, [statusEnemy]);
