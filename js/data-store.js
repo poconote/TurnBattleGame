@@ -3,7 +3,7 @@
 
   const clone = value => JSON.parse(JSON.stringify(value));
   const STORAGE_KEY = "dq-ai-battle-data-v1";
-  const CURRENT_SCHEMA_VERSION = 15;
+  const CURRENT_SCHEMA_VERSION = 16;
   const RESISTANCE_KEYS = ["fire", "ice", "wind", "bang", "zap", "instantDeath", "poison", "blind", "petrify", "sleep", "silence", "paralysis", "confusion"];
   const defaultEnemyActionWeights = actions => {
     const ids = [...new Set(actions || [])];
@@ -53,6 +53,10 @@
 
     normalize(data) {
       if (data?.actions) data.actions.forEach(action => DQ.ActionSchema.ensureEffects(action));
+      if (data?.jobs) {
+        const jobIds = new Set(data.jobs.map(job => job.id));
+        data.partyOrder = [...new Set([...(Array.isArray(data.partyOrder) ? data.partyOrder : []), ...data.jobs.map(job => job.id)])].filter(jobId => jobIds.has(jobId));
+      }
       if (data?.enemies) data.enemies.forEach(enemy => {
         enemy.resistances = { ...Object.fromEntries(RESISTANCE_KEYS.map(key => [key, 1])), ...(enemy.resistances || {}) };
         const defaults = defaultEnemyActionWeights(enemy.actions);
@@ -142,6 +146,7 @@
       for (const defaultJob of defaults.jobs) {
         if (!data.jobs.some(job => job.id === defaultJob.id)) data.jobs.push(clone(defaultJob));
       }
+      data.partyOrder = [...new Set([...(Array.isArray(data.partyOrder) ? data.partyOrder : defaults.partyOrder || []), ...data.jobs.map(job => job.id)])];
 
       data.enemies.forEach(enemy => {
         if (enemy.levelStats) {
@@ -213,6 +218,10 @@
         if (new Set(ids).size !== ids.length) errors.push(`${key}に重複したIDがあります。`);
       }
       const actionIds = new Set(data.actions.map(action => action.id));
+      const jobIds = data.jobs.map(job => job.id);
+      if (!Array.isArray(data.partyOrder) || data.partyOrder.length !== jobIds.length || new Set(data.partyOrder).size !== jobIds.length || data.partyOrder.some(jobId => !jobIds.includes(jobId))) {
+        errors.push("戦闘参加順にはすべての職業を重複なく指定してください。");
+      }
       data.jobs.forEach(job => {
         if (!job.name) errors.push(`${job.id || "職業"}の名前がありません。`);
         const levels = job.levelStats && typeof job.levelStats === "object" ? Object.entries(job.levelStats) : [];

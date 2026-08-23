@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 15,
+  "schemaVersion": 16,
   "actions": [
     {
       "id": "attack",
@@ -6673,5 +6673,12 @@
       "maxHpDivisor": 2,
       "lastStandingBonus": 80
     }
-  }
+  },
+  "partyOrder": [
+    "warrior",
+    "priest",
+    "mage",
+    "hero",
+    "sage"
+  ]
 }

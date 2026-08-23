@@ -12,7 +12,10 @@
     reset() {
       this.stopAuto();
       this.data = this.store.getData();
-      const allies = this.data.jobs.filter(job => job.enabled).slice(0, 3)
+      const partyOrder = new Map((this.data.partyOrder || []).map((jobId, index) => [jobId, index]));
+      const allies = this.data.jobs.filter(job => job.enabled)
+        .sort((a, b) => (partyOrder.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (partyOrder.get(b.id) ?? Number.MAX_SAFE_INTEGER))
+        .slice(0, 3)
         .map((job, formationIndex) => new DQ.Character(job, "ally", { formationIndex }));
       this.battleNumber = 1;
       this.initializeBattle(allies, true);

@@ -291,6 +291,7 @@ for (let level = 21; level <= 50; level += 1) {
   makeJob("hero", "勇者", "勇", false, heroLearning, heroStats, { buffAffinity: { attack: 1.35, defense: 1.2, speed: 1.1 }, healPriority: 1.05, magicPriority: 1.05 }),
   makeJob("sage", "賢者", "賢", false, sageLearning, sageStats, { buffAffinity: { attack: 0.85, defense: 1.15, speed: 1.15 }, healPriority: 1.25, magicPriority: 1.25 }),
 ].forEach(job => upsert(data.jobs, job));
+data.partyOrder = ["warrior", "priest", "mage", "hero", "sage"];
 
 const resistanceDefaults = { fire: 1, ice: 1, wind: 1, bang: 1, zap: 1, instantDeath: 0.5, poison: 0.8, blind: 0.8, petrify: 0.5, sleep: 0.75, silence: 0.75, paralysis: 0.7, confusion: 0.75 };
 const enemyActionWeights = enemyActions => {
@@ -396,7 +397,7 @@ data.ai.targetSelection = {
   revivedTargetWeight: 0,
   reviveProtectionTurns: 1,
 };
-data.schemaVersion = 15;
+data.schemaVersion = 16;
 
 fs.writeFileSync(file, `${JSON.stringify(data, null, 2)}\n`, "utf8");
 console.log(`schema=${data.schemaVersion} actions=${data.actions.length} jobs=${data.jobs.length} enemies=${data.enemies.length} encounters=${data.encounters.length}`);

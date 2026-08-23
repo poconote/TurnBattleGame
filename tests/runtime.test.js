@@ -71,6 +71,15 @@ for (const file of ["action-schema.js", "data-store.js", "models.js", "battle-ev
   battle.encounterId = "resistanceLab";
   battle.reset();
   if (battle.characters.length !== 6) throw new Error("3体編成へ切り替えられませんでした。");
+  const originalPartyOrder = [...battle.data.partyOrder];
+  battle.data.partyOrder = ["mage", "priest", "warrior", "hero", "sage"];
+  battle.reset();
+  if (battle.getLiving("ally").map(actor => actor.templateId).join(",") !== "mage,priest,warrior"
+    || battle.getLiving("ally").map(actor => actor.formationIndex).join(",") !== "0,1,2") {
+    throw new Error("編集した戦闘参加順を前衛・中衛・後衛へ反映できませんでした。");
+  }
+  battle.data.partyOrder = originalPartyOrder;
+  battle.reset();
   battle.pause = () => Promise.resolve();
   {
     const randomEnemy = battle.getCharacter("enemyMage");
@@ -219,6 +228,9 @@ for (const file of ["action-schema.js", "data-store.js", "models.js", "battle-ev
   }
   const editor = context.dqEditor;
   editor.open();
+  if (!editor.partyOrderHtml().includes('data-party-order="up"') || !editor.partyOrderHtml().includes("前衛") || !editor.partyOrderHtml().includes("不参加")) {
+    throw new Error("職業エディターに戦闘参加順の並び替え操作を表示できませんでした。");
+  }
   editor.tab = "actions";
   editor.selectedIndex = editor.draft.actions.findIndex(action => action.id === "baikilt");
   editor.draft.jobs.find(job => job.id === "warrior").levelStats["1"].maxHp = 999;

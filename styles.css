@@ -504,6 +504,14 @@ button:disabled { cursor: not-allowed; opacity: .45; }
 .enemy-action-weight-row small { color: var(--muted); }
 .enemy-action-weight-row input { width: 90px; }
 .enemy-action-weight-row b { color: var(--cyan); text-align: right; }
+.party-order-editor { display: grid; grid-template-columns: minmax(150px,.55fr) minmax(260px,1fr); gap: 12px; margin: 12px 0; padding: 12px; border: 1px solid var(--line); border-radius: 9px; background: rgba(255,255,255,.02); }
+.party-order-editor > div:first-child { display: flex; flex-direction: column; gap: 5px; color: var(--muted); }
+.party-order-list { display: grid; gap: 5px; }
+.party-order-row { display: grid; grid-template-columns: 58px minmax(90px,1fr) auto; align-items: center; gap: 8px; }
+.party-order-row > b { color: var(--cyan); font-size: 11px; }
+.party-order-row > div { display: flex; gap: 4px; }
+.party-order-row button { min-width: 30px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 6px; color: var(--text); background: var(--panel-2); cursor: pointer; }
+.party-order-row button:disabled { opacity: .35; cursor: default; }
 .encounter-member-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; }
 .encounter-member-grid label { display: flex; flex-direction: column; gap: 4px; }
 .editor-tabs { flex-wrap: wrap; }
@@ -534,6 +542,7 @@ button:disabled { cursor: not-allowed; opacity: .45; }
   .action-learning-row small { display: none; }
   .enemy-action-weight-row { grid-template-columns: minmax(100px,1fr) 78px 52px; }
   .enemy-action-weight-row small { display: none; }
+  .party-order-editor { grid-template-columns: 1fr; }
   .encounter-member-grid { grid-template-columns: 1fr; }
   .effect-field-grid { grid-template-columns: 1fr; }
 }

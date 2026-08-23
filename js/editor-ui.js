@@ -137,8 +137,29 @@
         ? `<div class="editor-help">適性1.0が標準です。1より大きいほど優先し、1未満ほど選びにくくなります。攻撃・守備・素早さ強化は対象選択、回復・攻撃魔法の優先度はこの職業自身の行動評価に使います。</div>`
         : this.tab === "actions"
         ? `<div class="editor-help">AI評価タイプは作戦と点数計算の分類です。実際の処理は効果一覧を上から順番に実行します。例：毒攻撃＝物理ダメージ＋状態付与、全体回復治療＝HP回復＋状態治療。</div>` : "";
-      document.querySelector("#editor-form").innerHTML = `<div class="editor-form-title"><div><span>${config.title.toUpperCase()}</span><h3>${this.escape(item.name || "名称未設定")}</h3></div><span>変更は保存時に戦闘へ反映</span></div>${actionHelp}<div class="field-grid">${config.fields.map(field => this.fieldHtml(item, field)).join("")}</div>`;
+      const partyOrder = this.tab === "jobs" ? this.partyOrderHtml() : "";
+      document.querySelector("#editor-form").innerHTML = `<div class="editor-form-title"><div><span>${config.title.toUpperCase()}</span><h3>${this.escape(item.name || "名称未設定")}</h3></div><span>変更は保存時に戦闘へ反映</span></div>${partyOrder}${actionHelp}<div class="field-grid">${config.fields.map(field => this.fieldHtml(item, field)).join("")}</div>`;
       this.bindFormInputs(item);
+    }
+
+    normalizedPartyOrder() {
+      const jobIds = new Set(this.draft.jobs.map(job => job.id));
+      this.draft.partyOrder = [...new Set([...(this.draft.partyOrder || []), ...this.draft.jobs.map(job => job.id)])].filter(jobId => jobIds.has(jobId));
+      return this.draft.partyOrder;
+    }
+
+    partyOrderHtml() {
+      const order = this.normalizedPartyOrder();
+      const enabledIds = order.filter(jobId => this.draft.jobs.find(job => job.id === jobId)?.enabled);
+      const labels = ["前衛", "中衛", "後衛"];
+      const rows = order.map((jobId, index) => {
+        const job = this.draft.jobs.find(item => item.id === jobId);
+        if (!job) return "";
+        const enabledIndex = enabledIds.indexOf(jobId);
+        const position = !job.enabled ? "不参加" : labels[enabledIndex] || "参加枠外";
+        return `<div class="party-order-row"><b>${this.escape(position)}</b><span>${this.escape(job.name)}</span><div><button type="button" data-party-order="up" data-party-id="${this.escape(jobId)}" ${index === 0 ? "disabled" : ""} aria-label="${this.escape(`${job.name}を前へ移動`)}">↑</button><button type="button" data-party-order="down" data-party-id="${this.escape(jobId)}" ${index === order.length - 1 ? "disabled" : ""} aria-label="${this.escape(`${job.name}を後ろへ移動`)}">↓</button></div></div>`;
+      }).join("");
+      return `<div class="party-order-editor"><div><span>戦闘参加順</span><small>上から前衛・中衛・後衛。不参加の職業は順番から除外されます。</small></div><div class="party-order-list">${rows}</div></div>`;
     }
 
     fieldHtml(item, [path, label, type, options]) {
@@ -297,6 +318,15 @@
           return;
         }
         this.setPath(item, path, value);
+        if (this.tab === "jobs" && path === "enabled") {
+          this.renderEntityForm();
+          this.renderList();
+          return;
+        }
+        if (this.tab === "jobs" && path === "id" && oldId !== value) {
+          this.draft.partyOrder = (this.draft.partyOrder || []).map(jobId => jobId === oldId ? value : jobId);
+          this.normalizedPartyOrder();
+        }
         if (this.tab === "enemies" && path === "actions") {
           item.actionWeights ||= {};
           item.actionWeights = Object.fromEntries(value.map(actionId => [actionId, Math.max(0, Number(item.actionWeights[actionId] ?? (actionId === "attack" ? 60 : 20)))]));
@@ -324,6 +354,20 @@
       this.bindEncounterMembers(item);
       this.bindEffectEditor(item);
       this.bindEnemyActionWeights(item);
+      this.bindPartyOrder();
+    }
+
+    bindPartyOrder() {
+      if (this.tab !== "jobs") return;
+      document.querySelectorAll("[data-party-order]").forEach(button => button.addEventListener("click", () => {
+        const order = this.normalizedPartyOrder();
+        const index = order.indexOf(button.dataset.partyId);
+        const nextIndex = button.dataset.partyOrder === "up" ? index - 1 : index + 1;
+        if (index < 0 || nextIndex < 0 || nextIndex >= order.length) return;
+        [order[index], order[nextIndex]] = [order[nextIndex], order[index]];
+        this.draft.partyOrder = order;
+        this.renderEntityForm();
+      }));
     }
 
     bindEnemyActionWeights(item) {
@@ -404,6 +448,7 @@
       }[this.tab];
       base.id = this.uniqueId({ jobs: "job", enemies: "enemy", encounters: "encounter", actions: "action", strategies: "strategy" }[this.tab] || "item");
       this.draft[this.tab].push(base);
+      if (this.tab === "jobs") this.normalizedPartyOrder();
       this.originalIds.set(base, null);
       if (base.levelStats) this.editedLevels.set(base, Number(base.level));
       this.selectedIndex = this.draft[this.tab].length - 1;
@@ -418,6 +463,7 @@
       copy.name = `${source.name} コピー`;
       if ("enabled" in copy) copy.enabled = false;
       this.draft[this.tab].push(copy);
+      if (this.tab === "jobs") this.normalizedPartyOrder();
       this.originalIds.set(copy, null);
       if (copy.levelStats) this.editedLevels.set(copy, Number(copy.level));
       this.selectedIndex = this.draft[this.tab].length - 1;
@@ -431,6 +477,7 @@
       if (refs.length) { this.showErrors([`「${item.name}」は ${refs.join("、")} が使用しているため削除できません。`]); return; }
       if (!confirm(`「${item.name}」を削除しますか？`)) return;
       this.draft[this.tab].splice(this.selectedIndex, 1);
+      if (this.tab === "jobs") this.draft.partyOrder = (this.draft.partyOrder || []).filter(jobId => jobId !== item.id);
       if (this.tab === "encounters" && this.draft.selectedEncounterId === item.id) this.draft.selectedEncounterId = this.draft.encounters[0]?.id || "";
       this.selectedIndex = Math.max(0, this.selectedIndex - 1);
       this.render();
@@ -456,6 +503,7 @@
             next.jobs.forEach(saved => { const edited = this.draft.jobs.find(job => job.id === saved.id); if (edited) { saved.actions = [...edited.actions]; saved.actionLevels = DQ.cloneData(edited.actionLevels || {}); } });
             next.enemies.forEach(saved => { const edited = this.draft.enemies.find(enemy => enemy.id === saved.id); if (edited) saved.actions = [...edited.actions]; });
           }
+          if (this.tab === "jobs") next.partyOrder = DQ.cloneData(this.draft.partyOrder);
           if (this.tab === "enemies" && originalId && originalId !== item.id) {
             next.encounters.forEach(encounter => encounter.members.forEach(member => { if (member.enemyId === originalId) member.enemyId = item.id; }));
           }
