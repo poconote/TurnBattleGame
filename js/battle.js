@@ -86,6 +86,7 @@
         unit.currentMp = Math.max(0, Math.min(unit.maxMp, unit.currentMp));
         unit.alive = unit.currentHp > 0;
         unit.lastDecision = null;
+        unit.reviveProtectionUntilTurn = 0;
         this.statusEngine?.clear(unit);
         Object.values(unit.buffs).forEach(buff => {
           buff.value = buff.mode === "multiply" ? 1 : 0;
@@ -199,6 +200,7 @@
           actor.allActions = [...template.actions];
           actor.actionLevels = { ...(template.actionLevels || {}) };
           actor.actions = actor.side === "enemy" ? [...actor.allActions] : actor.allActions.filter(actionId => Number(actor.actionLevels[actionId] ?? 1) <= actor.level);
+          actor.actionWeights = Object.fromEntries(actor.allActions.map(actionId => [actionId, Math.max(0, Number(template.actionWeights?.[actionId] ?? 1))]));
         }
       });
       if (!this.data.strategies.some(strategy => strategy.id === this.strategy)) this.strategy = this.data.strategies[0].id;
@@ -347,6 +349,7 @@
         if (unit.alive && unit.currentHp <= 0) {
           unit.alive = false;
           unit.currentHp = 0;
+          unit.reviveProtectionUntilTurn = 0;
           this.events.emit("afterDeath", { target: unit });
           this.log.add(`${unit.name}は戦闘不能になった。`, "danger");
         }

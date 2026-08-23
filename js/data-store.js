@@ -3,8 +3,16 @@
 
   const clone = value => JSON.parse(JSON.stringify(value));
   const STORAGE_KEY = "dq-ai-battle-data-v1";
-  const CURRENT_SCHEMA_VERSION = 14;
+  const CURRENT_SCHEMA_VERSION = 15;
   const RESISTANCE_KEYS = ["fire", "ice", "wind", "bang", "zap", "instantDeath", "poison", "blind", "petrify", "sleep", "silence", "paralysis", "confusion"];
+  const defaultEnemyActionWeights = actions => {
+    const ids = [...new Set(actions || [])];
+    if (!ids.length) return {};
+    if (ids.length === 1) return { [ids[0]]: 100 };
+    if (!ids.includes("attack")) return Object.fromEntries(ids.map(id => [id, 100 / ids.length]));
+    const specialWeight = 40 / Math.max(1, ids.length - 1);
+    return Object.fromEntries(ids.map(id => [id, id === "attack" ? 60 : specialWeight]));
+  };
 
   class GameDataStore {
     constructor(storageKey = STORAGE_KEY) {
@@ -47,6 +55,11 @@
       if (data?.actions) data.actions.forEach(action => DQ.ActionSchema.ensureEffects(action));
       if (data?.enemies) data.enemies.forEach(enemy => {
         enemy.resistances = { ...Object.fromEntries(RESISTANCE_KEYS.map(key => [key, 1])), ...(enemy.resistances || {}) };
+        const defaults = defaultEnemyActionWeights(enemy.actions);
+        enemy.actionWeights = Object.fromEntries((enemy.actions || []).map(actionId => {
+          const configured = Number(enemy.actionWeights?.[actionId]);
+          return [actionId, Number.isFinite(configured) && configured >= 0 ? configured : defaults[actionId]];
+        }));
       });
       return data;
     }
@@ -140,6 +153,7 @@
         delete enemy.actionLevels;
         delete enemy.enabled;
         enemy.recommendedLevel = Number(enemy.recommendedLevel || 1);
+        enemy.actionWeights ||= defaultEnemyActionWeights(enemy.actions);
       });
       for (const defaultEnemy of defaults.enemies) {
         const enemy = data.enemies.find(item => item.id === defaultEnemy.id);
@@ -147,6 +161,7 @@
         else {
           enemy.resistances = { ...clone(defaultEnemy.resistances), ...(enemy.resistances || {}) };
           enemy.actions = [...new Set([...(enemy.actions || []), ...defaultEnemy.actions])];
+          enemy.actionWeights = { ...clone(defaultEnemy.actionWeights || defaultEnemyActionWeights(defaultEnemy.actions)), ...(enemy.actionWeights || {}) };
         }
       }
 
@@ -182,12 +197,16 @@
         data.ai?.targetSelection?.enemyMiddleWeight,
         data.ai?.targetSelection?.enemyBackWeight,
       ].map(Number);
+      const revivedTargetWeight = Number(data.ai?.targetSelection?.revivedTargetWeight);
+      const reviveProtectionTurns = Number(data.ai?.targetSelection?.reviveProtectionTurns);
       if (!Number.isFinite(orderMin) || !Number.isFinite(orderMax) || orderMin <= 0 || orderMax <= 0 || orderMin > orderMax) {
         errors.push("行動順の素早さ乱数倍率が不正です。");
       }
       if (formationWeights.some(weight => !Number.isFinite(weight) || weight <= 0)) {
         errors.push("敵から狙われる隊列ウェイトは、すべて0より大きくしてください。");
       }
+      if (!Number.isFinite(revivedTargetWeight) || revivedTargetWeight < 0) errors.push("蘇生直後の対象ウェイトは0以上にしてください。");
+      if (!Number.isInteger(reviveProtectionTurns) || reviveProtectionTurns < 0) errors.push("蘇生後に保護するターン数は0以上の整数にしてください。");
       for (const key of ["actions", "jobs", "enemies", "encounters", "strategies"]) {
         const ids = data[key].map(item => item.id);
         if (ids.some(id => !id || !/^[A-Za-z][A-Za-z0-9_-]*$/.test(id))) errors.push(`${key}に使用できないIDがあります。`);
@@ -221,7 +240,12 @@
           if (!Number.isFinite(value) || value < 0) errors.push(`${enemy.name || enemy.id}の${resistance}耐性倍率が不正です。`);
         }
         if (!Number.isInteger(Number(enemy.recommendedLevel)) || Number(enemy.recommendedLevel) < 1) errors.push(`${enemy.name || enemy.id}の出現目安Lvが不正です。`);
-        (enemy.actions || []).forEach(id => { if (!actionIds.has(id)) errors.push(`${enemy.name}が存在しない技「${id}」を参照しています。`); });
+        (enemy.actions || []).forEach(id => {
+          if (!actionIds.has(id)) errors.push(`${enemy.name}が存在しない技「${id}」を参照しています。`);
+          const weight = Number(enemy.actionWeights?.[id]);
+          if (!Number.isFinite(weight) || weight < 0) errors.push(`${enemy.name}の「${id}」使用ウェイトが不正です。`);
+        });
+        if ((enemy.actions || []).length && !(enemy.actions || []).some(id => Number(enemy.actionWeights?.[id]) > 0)) errors.push(`${enemy.name}は少なくとも1つの技の使用ウェイトを0より大きくしてください。`);
       });
       const enemyIds = new Set(data.enemies.map(enemy => enemy.id));
       data.encounters.forEach(encounter => {

@@ -20,6 +20,7 @@
         ["resistances.blind", "幻惑成功倍率", "number-step"], ["resistances.petrify", "石化成功倍率", "number-step"],
         ["resistances.sleep", "眠り成功倍率", "number-step"], ["resistances.silence", "呪文封じ成功倍率", "number-step"],
         ["resistances.paralysis", "マヒ成功倍率", "number-step"], ["resistances.confusion", "混乱成功倍率", "number-step"], ["actions", "使用可能な技", "actions"],
+        ["actionWeights", "選択中の技の使用ウェイト", "enemyActionWeights"],
       ],
     },
     encounters: {
@@ -51,6 +52,7 @@
     ["turnOrder.minMultiplier", "行動順：素早さ倍率の最小値"], ["turnOrder.maxMultiplier", "行動順：素早さ倍率の最大値"],
     ["targetSelection.enemyFrontWeight", "敵の対象選択：前衛ウェイト"], ["targetSelection.enemyMiddleWeight", "敵の対象選択：中衛ウェイト"],
     ["targetSelection.enemyBackWeight", "敵の対象選択：後衛ウェイト"],
+    ["targetSelection.revivedTargetWeight", "敵の対象選択：蘇生直後ウェイト"], ["targetSelection.reviveProtectionTurns", "蘇生後に保護する追加ターン数"],
     ["randomMin", "行動評価：ランダム最小値"], ["randomMax", "行動評価：ランダム最大値"],
     ["attack.lowHpThreshold", "攻撃：瀕死判定HP率"], ["attack.lowHpBonus", "攻撃：瀕死敵への加点"], ["attack.lethalBonus", "攻撃：撃破見込み加点"],
     ["attack.elementWeakBonus", "物理スキル：弱点属性加点"], ["attack.elementResistPenalty", "物理スキル：属性耐性減点"],
@@ -150,6 +152,7 @@
       if (type === "actionLearning") return this.actionLearningHtml(item, label);
       if (type === "encounterMembers") return this.encounterMembersHtml(item, label);
       if (type === "effects") return this.effectsEditorHtml(item, label);
+      if (type === "enemyActionWeights") return this.enemyActionWeightsHtml(item, label);
       if (type === "actions") return `<label class="editor-field wide"><span>${label}</span><select data-path="${path}" multiple size="6">${this.draft.actions.map(action => `<option value="${this.escape(action.id)}" ${(value || []).includes(action.id) ? "selected" : ""}>${this.escape(action.name)} (${this.escape(action.id)})</option>`).join("")}</select><small>Ctrlキーを押しながら選択すると複数指定できます。</small></label>`;
       if (type === "actors") {
         const actors = [...this.draft.jobs.map(actor => ({ ...actor, group: "職業" })), ...this.draft.enemies.map(actor => ({ ...actor, group: "敵" }))];
@@ -159,6 +162,18 @@
       const step = type === "number-step" ? "any" : "1";
       const inputType = type.startsWith("number") ? "number" : "text";
       return `<label class="editor-field"><span>${label}</span><input data-path="${path}" type="${inputType}" step="${step}" value="${this.escape(value ?? "")}"></label>`;
+    }
+
+    enemyActionWeightsHtml(item, label) {
+      item.actionWeights ||= {};
+      const selected = (item.actions || []).map(actionId => this.draft.actions.find(action => action.id === actionId)).filter(Boolean);
+      const total = selected.reduce((sum, action) => sum + Math.max(0, Number(item.actionWeights[action.id] ?? 1)), 0);
+      const rows = selected.map(action => {
+        const weight = Math.max(0, Number(item.actionWeights[action.id] ?? 1));
+        const probability = total > 0 ? weight / total * 100 : 0;
+        return `<label class="enemy-action-weight-row"><span>${this.escape(action.name)}</span><small>${this.escape(action.id)}</small><input type="number" min="0" step="any" data-enemy-action-weight="${this.escape(action.id)}" value="${weight}"><b>${probability.toFixed(1)}%</b></label>`;
+      }).join("");
+      return `<div class="editor-field wide enemy-action-weights"><span>${label}</span><div class="enemy-action-weight-list">${rows || "<small>先に使用可能な技を選択してください。</small>"}</div><small>使用可能な技だけでウェイトを再計算します。MP不足などで使えない技はその行動時の抽選から外れます。</small></div>`;
     }
 
     effectsEditorHtml(item, label) {
@@ -282,6 +297,13 @@
           return;
         }
         this.setPath(item, path, value);
+        if (this.tab === "enemies" && path === "actions") {
+          item.actionWeights ||= {};
+          item.actionWeights = Object.fromEntries(value.map(actionId => [actionId, Math.max(0, Number(item.actionWeights[actionId] ?? (actionId === "attack" ? 60 : 20)))]));
+          this.renderEntityForm();
+          this.renderList();
+          return;
+        }
         if (this.tab === "actions" && path !== "type") DQ.ActionSchema.syncEffectFromLegacy(item, path);
         if (path === "id" && this.tab === "actions" && oldId !== value) {
           [...this.draft.jobs, ...this.draft.enemies].forEach(actor => {
@@ -301,6 +323,16 @@
       this.bindActionLearning(item);
       this.bindEncounterMembers(item);
       this.bindEffectEditor(item);
+      this.bindEnemyActionWeights(item);
+    }
+
+    bindEnemyActionWeights(item) {
+      if (this.tab !== "enemies") return;
+      document.querySelectorAll("[data-enemy-action-weight]").forEach(input => input.addEventListener("change", () => {
+        item.actionWeights ||= {};
+        item.actionWeights[input.dataset.enemyActionWeight] = Math.max(0, Number(input.value || 0));
+        this.renderEntityForm();
+      }));
     }
 
     bindEffectEditor(item) {
@@ -365,7 +397,7 @@
     add() {
       const base = {
         jobs: { name: "新しい職業", icon: "新", enabled: false, level: 1, levelStats: { "1": { maxHp: 100, maxMp: 30, attack: 30, defense: 30, speed: 30 } }, actions: ["attack"], actionLevels: { attack: 1 }, aiTraits: { buffAffinity: { attack: 1, defense: 1, speed: 1 }, healPriority: 1, magicPriority: 1 } },
-        enemies: { name: "新しい敵", icon: "敵", recommendedLevel: 1, maxHp: 20, maxMp: 0, attack: 10, defense: 8, speed: 8, actions: ["attack"], resistances: { fire: 1, ice: 1, wind: 1, bang: 1, zap: 1, instantDeath: 1, poison: 1, blind: 1, petrify: 1, sleep: 1, silence: 1, paralysis: 1, confusion: 1 } },
+        enemies: { name: "新しい敵", icon: "敵", recommendedLevel: 1, maxHp: 20, maxMp: 0, attack: 10, defense: 8, speed: 8, actions: ["attack"], actionWeights: { attack: 100 }, resistances: { fire: 1, ice: 1, wind: 1, bang: 1, zap: 1, instantDeath: 1, poison: 1, blind: 1, petrify: 1, sleep: 1, silence: 1, paralysis: 1, confusion: 1 } },
         encounters: { name: "新しい敵グループ", recommendedLevel: 1, members: [{ enemyId: this.draft.enemies[0]?.id || "", count: 1 }] },
         actions: DQ.ActionSchema.ensureEffects({ name: "新しい技", type: "attack", mpCost: 0, target: "enemyOne", power: 0, powerMultiplier: 1, baseScore: 40, effectStat: "", effectMode: "add", effectValue: 0, duration: 4, maxStacks: 1 }),
         strategies: { name: "新しい作戦", attack: 1, heal: 1, magic: 1, support: 1, instantDeath: 1, status: 1, cure: 1, revive: 1 },
@@ -486,10 +518,15 @@
       const usesLearningLevels = this.draft.jobs.includes(actor);
       if (usesLearningLevels) actor.actionLevels ||= {};
       if (enabled && !actor.actions.includes(actionId)) actor.actions.push(actionId);
+      if (enabled && !usesLearningLevels) {
+        actor.actionWeights ||= {};
+        actor.actionWeights[actionId] = Math.max(0, Number(actor.actionWeights[actionId] ?? (actionId === "attack" ? 60 : 20)));
+      }
       if (enabled && usesLearningLevels) actor.actionLevels[actionId] = Math.max(1, Math.floor(Number(actor.actionLevels[actionId] ?? learnedAt) || 1));
       if (!enabled) {
         actor.actions = actor.actions.filter(id => id !== actionId);
         if (usesLearningLevels) delete actor.actionLevels[actionId];
+        else if (actor.actionWeights) delete actor.actionWeights[actionId];
       }
     }
     trackOriginalIds() {

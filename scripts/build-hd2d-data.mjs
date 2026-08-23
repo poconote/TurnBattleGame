@@ -293,9 +293,15 @@ for (let level = 21; level <= 50; level += 1) {
 ].forEach(job => upsert(data.jobs, job));
 
 const resistanceDefaults = { fire: 1, ice: 1, wind: 1, bang: 1, zap: 1, instantDeath: 0.5, poison: 0.8, blind: 0.8, petrify: 0.5, sleep: 0.75, silence: 0.75, paralysis: 0.7, confusion: 0.75 };
+const enemyActionWeights = enemyActions => {
+  if (enemyActions.length === 1) return { [enemyActions[0]]: 100 };
+  if (!enemyActions.includes("attack")) return Object.fromEntries(enemyActions.map(actionId => [actionId, 100 / enemyActions.length]));
+  const specialWeight = 40 / Math.max(1, enemyActions.length - 1);
+  return Object.fromEntries(enemyActions.map(actionId => [actionId, actionId === "attack" ? 60 : specialWeight]));
+};
 const enemy = (id, name, icon, recommendedLevel, maxHp, maxMp, attack, defense, speed, enemyActions, resistances = {}) => ({
   id, name, icon, recommendedLevel, maxHp, maxMp, attack, defense, speed,
-  actions: enemyActions, resistances: { ...resistanceDefaults, ...resistances },
+  actions: enemyActions, actionWeights: enemyActionWeights(enemyActions), resistances: { ...resistanceDefaults, ...resistances },
 });
 const enemyData = [
   enemy("slime", "スライム", "●", 2, 7, 1, 13, 18, 8, ["attack"], { fire: 1.2, ice: 0.9, instantDeath: 0.75 }),
@@ -352,6 +358,9 @@ const enemyData = [
   enemy("baramosBros", "バラモスブロス", "兄", 50, 4300, 500, 310, 340, 168, ["attack", "ionazun", "fierceFire"], { fire: 0.4, ice: 0.75, wind: 0.8, bang: 0.55, instantDeath: 0, poison: 0, petrify: 0, sleep: 0.2, silence: 0.3, paralysis: 0.15, confusion: 0.2 }),
 ];
 enemyData.forEach(item => upsert(data.enemies, item));
+data.enemies.forEach(item => {
+  item.actionWeights = Object.fromEntries((item.actions || []).map(actionId => [actionId, Math.max(0, Number(item.actionWeights?.[actionId] ?? enemyActionWeights(item.actions)[actionId]))]));
+});
 
 const encounters = [
   { id: "seaPassage", name: "海辺の魔物", recommendedLevel: 21, members: [{ enemyId: "slimeSnail", count: 2 }, { enemyId: "killerApe", count: 1 }] },
@@ -382,7 +391,12 @@ data.ai.cure = {
   ...data.ai.cure,
   sleepValue: 145, silenceValue: 105, paralysisValue: 165, confusionValue: 140,
 };
-data.schemaVersion = 14;
+data.ai.targetSelection = {
+  ...data.ai.targetSelection,
+  revivedTargetWeight: 0,
+  reviveProtectionTurns: 1,
+};
+data.schemaVersion = 15;
 
 fs.writeFileSync(file, `${JSON.stringify(data, null, 2)}\n`, "utf8");
 console.log(`schema=${data.schemaVersion} actions=${data.actions.length} jobs=${data.jobs.length} enemies=${data.enemies.length} encounters=${data.encounters.length}`);

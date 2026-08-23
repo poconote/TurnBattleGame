@@ -24,6 +24,7 @@
       this.actionLevels = { ...(data.actionLevels || {}) };
       this.allActions = [...(data.actions || [])];
       this.actions = side === "enemy" ? [...this.allActions] : this.allActions.filter(actionId => Number(this.actionLevels[actionId] ?? 1) <= level);
+      this.actionWeights = Object.fromEntries(this.allActions.map(actionId => [actionId, Math.max(0, Number(data.actionWeights?.[actionId] ?? 1))]));
       this.aiTraits = DQ.cloneData?.(data.aiTraits || {}) || JSON.parse(JSON.stringify(data.aiTraits || {}));
       this.aiTraits.buffAffinity = { attack: 1, defense: 1, speed: 1, ...(this.aiTraits.buffAffinity || {}) };
       this.aiTraits.healPriority = Number(this.aiTraits.healPriority ?? 1);
@@ -45,6 +46,7 @@
         damageResistance: { mode: "multiply", value: 1, turns: 0, stacks: 0 },
       };
       this.lastDecision = null;
+      this.reviveProtectionUntilTurn = 0;
     }
     get hpRate() { return this.currentHp / this.maxHp; }
     effectiveStat(stat) {

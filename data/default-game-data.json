@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 14,
+  "schemaVersion": 15,
   "actions": [
     {
       "id": "attack",
@@ -4238,6 +4238,9 @@
       "actions": [
         "attack"
       ],
+      "actionWeights": {
+        "attack": 100
+      },
       "resistances": {
         "fire": 1.2,
         "ice": 0.9,
@@ -4267,6 +4270,9 @@
       "actions": [
         "attack"
       ],
+      "actionWeights": {
+        "attack": 100
+      },
       "resistances": {
         "fire": 1,
         "ice": 1,
@@ -4296,6 +4302,9 @@
       "actions": [
         "attack"
       ],
+      "actionWeights": {
+        "attack": 100
+      },
       "resistances": {
         "fire": 1,
         "ice": 1,
@@ -4325,6 +4334,9 @@
       "actions": [
         "attack"
       ],
+      "actionWeights": {
+        "attack": 100
+      },
       "resistances": {
         "fire": 1.1,
         "ice": 1,
@@ -4355,6 +4367,10 @@
         "attack",
         "manusa"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "manusa": 40
+      },
       "resistances": {
         "fire": 1.15,
         "ice": 1,
@@ -4385,6 +4401,10 @@
         "attack",
         "heavyBlow"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "heavyBlow": 40
+      },
       "resistances": {
         "fire": 1.15,
         "ice": 0.85,
@@ -4415,6 +4435,10 @@
         "attack",
         "poisonAttack"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "poisonAttack": 40
+      },
       "resistances": {
         "fire": 1.2,
         "ice": 0.9,
@@ -4445,6 +4469,10 @@
         "attack",
         "mera"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "mera": 40
+      },
       "resistances": {
         "fire": 0.75,
         "ice": 1.2,
@@ -4475,6 +4503,10 @@
         "attack",
         "poisonAttack"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "poisonAttack": 40
+      },
       "resistances": {
         "fire": 1.15,
         "ice": 1,
@@ -4505,6 +4537,10 @@
         "attack",
         "hoimi"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "hoimi": 40
+      },
       "resistances": {
         "fire": 1,
         "ice": 1,
@@ -4535,6 +4571,10 @@
         "attack",
         "heavyBlow"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "heavyBlow": 40
+      },
       "resistances": {
         "fire": 1.25,
         "ice": 1,
@@ -4565,6 +4605,10 @@
         "attack",
         "paralyzingAttack"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "paralyzingAttack": 40
+      },
       "resistances": {
         "fire": 1.15,
         "ice": 1,
@@ -4594,6 +4638,9 @@
       "actions": [
         "attack"
       ],
+      "actionWeights": {
+        "attack": 100
+      },
       "resistances": {
         "fire": 0.8,
         "ice": 1.15,
@@ -4624,6 +4671,10 @@
         "attack",
         "heavyBlow"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "heavyBlow": 40
+      },
       "resistances": {
         "fire": 0.8,
         "ice": 1,
@@ -4654,6 +4705,10 @@
         "attack",
         "sleepAttack"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "sleepAttack": 40
+      },
       "resistances": {
         "fire": 1.25,
         "ice": 1,
@@ -4684,6 +4739,10 @@
         "attack",
         "gira"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "gira": 40
+      },
       "resistances": {
         "fire": 0.35,
         "ice": 1.35,
@@ -4714,6 +4773,10 @@
         "attack",
         "heavyBlow"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "heavyBlow": 40
+      },
       "resistances": {
         "fire": 1,
         "ice": 1.1,
@@ -4751,6 +4814,10 @@
         "wind": 0.8,
         "bang": 0.9,
         "instantDeath": 0.06
+      },
+      "actionWeights": {
+        "attack": 60,
+        "heavyBlow": 40
       }
     },
     {
@@ -4767,6 +4834,10 @@
         "attack",
         "scara"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "scara": 40
+      },
       "resistances": {
         "fire": 0.65,
         "ice": 0.65,
@@ -4797,6 +4868,10 @@
         "attack",
         "heavyBlow"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "heavyBlow": 40
+      },
       "resistances": {
         "fire": 1,
         "ice": 1.15,
@@ -4827,6 +4902,10 @@
         "attack",
         "mera"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "mera": 40
+      },
       "resistances": {
         "fire": 0.05,
         "ice": 0.05,
@@ -4858,6 +4937,11 @@
         "begirama",
         "mahotoon"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "begirama": 20,
+        "mahotoon": 20
+      },
       "resistances": {
         "fire": 0.75,
         "ice": 1.15,
@@ -4888,6 +4972,10 @@
         "attack",
         "doubleEdgedSlash"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "doubleEdgedSlash": 40
+      },
       "resistances": {
         "fire": 0.7,
         "ice": 1,
@@ -4918,6 +5006,10 @@
         "attack",
         "heavyBlow"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "heavyBlow": 40
+      },
       "resistances": {
         "fire": 1.15,
         "ice": 1,
@@ -4948,6 +5040,10 @@
         "attack",
         "fireBreath"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "fireBreath": 40
+      },
       "resistances": {
         "fire": 0.45,
         "ice": 1.2,
@@ -4978,6 +5074,10 @@
         "attack",
         "poisonAttack"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "poisonAttack": 40
+      },
       "resistances": {
         "fire": 1.25,
         "ice": 1,
@@ -5008,6 +5108,10 @@
         "attack",
         "doubleEdgedSlash"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "doubleEdgedSlash": 40
+      },
       "resistances": {
         "fire": 1,
         "ice": 1.1,
@@ -5039,6 +5143,11 @@
         "hyadaruko",
         "iceBreath"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "hyadaruko": 20,
+        "iceBreath": 20
+      },
       "resistances": {
         "fire": 1.4,
         "ice": 0.2,
@@ -5069,6 +5178,10 @@
         "attack",
         "falconSlash"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "falconSlash": 40
+      },
       "resistances": {
         "fire": 1.15,
         "ice": 1,
@@ -5099,6 +5212,10 @@
         "attack",
         "vitalThrust"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "vitalThrust": 40
+      },
       "resistances": {
         "fire": 0.65,
         "ice": 1,
@@ -5129,6 +5246,10 @@
         "attack",
         "hyadain"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "hyadain": 40
+      },
       "resistances": {
         "fire": 1.35,
         "ice": 0.25,
@@ -5159,6 +5280,10 @@
         "attack",
         "iceBreath"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "iceBreath": 40
+      },
       "resistances": {
         "fire": 1.3,
         "ice": 0.35,
@@ -5189,6 +5314,10 @@
         "attack",
         "heavyBlow"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "heavyBlow": 40
+      },
       "resistances": {
         "fire": 1,
         "ice": 1,
@@ -5219,6 +5348,10 @@
         "attack",
         "swordDance"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "swordDance": 40
+      },
       "resistances": {
         "fire": 1,
         "ice": 1,
@@ -5250,6 +5383,11 @@
         "bagima",
         "behoimi"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "bagima": 20,
+        "behoimi": 20
+      },
       "resistances": {
         "fire": 1.1,
         "ice": 1,
@@ -5280,6 +5418,10 @@
         "attack",
         "heavyBlow"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "heavyBlow": 40
+      },
       "resistances": {
         "fire": 1,
         "ice": 1,
@@ -5310,6 +5452,10 @@
         "attack",
         "swordDance"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "swordDance": 40
+      },
       "resistances": {
         "fire": 1,
         "ice": 1,
@@ -5341,6 +5487,11 @@
         "zaki",
         "mahotoon"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "zaki": 20,
+        "mahotoon": 20
+      },
       "resistances": {
         "fire": 0.65,
         "ice": 1,
@@ -5371,6 +5522,10 @@
         "attack",
         "iceBreath"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "iceBreath": 40
+      },
       "resistances": {
         "fire": 1.3,
         "ice": 0.5,
@@ -5401,6 +5556,10 @@
         "attack",
         "heavyBlow"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "heavyBlow": 40
+      },
       "resistances": {
         "fire": 1,
         "ice": 1,
@@ -5431,6 +5590,10 @@
         "attack",
         "fierceFire"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "fierceFire": 40
+      },
       "resistances": {
         "fire": 0.45,
         "ice": 1.2,
@@ -5461,6 +5624,10 @@
         "attack",
         "fierceFire"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "fierceFire": 40
+      },
       "resistances": {
         "fire": 0.2,
         "ice": 1.45,
@@ -5493,6 +5660,12 @@
         "ionazun",
         "zaoriku"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "merazoma": 13.333333333333334,
+        "ionazun": 13.333333333333334,
+        "zaoriku": 13.333333333333334
+      },
       "resistances": {
         "fire": 0.65,
         "ice": 0.75,
@@ -5523,6 +5696,10 @@
         "attack",
         "fullForceSlash"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "fullForceSlash": 40
+      },
       "resistances": {
         "fire": 1,
         "ice": 1,
@@ -5553,6 +5730,10 @@
         "attack",
         "fullForceSlash"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "fullForceSlash": 40
+      },
       "resistances": {
         "fire": 1,
         "ice": 1,
@@ -5584,6 +5765,11 @@
         "iceBreath",
         "petrifyingAttack"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "iceBreath": 20,
+        "petrifyingAttack": 20
+      },
       "resistances": {
         "fire": 1.3,
         "ice": 0.55,
@@ -5615,6 +5801,11 @@
         "swordDance",
         "rainOfSwords"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "swordDance": 20,
+        "rainOfSwords": 20
+      },
       "resistances": {
         "fire": 0.8,
         "ice": 1,
@@ -5649,6 +5840,14 @@
         "manusa",
         "medapani"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "merazoma": 8,
+        "ionazun": 8,
+        "fierceFire": 8,
+        "manusa": 8,
+        "medapani": 8
+      },
       "resistances": {
         "fire": 0.5,
         "ice": 1.2,
@@ -5680,6 +5879,11 @@
         "fierceFire",
         "behoimi"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "fierceFire": 20,
+        "behoimi": 20
+      },
       "resistances": {
         "fire": 0.1,
         "ice": 0.1,
@@ -5711,6 +5915,11 @@
         "fierceFire",
         "iceBreath"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "fierceFire": 20,
+        "iceBreath": 20
+      },
       "resistances": {
         "fire": 0.35,
         "ice": 0.65,
@@ -5742,6 +5951,11 @@
         "sukurlt",
         "paralyzingAttack"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "sukurlt": 20,
+        "paralyzingAttack": 20
+      },
       "resistances": {
         "fire": 0.65,
         "ice": 0.75,
@@ -5775,6 +5989,13 @@
         "ionazun",
         "mahotoon"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "merazoma": 10,
+        "mahyado": 10,
+        "ionazun": 10,
+        "mahotoon": 10
+      },
       "resistances": {
         "fire": 0.55,
         "ice": 0.55,
@@ -5806,6 +6027,11 @@
         "ionazun",
         "fierceFire"
       ],
+      "actionWeights": {
+        "attack": 60,
+        "ionazun": 20,
+        "fierceFire": 20
+      },
       "resistances": {
         "fire": 0.4,
         "ice": 0.75,
@@ -6345,7 +6571,9 @@
     "targetSelection": {
       "enemyFrontWeight": 5,
       "enemyMiddleWeight": 3,
-      "enemyBackWeight": 1
+      "enemyBackWeight": 1,
+      "revivedTargetWeight": 0,
+      "reviveProtectionTurns": 1
     },
     "randomMin": -10,
     "randomMax": 10,

@@ -128,6 +128,8 @@
         if (success) {
           target.currentHp = preview.reviveHp;
           target.alive = true;
+          const protectionTurns = Math.max(0, Math.floor(Number(context.battle.data.ai?.targetSelection?.reviveProtectionTurns ?? 1)));
+          target.reviveProtectionUntilTurn = Number(context.battle.turn || 1) + protectionTurns;
           context.battle.statusEngine.clear(target);
         }
         return { ...preview, success };

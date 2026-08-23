@@ -79,11 +79,13 @@
         const definition = this.battle.statusEngine.definition(status.id);
         return `<span class="state-badge status ${this.escape(status.id)}">${this.escape(definition.badge)}${status.turns > 0 ? ` ${status.turns}` : ""}</span>`;
       }).join("");
+      const reviveProtectionLabel = unit.side === "ally" && unit.alive && Number(unit.reviveProtectionUntilTurn || 0) >= this.battle.turn
+        ? '<span class="state-badge">蘇生保護</span>' : "";
       const popoverId = `status-${unit.id}`;
       return `<article class="character-card ${unit.alive ? "" : "dead"} ${this.selectedDecisionActor === unit.id ? "selected" : ""}" data-id="${this.escape(unit.id)}" data-role="${this.escape(unit.role)}">
         <button type="button" class="card-focus-trigger" aria-label="${this.escape(`${unit.name}のステータスと使える技を表示`)}" aria-describedby="${this.escape(popoverId)}"></button>
         <div class="character-visual"><div class="sprite">${this.escape(unit.icon)}</div></div>
-        <div class="character-name-row"><span class="character-name">${this.escape(unit.name)}${unit.side === "ally" ? ` <small class="level-badge">Lv.${unit.level}</small>` : ""}</span><span class="state-badges">${buffLabels}${statusLabels}</span></div>
+        <div class="character-name-row"><span class="character-name">${this.escape(unit.name)}${unit.side === "ally" ? ` <small class="level-badge">Lv.${unit.level}</small>` : ""}</span><span class="state-badges">${buffLabels}${statusLabels}${reviveProtectionLabel}</span></div>
         <div class="stat-line"><div class="stat-values"><span>HP</span><b>${unit.currentHp} / ${unit.maxHp}</b></div><div class="bar"><span class="hp-bar ${hp < 25 ? "low" : ""}" style="width:${hp}%"></span></div></div>
         <div class="stat-line"><div class="stat-values"><span>MP</span><b>${unit.currentMp} / ${unit.maxMp}</b></div><div class="bar"><span class="mp-bar" style="width:${mp}%"></span></div></div>
         ${unit.alive ? "" : '<div class="dead-label">戦闘不能</div>'}
@@ -93,13 +95,15 @@
       const statValue = (base, effective) => Math.round(base) === Math.round(effective)
         ? `${Math.round(base)}`
         : `${Math.round(base)} → ${Math.round(effective)}`;
+      const totalActionWeight = unit.side === "enemy" ? unit.actions.reduce((sum, actionId) => sum + Math.max(0, Number(unit.actionWeights?.[actionId] ?? 1)), 0) : 0;
       const actionRows = unit.actions.map(actionId => {
         const action = this.battle.getAction(actionId);
         if (!action) return "";
         const mpCost = Number(action.mpCost || 0);
         const available = action.battleUsable !== false && unit.alive && unit.currentMp >= mpCost;
         const note = action.battleUsable === false ? "・戦闘外" : available ? "" : "・不足";
-        return `<li class="${available ? "" : "unavailable"}"><span>${this.escape(action.battleName || action.name)}</span><b>MP ${mpCost}${note}</b></li>`;
+        const probability = unit.side === "enemy" && totalActionWeight > 0 ? `${(Math.max(0, Number(unit.actionWeights?.[actionId] ?? 1)) / totalActionWeight * 100).toFixed(1)}%・` : "";
+        return `<li class="${available ? "" : "unavailable"}"><span>${this.escape(action.battleName || action.name)}</span><b>${probability}MP ${mpCost}${note}</b></li>`;
       }).join("");
       const resistanceRows = unit.side === "enemy" ? Object.entries(unit.resistances).map(([element, multiplier]) => {
         const labels = { fire: "炎", ice: "氷", wind: "風", bang: "爆発", zap: "デイン", instantDeath: "即死", poison: "毒", blind: "幻惑", petrify: "石化", sleep: "眠り", silence: "呪文封じ", paralysis: "マヒ", confusion: "混乱" };

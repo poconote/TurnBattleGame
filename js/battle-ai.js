@@ -7,6 +7,7 @@
     constructor(battle) { this.battle = battle; }
 
     decide(actor) {
+      if (actor.side === "enemy") return this.decideEnemy(actor);
       const candidates = [];
       for (const actionId of actor.actions) {
         const action = this.battle.getAction(actionId);
@@ -36,6 +37,84 @@
         selected,
         candidates: [...usable, ...candidates.filter(candidate => !candidate.available)],
       };
+    }
+
+    decideEnemy(actor, actionRandom = Math.random(), targetRandom = Math.random()) {
+      const candidates = [];
+      for (const actionId of actor.actions) {
+        const action = this.battle.getAction(actionId);
+        if (!action) continue;
+        const targets = this.battle.targetResolver.resolve(actor, action);
+        if (action.battleUsable === false) {
+          candidates.push(this.unavailable(actor, action, targets, "戦闘では使用できない"));
+        } else if (!this.battle.statusEngine.canUseAction(actor, action)) {
+          candidates.push(this.unavailable(actor, action, targets, "現在の状態では使用できない"));
+        } else if (actor.currentMp < Number(action.mpCost || 0)) {
+          candidates.push(this.unavailable(actor, action, targets, "MPが足りない"));
+        } else if (!targets.length) {
+          candidates.push(this.unavailable(actor, action, targets, "有効な対象がいない"));
+        } else {
+          candidates.push({
+            actorId: actor.id,
+            action,
+            targets,
+            available: true,
+            actionWeight: Math.max(0, Number(actor.actionWeights?.[action.id] ?? 1)),
+            finalScore: 0,
+            reasons: [],
+            settings: null,
+            targetOptions: [],
+          });
+        }
+      }
+      const usable = candidates.filter(candidate => candidate.available);
+      if (!usable.length) return { actorId: actor.id, turn: this.battle.turn, strategy: "enemyRandom", selected: null, candidates };
+
+      const positiveTotal = usable.reduce((sum, candidate) => sum + candidate.actionWeight, 0);
+      const fallbackWeight = positiveTotal > 0 ? 0 : 1;
+      const total = positiveTotal || usable.length;
+      usable.forEach(candidate => {
+        const weight = candidate.actionWeight || fallbackWeight;
+        const probability = weight / total;
+        candidate.finalScore = Math.round(probability * 100);
+        candidate.reasons = [
+          { label: "敵行動ウェイト", value: weight, kind: "weight" },
+          { label: "使用可能技内の抽選確率", value: `${(probability * 100).toFixed(1)}%`, kind: "probability" },
+        ];
+      });
+
+      const selected = this.pickWeighted(usable, candidate => candidate.actionWeight || fallbackWeight, actionRandom);
+      selected.targets = this.chooseEnemyTargets(actor, selected.action, selected.targets, targetRandom);
+      selected.settings = this.describeAction(actor, selected.action, selected.targets);
+      return {
+        actorId: actor.id,
+        turn: this.battle.turn,
+        strategy: "enemyRandom",
+        selected,
+        candidates: [...usable, ...candidates.filter(candidate => !candidate.available)],
+      };
+    }
+
+    pickWeighted(items, getWeight, randomValue = Math.random()) {
+      const weights = items.map(item => Math.max(0, Number(getWeight(item) || 0)));
+      const total = weights.reduce((sum, weight) => sum + weight, 0);
+      if (total <= 0) return items[Math.min(items.length - 1, Math.floor(Math.max(0, Math.min(0.999999999, Number(randomValue))) * items.length))];
+      let roll = Math.max(0, Math.min(0.999999999, Number(randomValue))) * total;
+      for (let index = 0; index < items.length; index += 1) {
+        roll -= weights[index];
+        if (roll < 0) return items[index];
+      }
+      return items[items.length - 1];
+    }
+
+    chooseEnemyTargets(actor, action, targets, randomValue = Math.random()) {
+      if (isGroupTarget(action)) return targets;
+      const config = DQ.TargetResolver.config(action);
+      const offensive = config.side === "opponent" && targets.some(target => target.side === "ally");
+      const selected = offensive
+        ? this.pickWeighted(targets, target => this.enemyFormationWeight(target), randomValue)
+        : this.pickWeighted(targets, () => 1, randomValue);
+      return selected ? [selected] : [];
     }
 
     unavailable(actor, action, targets, reason) {
@@ -131,11 +210,14 @@
     enemyFormationWeight(target) {
       if (target?.side !== "ally") return 1;
       const rules = this.battle.data.ai.targetSelection || {};
-      return [
+      const formationWeight = [
         Number(rules.enemyFrontWeight ?? 5),
         Number(rules.enemyMiddleWeight ?? 3),
         Number(rules.enemyBackWeight ?? 1),
-      ][target.formationIndex] || 1;
+      ][target.formationIndex] ?? 1;
+      const protectedFromSingleTarget = Number(target.reviveProtectionUntilTurn || 0) >= Number(this.battle.turn || 1);
+      const revivedWeight = protectedFromSingleTarget ? Math.max(0, Number(rules.revivedTargetWeight ?? 0)) : 1;
+      return formationWeight * revivedWeight;
     }
 
     groupLabel(targets) {

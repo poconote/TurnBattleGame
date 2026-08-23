@@ -72,6 +72,26 @@ for (const file of ["action-schema.js", "data-store.js", "models.js", "battle-ev
   battle.reset();
   if (battle.characters.length !== 6) throw new Error("3体編成へ切り替えられませんでした。");
   battle.pause = () => Promise.resolve();
+  {
+    const randomEnemy = battle.getCharacter("enemyMage");
+    const [front, middle, back] = battle.getLiving("ally");
+    randomEnemy.actionWeights = { attack: 60, mera: 40 };
+    const normalAttack = battle.ai.decideEnemy(randomEnemy, 0.1, 0);
+    const specialAttack = battle.ai.decideEnemy(randomEnemy, 0.99, 0.99);
+    if (normalAttack.selected?.action.id !== "attack" || specialAttack.selected?.action.id !== "mera") {
+      throw new Error("敵が評価点ではなく設定ウェイトで使用可能な技を抽選できませんでした。");
+    }
+    if (battle.ai.decideEnemy(randomEnemy, 0.1, 0).selected.targets[0] !== front
+      || battle.ai.decideEnemy(randomEnemy, 0.1, 0.6).selected.targets[0] !== middle
+      || battle.ai.decideEnemy(randomEnemy, 0.1, 0.99).selected.targets[0] !== back) {
+      throw new Error("敵の単体攻撃対象に前衛5・中衛3・後衛1のランダムウェイトが反映されませんでした。");
+    }
+    front.reviveProtectionUntilTurn = battle.turn + 1;
+    if (battle.ai.decideEnemy(randomEnemy, 0.1, 0).selected.targets[0] !== middle || battle.ai.enemyFormationWeight(front) !== 0) {
+      throw new Error("蘇生直後の味方を敵の単体攻撃抽選から保護できませんでした。");
+    }
+    front.reviveProtectionUntilTurn = 0;
+  }
   await battle.stepAction();
   if (battle.actionQueue.length !== 5) throw new Error("STEPで1人分だけ進みませんでした。");
   if (battle.actionQueue.some(item => item.decision) || battle.characters.filter(actor => actor.lastDecision).length !== 1) {
@@ -353,7 +373,7 @@ for (const file of ["action-schema.js", "data-store.js", "models.js", "battle-ev
     throw new Error("AIが戦闘不能の味方にザオリクを優先できませんでした。");
   }
   battle.actionExecutor.execute(statusPriest, battle.getAction("zaoriku"), [statusWarrior]);
-  if (!statusWarrior.alive || statusWarrior.currentHp !== statusWarrior.maxHp) throw new Error("ザオリクで最大HPまで蘇生できませんでした。");
+  if (!statusWarrior.alive || statusWarrior.currentHp !== statusWarrior.maxHp || statusWarrior.reviveProtectionUntilTurn !== battle.turn + 1) throw new Error("ザオリクで最大HPまで蘇生し、単体攻撃から一時保護できませんでした。");
 
   const manusaEvaluation = battle.ai.evaluate(statusPriest, battle.getAction("manusa"), battle.getLiving("enemy"));
   if (!manusaEvaluation.reasons.some(reason => reason.label.includes("幻惑付与見込み"))) throw new Error("AI判断に状態異常の成功見込みが表示されませんでした。");
