@@ -28,6 +28,7 @@
         const statuses = Array.isArray(effect.statuses) ? effect.statuses : [effect.status].filter(Boolean);
         return statuses.some(statusId => target.hasStatus(statusId));
       }
+      if (effect.kind === "drainMp") return target.currentMp > 0;
       return true;
     }
 

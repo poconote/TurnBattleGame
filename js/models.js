@@ -28,13 +28,21 @@
       this.aiTraits.buffAffinity = { attack: 1, defense: 1, speed: 1, ...(this.aiTraits.buffAffinity || {}) };
       this.aiTraits.healPriority = Number(this.aiTraits.healPriority ?? 1);
       this.aiTraits.magicPriority = Number(this.aiTraits.magicPriority ?? 1);
-      this.resistances = { fire: 1, ice: 1, wind: 1, bang: 1, instantDeath: 1, poison: 1, blind: 1, petrify: 1, ...(data.resistances || {}) };
+      this.resistances = {
+        fire: 1, ice: 1, wind: 1, bang: 1, zap: 1,
+        instantDeath: 1, poison: 1, blind: 1, petrify: 1,
+        sleep: 1, silence: 1, paralysis: 1, confusion: 1,
+        ...(data.resistances || {}),
+      };
       this.alive = true;
       this.statuses = {};
       this.buffs = {
         attack: { mode: "multiply", value: 1, turns: 0, stacks: 0 },
         defense: { mode: "add", value: 0, turns: 0, stacks: 0 },
         speed: { mode: "add", value: 0, turns: 0, stacks: 0 },
+        magicResistance: { mode: "multiply", value: 1, turns: 0, stacks: 0 },
+        breathResistance: { mode: "multiply", value: 1, turns: 0, stacks: 0 },
+        damageResistance: { mode: "multiply", value: 1, turns: 0, stacks: 0 },
       };
       this.lastDecision = null;
     }
@@ -48,6 +56,15 @@
     get effectiveAttack() { return this.effectiveStat("attack"); }
     get effectiveDefense() { return this.effectiveStat("defense"); }
     get effectiveSpeed() { return this.effectiveStat("speed"); }
+    damageTakenMultiplier(damageClass) {
+      const activeValue = stat => {
+        const buff = this.buffs[stat];
+        return buff?.turns > 0 ? Number(buff.value) : 1;
+      };
+      const classMultiplier = damageClass === "magic" ? activeValue("magicResistance")
+        : damageClass === "breath" ? activeValue("breathResistance") : 1;
+      return Math.max(0, classMultiplier * activeValue("damageResistance"));
+    }
     hasStatus(statusId) { return Boolean(this.statuses[statusId]); }
   }
 

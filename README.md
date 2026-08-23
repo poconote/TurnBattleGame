@@ -77,3 +77,12 @@ Windowsでは `start.bat` をダブルクリックしてください。ローカ
 - `node tests/runtime.test.js`
 - `node tests/data-store.test.js`
 - `node tests/level-progression.test.js`
+
+## HD-2D版DQ3データ
+
+- 標準データはHD-2D版『ドラゴンクエストIII そして伝説へ…』を基準にしています。
+- 戦士・僧侶・魔法使い・勇者・賢者にLv1～50の標準成長値と習得Lvを登録しています。習得Lvは賢さで前後するため最短Lvです。
+- 性格・種・転職・装備で能力値が変わる本編とは異なり、Lv別能力値はAI比較用の決定論的な標準成長曲線です。
+- モシャス、パルプンテ、かばうなど、現在のエンジンで正確に再現できない行動もデータには残し、戦闘候補外として表示します。
+- 魔物はHD-2D版の内部Lv・HP・MP・攻撃・守備・素早さを参考に、Lv50まで53種類、敵グループ31種類を登録しています。
+- `node scripts/build-hd2d-data.mjs` で標準JSONを再生成できます。

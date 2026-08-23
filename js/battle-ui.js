@@ -97,11 +97,12 @@
         const action = this.battle.getAction(actionId);
         if (!action) return "";
         const mpCost = Number(action.mpCost || 0);
-        const available = unit.alive && unit.currentMp >= mpCost;
-        return `<li class="${available ? "" : "unavailable"}"><span>${this.escape(action.battleName || action.name)}</span><b>MP ${mpCost}${available ? "" : "・不足"}</b></li>`;
+        const available = action.battleUsable !== false && unit.alive && unit.currentMp >= mpCost;
+        const note = action.battleUsable === false ? "・戦闘外" : available ? "" : "・不足";
+        return `<li class="${available ? "" : "unavailable"}"><span>${this.escape(action.battleName || action.name)}</span><b>MP ${mpCost}${note}</b></li>`;
       }).join("");
       const resistanceRows = unit.side === "enemy" ? Object.entries(unit.resistances).map(([element, multiplier]) => {
-        const labels = { fire: "炎", ice: "氷", wind: "風", bang: "爆発", instantDeath: "即死", poison: "毒", blind: "幻惑", petrify: "石化" };
+        const labels = { fire: "炎", ice: "氷", wind: "風", bang: "爆発", zap: "デイン", instantDeath: "即死", poison: "毒", blind: "幻惑", petrify: "石化", sleep: "眠り", silence: "呪文封じ", paralysis: "マヒ", confusion: "混乱" };
         const value = Number(multiplier);
         const state = value >= 1.15 ? "weak" : value > 1 ? "slightly-weak" : value <= 0.75 ? "strong-resistant" : value < 1 ? "resistant" : "normal";
         const stateLabel = { weak: "弱点", "slightly-weak": "やや弱点", "strong-resistant": "強耐性", resistant: "耐性", normal: "通常" }[state];
@@ -176,16 +177,17 @@
     actionSettingRows(candidate) {
       const action = candidate.action;
       const settings = candidate.settings || {};
-      const typeLabels = { attack: "物理攻撃", heal: "回復", magic: "攻撃魔法", support: "補助", instantDeath: "即死", status: "状態異常", cure: "状態治療", revive: "蘇生" };
+      const typeLabels = { attack: "物理攻撃", heal: "回復", magic: "攻撃魔法", support: "補助・弱体", instantDeath: "即死", status: "状態異常", cure: "状態治療", revive: "蘇生", utility: "戦闘外・未対応" };
       const targetLabels = { enemyOne: "敵1体", allEnemies: "敵全体", allyOne: "味方1人", allAllies: "味方全体", self: "自分" };
-      const elementLabels = { fire: "炎", ice: "氷", wind: "風", bang: "爆発" };
-      const statLabels = { attack: "攻撃力", defense: "守備力", speed: "素早さ" };
+      const elementLabels = { fire: "炎", ice: "氷", wind: "風", bang: "爆発", zap: "デイン" };
+      const statLabels = { attack: "攻撃力", defense: "守備力", speed: "素早さ", magicResistance: "呪文耐性", breathResistance: "ブレス耐性", damageResistance: "全ダメージ耐性" };
       const rows = [
         ["行動タイプ", typeLabels[settings.type] || settings.type || "不明"],
         ["消費MP", settings.mpCost ?? Number(action.mpCost || 0)],
         ["対象設定", targetLabels[settings.target] || settings.target || "不明"],
         ["基本評価", `${settings.baseScore ?? Number(action.baseScore || 0)}点`],
       ];
+      if (action.description) rows.push(["効果・補足", action.description]);
       if (settings.element) rows.push(["属性", elementLabels[settings.element] || settings.element]);
       if (settings.type === "magic") rows.push(["基礎威力", settings.power]);
       if (settings.type === "attack") {
@@ -200,8 +202,8 @@
         rows.push(["最大重ね掛け", settings.maxStacks]);
       }
       if (settings.type === "instantDeath") rows.push(["基本成功率", `${(Number(settings.successRate) * 100).toFixed(1)}%`]);
-      const effectLabels = { damage: "ダメージ", heal: "HP回復", modifyStat: "能力変化", instantDeath: "即死", recoil: "反動", applyStatus: "状態異常付与", cureStatus: "状態異常治療", revive: "蘇生" };
-      const statusLabels = { poison: "毒", blind: "幻惑", petrify: "石化" };
+      const effectLabels = { damage: "ダメージ", heal: "HP回復", modifyStat: "能力変化", instantDeath: "即死", recoil: "反動", applyStatus: "状態異常付与", cureStatus: "状態異常治療", revive: "蘇生", drainMp: "MP吸収", sacrifice: "自己犠牲", noop: "効果なし" };
+      const statusLabels = { poison: "毒", blind: "幻惑", petrify: "石化", sleep: "眠り", silence: "呪文封じ", paralysis: "マヒ", confusion: "混乱" };
       (settings.effectPreviews || []).forEach((preview, index) => {
         const effect = preview.effect;
         rows.push([`効果${index + 1}`, effectLabels[effect.kind] || effect.kind]);
@@ -214,6 +216,7 @@
         }
         if (effect.kind === "cureStatus") rows.push(["治療対象", effect.statuses.map(status => statusLabels[status] || status).join("・")]);
         if (effect.kind === "revive") rows.push(["蘇生設定", `成功${(Number(effect.successRate) * 100).toFixed(1)}% / HP${(Number(effect.hpRate) * 100).toFixed(1)}%`]);
+        if (effect.kind === "drainMp") rows.push(["MP吸収量", effect.power]);
         preview.outcomes.forEach(outcome => {
           if (effect.kind === "applyStatus") rows.push([`成功見込み（${outcome.targetName}）`, `${(Number(outcome.successRate) * 100).toFixed(1)}%`, Number(outcome.resistance) < 1 ? "resistant-setting" : ""]);
           if (effect.kind === "cureStatus" && outcome.statuses?.length) rows.push([`治療（${outcome.targetName}）`, outcome.statuses.map(status => statusLabels[status] || status).join("・")]);

@@ -12,7 +12,11 @@
         const action = this.battle.getAction(actionId);
         if (!action) continue;
         const targets = this.battle.targetResolver.resolve(actor, action);
-        if (actor.currentMp < action.mpCost) {
+        if (action.battleUsable === false) {
+          candidates.push(this.unavailable(actor, action, targets, "戦闘外・未対応の行動"));
+        } else if (!this.battle.statusEngine.canUseAction(actor, action)) {
+          candidates.push(this.unavailable(actor, action, targets, "呪文封じで使用できない"));
+        } else if (actor.currentMp < action.mpCost) {
           candidates.push(this.unavailable(actor, action, targets, "MPが足りない"));
         } else if (!targets.length) {
           candidates.push(this.unavailable(actor, action, targets, "有効な対象がいない"));
@@ -168,6 +172,11 @@
       if ((action.effects || []).some(effect => effect.kind === "applyStatus")) score += this.evaluateStatus(actor, action, targets, reasons);
       if ((action.effects || []).some(effect => effect.kind === "cureStatus")) score += this.evaluateCure(action, targets, reasons);
       if ((action.effects || []).some(effect => effect.kind === "revive")) score += this.evaluateRevive(actor, action, targets, reasons);
+      if ((action.effects || []).some(effect => effect.kind === "sacrifice")) {
+        const penalty = this.battle.getLiving(actor.side).length <= 1 ? -500 : -140;
+        score += penalty;
+        reasons.push({ label: "使用者が戦闘不能になる危険", value: penalty, kind: "add" });
+      }
 
       const roleMultiplier = ["heal", "cure", "revive"].includes(action.type) ? actor.aiTraits.healPriority : action.type === "magic" ? actor.aiTraits.magicPriority : 1;
       if (roleMultiplier !== 1) {
@@ -216,19 +225,25 @@
       }));
       settings.outcomes = targets.map(target => {
         const outcome = { targetId: target.id, targetName: target.name };
-        preview.effects.forEach(result => result.outcomes.filter(item => item.target === target).forEach(item => Object.assign(outcome, {
-          resistance: item.resistance ?? outcome.resistance,
-          expectedDamage: item.expectedDamage ?? outcome.expectedDamage,
-          damageMin: item.damageMin ?? outcome.damageMin,
-          damageMax: item.damageMax ?? outcome.damageMax,
-          expectedHeal: item.expectedHeal ?? outcome.expectedHeal,
-          healMin: item.healMin ?? outcome.healMin,
-          healMax: item.healMax ?? outcome.healMax,
-          successRate: item.successRate ?? outcome.successRate,
-          status: item.status ?? outcome.status,
-          curableStatuses: item.statuses ?? outcome.curableStatuses,
-          reviveHp: item.reviveHp ?? outcome.reviveHp,
-        })));
+        preview.effects.forEach(result => result.outcomes.filter(item => item.target === target).forEach(item => {
+          if (item.expectedDamage != null) {
+            outcome.expectedDamage = Number(outcome.expectedDamage || 0) + Number(item.expectedDamage);
+            outcome.damageMin = Number(outcome.damageMin || 0) + Number(item.damageMin || 0);
+            outcome.damageMax = Number(outcome.damageMax || 0) + Number(item.damageMax || 0);
+          }
+          Object.assign(outcome, {
+            resistance: item.resistance ?? outcome.resistance,
+            damageTakenMultiplier: item.damageTakenMultiplier ?? outcome.damageTakenMultiplier,
+            expectedHeal: item.expectedHeal ?? outcome.expectedHeal,
+            healMin: item.healMin ?? outcome.healMin,
+            healMax: item.healMax ?? outcome.healMax,
+            expectedDrain: item.expectedDrain ?? outcome.expectedDrain,
+            successRate: item.successRate ?? outcome.successRate,
+            status: item.status ?? outcome.status,
+            curableStatuses: item.statuses ?? outcome.curableStatuses,
+            reviveHp: item.reviveHp ?? outcome.reviveHp,
+          });
+        }));
         return outcome;
       });
       return settings;
@@ -238,7 +253,7 @@
       const rules = this.battle.data.ai.attack;
       let bonus = 0;
       const effect = DQ.ActionSchema.getPrimaryEffect(action, "damage");
-      const damage = this.battle.estimatePhysicalDamage(actor, target, action);
+      const damage = this.battle.effectEngine.previewAction(actor, action, [target]).totalExpectedDamage;
       if (effect?.element) {
         const resistance = target.resistances[effect.element] ?? 1;
         if (resistance >= this.battle.data.ai.magic.weakThreshold) {
@@ -284,7 +299,7 @@
       const group = isGroupTarget(action);
       const weak = targets.filter(target => (target.resistances[effect?.element] ?? 1) >= rules.weakThreshold).length;
       const resistant = targets.filter(target => (target.resistances[effect?.element] ?? 1) <= rules.resistThreshold).length;
-      const damages = targets.map(target => this.battle.estimateMagicDamage(action, target));
+      const damages = targets.map(target => this.battle.effectEngine.previewAction(actor, action, [target]).totalExpectedDamage);
       const totalDamage = damages.reduce((sum, damage) => sum + damage, 0);
       if (weak) { const value = weak * rules.weakBonus; bonus += value; reasons.push({ label: `弱点属性${weak > 1 ? `（${weak}体）` : ""}`, value, kind: "add" }); }
       if (resistant) { const value = resistant * (group ? rules.groupResistPenalty : rules.singleResistPenalty); bonus += value; reasons.push({ label: `属性耐性あり${resistant > 1 ? `（${resistant}体）` : ""}`, value, kind: "add" }); }
@@ -301,10 +316,36 @@
       const rules = this.battle.data.ai.support;
       let bonus = 0;
       const effect = DQ.ActionSchema.getPrimaryEffect(action, "modifyStat");
+      const drainEffect = (action.effects || []).find(item => item.kind === "drainMp");
+      if (!effect && drainEffect) {
+        const missingMp = Math.max(0, actor.maxMp - actor.currentMp);
+        const availableMp = targets.reduce((sum, target) => sum + target.currentMp, 0);
+        const value = Math.min(missingMp, availableMp, Number(drainEffect.power || 0)) * 5;
+        bonus += value;
+        reasons.push({ label: `MP吸収見込み ${Math.round(Math.min(missingMp, availableMp, Number(drainEffect.power || 0)))}`, value, kind: "add" });
+        return bonus;
+      }
+      if (!effect) return bonus;
+      const stat = effect.stat || "defense";
+      const debuff = targets.some(target => target.side !== actor.side);
+      if (debuff) {
+        if (targets.length > 1) {
+          const value = (targets.length - 1) * 12;
+          bonus += value;
+          reasons.push({ label: `弱体対象${targets.length}体`, value, kind: "add" });
+        }
+        const statValue = targets.reduce((sum, target) => sum + Number(target.effectiveStat?.(stat) || 0), 0) / Math.max(1, targets.length);
+        const value = Math.min(45, Math.round(statValue / 5));
+        bonus += value;
+        reasons.push({ label: "対象の能力を下げる価値", value, kind: "add" });
+        const active = targets.filter(unit => unit.buffs[stat]?.turns > 0).length;
+        if (!active) { bonus += rules.unusedBonus; reasons.push({ label: "弱体が未使用", value: rules.unusedBonus, kind: "add" }); }
+        if (active === targets.length) { bonus += rules.activePenalty; reasons.push({ label: "すでに全員弱体済み", value: rules.activePenalty, kind: "add" }); }
+        return bonus;
+      }
       if (targets.length === 3) { bonus += rules.fullPartyBonus; reasons.push({ label: "味方3人生存", value: rules.fullPartyBonus, kind: "add" }); }
       const opponents = this.battle.getLiving(actor.side === "ally" ? "enemy" : "ally");
       if (Math.max(...opponents.map(unit => unit.attack)) >= rules.strongEnemyAttack) { bonus += rules.strongEnemyBonus; reasons.push({ label: "強力な物理攻撃の敵", value: rules.strongEnemyBonus, kind: "add" }); }
-      const stat = effect?.stat || "defense";
       const affinities = targets.map(target => Number(target.aiTraits.buffAffinity[stat] ?? 1));
       const affinity = affinities.reduce((sum, value) => sum + value, 0) / affinities.length;
       const affinityAdjustment = Math.round((affinity - 1) * 40);

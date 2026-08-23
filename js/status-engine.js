@@ -5,6 +5,10 @@
     poison: { name: "毒", badge: "毒", defaultDuration: 0, defaultTickRate: 0.08 },
     blind: { name: "幻惑", badge: "幻", defaultDuration: 4, defaultPotency: 0.55 },
     petrify: { name: "石化", badge: "石", defaultDuration: 0 },
+    sleep: { name: "眠り", badge: "眠", defaultDuration: 3 },
+    silence: { name: "呪文封じ", badge: "封", defaultDuration: 3 },
+    paralysis: { name: "マヒ", badge: "痺", defaultDuration: 4 },
+    confusion: { name: "混乱", badge: "乱", defaultDuration: 3 },
   };
 
   class StatusEngine {
@@ -20,7 +24,14 @@
     definition(statusId) { return STATUS_DEFINITIONS[statusId] || { name: statusId, badge: statusId.slice(0, 1), defaultDuration: 0 }; }
     has(target, statusId) { return Boolean(target?.statuses?.[statusId]); }
     list(target) { return Object.entries(target?.statuses || {}).map(([id, status]) => ({ id, ...status })); }
-    canAct(target) { return target.alive && !this.has(target, "petrify"); }
+    canAct(target) {
+      return target.alive && !["petrify", "sleep", "paralysis", "confusion"].some(statusId => this.has(target, statusId));
+    }
+
+    canUseAction(target, action) {
+      if (!this.has(target, "silence")) return true;
+      return action.type === "attack" || action.type === "utility";
+    }
 
     apply(target, statusId, settings = {}) {
       const definition = this.definition(statusId);
@@ -50,10 +61,11 @@
     clear(target) { target.statuses = {}; }
 
     beforeAction(context) {
-      if (!this.has(context.actor, "petrify")) return;
+      const blockingStatus = ["petrify", "sleep", "paralysis", "confusion"].find(statusId => this.has(context.actor, statusId));
+      if (!blockingStatus) return;
       context.cancelled = true;
-      context.reason = "petrify";
-      context.message = `${context.actor.name}は石化していて動けない。`;
+      context.reason = blockingStatus;
+      context.message = `${context.actor.name}は${this.definition(blockingStatus).name}で動けない。`;
     }
 
     beforeEffect(context) {

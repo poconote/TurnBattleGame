@@ -25,7 +25,8 @@
         const base = effect.formula === "physical"
           ? context.actor.effectiveAttack * Number(effect.powerMultiplier ?? 1) - target.effectiveDefense * 0.48
           : Number(effect.power || 0);
-        const hitDamage = Math.max(1, Math.round(base * resistance));
+        const damageTakenMultiplier = target.damageTakenMultiplier?.(effect.damageClass || (effect.formula === "fixed" ? "magic" : "physical")) ?? 1;
+        const hitDamage = Math.max(1, Math.round(base * resistance * damageTakenMultiplier));
         const accuracy = effect.formula === "physical" && context.actor.hasStatus?.("blind")
           ? Math.max(0, Math.min(1, Number(context.actor.statuses.blind.potency ?? 0.55))) : 1;
         const expectedDamage = Math.max(1, Math.round(hitDamage * accuracy));
@@ -33,7 +34,7 @@
         const maxRate = Number(effect.varianceMax ?? (effect.formula === "physical" ? 1.12 : 1.1));
         context.lastExpectedDamage = expectedDamage;
         context.totalExpectedDamage += expectedDamage;
-        return { target, resistance, accuracy, hitDamage, expectedDamage, damageMin: Math.max(1, Math.round(hitDamage * minRate)), damageMax: Math.max(1, Math.round(hitDamage * maxRate)) };
+        return { target, resistance, damageTakenMultiplier, accuracy, hitDamage, expectedDamage, damageMin: Math.max(1, Math.round(hitDamage * minRate)), damageMax: Math.max(1, Math.round(hitDamage * maxRate)) };
       },
       apply(context, effect, target) {
         const preview = this.preview({ ...context, totalExpectedDamage: 0 }, effect, target);
@@ -66,7 +67,10 @@
         const maxStacks = Math.max(1, Number(effect.maxStacks || 1));
         const buff = target.buffs[stat] || (target.buffs[stat] = { mode, value: mode === "multiply" ? 1 : 0, turns: 0, stacks: 0 });
         buff.mode = mode;
-        if (mode === "multiply") buff.value = Math.max(buff.value, value);
+        if (mode === "multiply") {
+          const lowerIsStronger = ["magicResistance", "breathResistance", "damageResistance"].includes(stat);
+          buff.value = lowerIsStronger ? Math.min(buff.value, value) : Math.max(buff.value, value);
+        }
         else if (buff.stacks < maxStacks) buff.value += value;
         buff.stacks = Math.min(maxStacks, buff.stacks + 1);
         buff.turns = duration;
@@ -128,6 +132,32 @@
         }
         return { ...preview, success };
       },
+    })
+    .register("drainMp", {
+      preview(context, effect, target) {
+        const power = Math.max(0, Number(effect.power || 0));
+        const expectedDrain = Math.min(target.currentMp, Math.round(power));
+        return { target, expectedDrain, drainMin: Math.min(target.currentMp, Math.round(power * Number(effect.varianceMin ?? 0.65))), drainMax: Math.min(target.currentMp, Math.round(power * Number(effect.varianceMax ?? 1.35))) };
+      },
+      apply(context, effect, target) {
+        const requested = Math.max(0, Math.round(Number(effect.power || 0) * variance(effect, 0.65, 1.35, context.random())));
+        const amount = Math.min(target.currentMp, requested, Math.max(0, context.actor.maxMp - context.actor.currentMp));
+        target.currentMp -= amount;
+        context.actor.currentMp += amount;
+        return { target, amount };
+      },
+    })
+    .register("sacrifice", {
+      preview(context) { return { target: context.actor, currentHp: context.actor.currentHp }; },
+      apply(context) {
+        const amount = context.actor.currentHp;
+        context.actor.currentHp = 0;
+        return { target: context.actor, amount };
+      },
+    })
+    .register("noop", {
+      preview(context) { return { target: context.actor }; },
+      apply(context) { return { target: context.actor }; },
     })
     .register("recoil", {
       preview(context, effect) { return { target: context.actor, expectedRecoil: Math.round(Number(context.lastExpectedDamage || 0) * Number(effect.rate || 0)) }; },

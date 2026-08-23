@@ -3,7 +3,8 @@
 
   const clone = value => JSON.parse(JSON.stringify(value));
   const STORAGE_KEY = "dq-ai-battle-data-v1";
-  const CURRENT_SCHEMA_VERSION = 13;
+  const CURRENT_SCHEMA_VERSION = 14;
+  const RESISTANCE_KEYS = ["fire", "ice", "wind", "bang", "zap", "instantDeath", "poison", "blind", "petrify", "sleep", "silence", "paralysis", "confusion"];
 
   class GameDataStore {
     constructor(storageKey = STORAGE_KEY) {
@@ -44,7 +45,9 @@
 
     normalize(data) {
       if (data?.actions) data.actions.forEach(action => DQ.ActionSchema.ensureEffects(action));
-      if (data?.enemies) data.enemies.forEach(enemy => { enemy.resistances = { fire: 1, ice: 1, wind: 1, bang: 1, instantDeath: 1, poison: 1, blind: 1, petrify: 1, ...(enemy.resistances || {}) }; });
+      if (data?.enemies) data.enemies.forEach(enemy => {
+        enemy.resistances = { ...Object.fromEntries(RESISTANCE_KEYS.map(key => [key, 1])), ...(enemy.resistances || {}) };
+      });
       return data;
     }
 
@@ -110,12 +113,22 @@
         const defaultJob = defaults.jobs.find(item => item.id === job.id);
         if (defaultJob) {
           job.levelStats = { ...clone(defaultJob.levelStats), ...job.levelStats };
-          job.actions = [...new Set([...(job.actions || []), ...defaultJob.actions])];
-          job.actionLevels = { ...clone(defaultJob.actionLevels), ...(job.actionLevels || {}) };
+          const legacyDefaults = {
+            warrior: ["attack", "flameSlash", "quickThrust", "doubleEdgedSlash"],
+            priest: ["attack", "hoimi", "kiari", "manusa", "bagi", "piorim", "behoimi", "bagima", "zaki", "zaoriku"],
+            mage: ["attack", "mera", "scara", "hyado", "gira", "sukurlt", "io", "begirama", "merami", "hyadaruko", "baikilt", "zaraki"],
+          }[job.id] || [];
+          const customActions = (job.actions || []).filter(actionId => !legacyDefaults.includes(actionId) && !defaultJob.actions.includes(actionId));
+          const customLevels = Object.fromEntries(customActions.map(actionId => [actionId, Number(job.actionLevels?.[actionId] || 1)]));
+          job.actions = [...new Set([...defaultJob.actions, ...customActions])];
+          job.actionLevels = { ...clone(defaultJob.actionLevels), ...customLevels };
         } else job.actionLevels ||= Object.fromEntries((job.actions || []).map(id => [id, 1]));
         const defaultTraits = defaultJob?.aiTraits || { buffAffinity: { attack: 1, defense: 1, speed: 1 }, healPriority: 1, magicPriority: 1 };
         job.aiTraits = { ...clone(defaultTraits), ...(job.aiTraits || {}), buffAffinity: { ...clone(defaultTraits.buffAffinity), ...(job.aiTraits?.buffAffinity || {}) } };
       });
+      for (const defaultJob of defaults.jobs) {
+        if (!data.jobs.some(job => job.id === defaultJob.id)) data.jobs.push(clone(defaultJob));
+      }
 
       data.enemies.forEach(enemy => {
         if (enemy.levelStats) {
@@ -143,6 +156,9 @@
       });
 
       data.encounters = Array.isArray(data.encounters) && data.encounters.length ? data.encounters : clone(defaults.encounters);
+      for (const defaultEncounter of defaults.encounters) {
+        if (!data.encounters.some(encounter => encounter.id === defaultEncounter.id)) data.encounters.push(clone(defaultEncounter));
+      }
       data.selectedEncounterId = data.encounters.some(encounter => encounter.id === data.selectedEncounterId)
         ? data.selectedEncounterId
         : data.encounters.some(encounter => encounter.id === defaults.selectedEncounterId) ? defaults.selectedEncounterId : data.encounters[0]?.id;
@@ -200,7 +216,7 @@
         for (const field of ["maxHp", "maxMp", "attack", "defense", "speed"]) {
           if (!Number.isFinite(Number(enemy[field])) || Number(enemy[field]) < 0) errors.push(`${enemy.name || enemy.id}の${field}が不正です。`);
         }
-        for (const resistance of ["fire", "ice", "wind", "bang", "instantDeath", "poison", "blind", "petrify"]) {
+        for (const resistance of RESISTANCE_KEYS) {
           const value = Number(enemy.resistances?.[resistance] ?? 1);
           if (!Number.isFinite(value) || value < 0) errors.push(`${enemy.name || enemy.id}の${resistance}耐性倍率が不正です。`);
         }
@@ -225,9 +241,9 @@
         }
       });
       const validTargets = new Set(["enemyOne", "allEnemies", "allyOne", "allAllies", "self"]);
-      const validTypes = new Set(["attack", "heal", "magic", "support", "instantDeath", "status", "cure", "revive"]);
-      const validEffectKinds = new Set(["damage", "heal", "modifyStat", "instantDeath", "recoil", "applyStatus", "cureStatus", "revive"]);
-      const validStatuses = new Set(["poison", "blind", "petrify"]);
+      const validTypes = new Set(["attack", "heal", "magic", "support", "instantDeath", "status", "cure", "revive", "utility"]);
+      const validEffectKinds = new Set(["damage", "heal", "modifyStat", "instantDeath", "recoil", "applyStatus", "cureStatus", "revive", "drainMp", "sacrifice", "noop"]);
+      const validStatuses = new Set(["poison", "blind", "petrify", "sleep", "silence", "paralysis", "confusion"]);
       data.actions.forEach(action => {
         if (!validTargets.has(action.target)) errors.push(`${action.name}の対象種別が不正です。`);
         if (!validTypes.has(action.type)) errors.push(`${action.name}の行動タイプが不正です。`);
@@ -242,7 +258,7 @@
           }
           if (effect.kind === "heal" && (!Number.isFinite(Number(effect.power)) || Number(effect.power) < 0)) errors.push(`${action.name}の回復量が不正です。`);
           if (effect.kind === "modifyStat") {
-            if (!["attack", "defense", "speed"].includes(effect.stat) || !["add", "multiply"].includes(effect.mode)) errors.push(`${action.name}の能力変化設定が不正です。`);
+            if (!["attack", "defense", "speed", "magicResistance", "breathResistance", "damageResistance"].includes(effect.stat) || !["add", "multiply"].includes(effect.mode)) errors.push(`${action.name}の能力変化設定が不正です。`);
             if (!Number.isFinite(Number(effect.value)) || !Number.isFinite(Number(effect.duration)) || !Number.isFinite(Number(effect.maxStacks)) || Number(effect.duration) < 1 || Number(effect.maxStacks) < 1) errors.push(`${action.name}の能力変化量・ターン・重ね掛け上限が不正です。`);
           }
           if (effect.kind === "instantDeath" && (!Number.isFinite(Number(effect.successRate)) || Number(effect.successRate) < 0 || Number(effect.successRate) > 1)) errors.push(`${action.name}の即死成功率は0～1で指定してください。`);
@@ -255,14 +271,15 @@
           }
           if (effect.kind === "cureStatus" && (!Array.isArray(effect.statuses) || !effect.statuses.length || effect.statuses.some(status => !validStatuses.has(status)))) errors.push(`${action.name}の治療対象状態が不正です。`);
           if (effect.kind === "revive" && (!Number.isFinite(Number(effect.successRate)) || Number(effect.successRate) < 0 || Number(effect.successRate) > 1 || !Number.isFinite(Number(effect.hpRate)) || Number(effect.hpRate) <= 0 || Number(effect.hpRate) > 1)) errors.push(`${action.name}の蘇生成功率・HP率が不正です。`);
+          if (effect.kind === "drainMp" && (!Number.isFinite(Number(effect.power)) || Number(effect.power) < 0)) errors.push(`${action.name}のMP吸収量が不正です。`);
         });
         if (Number(action.mpCost) < 0) errors.push(`${action.name}の消費MPが不正です。`);
         if (action.successRate != null && (Number(action.successRate) < 0 || Number(action.successRate) > 1)) errors.push(`${action.name}の成功率は0～1で指定してください。`);
         if (action.recoilRate != null && (Number(action.recoilRate) < 0 || Number(action.recoilRate) > 1)) errors.push(`${action.name}の反動率は0～1で指定してください。`);
         if (action.priority != null && !Number.isFinite(Number(action.priority))) errors.push(`${action.name}の行動優先度が不正です。`);
         if (action.type === "attack" && (!Number.isFinite(Number(action.powerMultiplier)) || Number(action.powerMultiplier) <= 0)) errors.push(`${action.name}の物理攻撃倍率が不正です。`);
-        if (action.type === "support") {
-          if (!["attack", "defense", "speed"].includes(action.effectStat)) errors.push(`${action.name}の補助対象能力が不正です。`);
+        if (action.type === "support" && DQ.ActionSchema.getPrimaryEffect(action, "modifyStat")) {
+          if (!["attack", "defense", "speed", "magicResistance", "breathResistance", "damageResistance"].includes(action.effectStat)) errors.push(`${action.name}の補助対象能力が不正です。`);
           if (!["add", "multiply"].includes(action.effectMode)) errors.push(`${action.name}の補助計算方式が不正です。`);
           if (!Number.isFinite(Number(action.effectValue)) || Number(action.duration) < 1 || Number(action.maxStacks) < 1) errors.push(`${action.name}の補助効果量・ターン・重ね掛け上限が不正です。`);
         }

@@ -48,7 +48,7 @@ invalidEffect.actions.find(action => action.id === "doubleEdgedSlash").effects.f
 if (!store.validate(invalidEffect).some(error => error.includes("反動率"))) throw new Error("効果データの不正値を検出できませんでした。");
 
 const invalidStatusEffect = store.createDraft();
-invalidStatusEffect.actions.find(action => action.id === "manusa").effects[0].status = "sleep";
+invalidStatusEffect.actions.find(action => action.id === "manusa").effects[0].status = "freeze";
 if (!store.validate(invalidStatusEffect).some(error => error.includes("状態異常"))) throw new Error("未対応の状態異常を検出できませんでした。");
 
 const invalidReviveEffect = store.createDraft();
@@ -84,7 +84,7 @@ legacy.ai.turnOrder.minMultiplier = 0.8;
 delete legacy.ai.targetSelection;
 memory.set("legacy-data", JSON.stringify(legacy));
 const migrated = new context.DQ.GameDataStore("legacy-data").getData();
-if (migrated.schemaVersion !== 13 || migrated.ai.turnOrder.minMultiplier !== 0.8 || migrated.ai.targetSelection.enemyBackWeight !== 1 || !migrated.actions.some(action => action.id === "baikilt") || !migrated.actions.some(action => action.id === "flameSlash") || !migrated.actions.some(action => action.id === "zaoriku") || migrated.actions.find(action => action.id === "sukurlt").effectStat !== "defense" || migrated.actions.find(action => action.id === "sukurlt").effects[0].kind !== "modifyStat" || migrated.actions.some(action => !action.effects.length) || !migrated.jobs[0].levelStats["20"] || migrated.enemies[0].levelStats || !migrated.encounters.length || migrated.jobs.find(job => job.id === "warrior").aiTraits.buffAffinity.attack !== 1.5 || migrated.jobs.find(job => job.id === "mage").actionLevels.baikilt !== 21 || migrated.jobs.find(job => job.id === "priest").actionLevels.zaoriku !== 20 || migrated.enemies.find(enemy => enemy.id === "bubbleSlime").resistances.poison !== 1 || migrated.strategies.some(strategy => strategy.revive == null)) {
+if (migrated.schemaVersion !== 14 || migrated.ai.turnOrder.minMultiplier !== 0.8 || migrated.ai.targetSelection.enemyBackWeight !== 1 || !migrated.actions.some(action => action.id === "baikilt") || !migrated.actions.some(action => action.id === "flameSlash") || !migrated.actions.some(action => action.id === "gigadein") || migrated.actions.find(action => action.id === "sukurlt").effectStat !== "defense" || migrated.actions.find(action => action.id === "sukurlt").effects[0].kind !== "modifyStat" || migrated.actions.some(action => !action.effects.length) || !migrated.jobs[0].levelStats["50"] || !migrated.jobs.some(job => job.id === "hero") || !migrated.jobs.some(job => job.id === "sage") || migrated.enemies[0].levelStats || !migrated.encounters.some(encounter => encounter.id === "level50Trial") || migrated.jobs.find(job => job.id === "warrior").aiTraits.buffAffinity.attack !== 1.5 || migrated.jobs.find(job => job.id === "mage").actionLevels.baikilt !== 21 || migrated.jobs.find(job => job.id === "priest").actionLevels.zaoriku !== 37 || migrated.enemies.find(enemy => enemy.id === "bubbleSlime").resistances.poison !== 0.15 || migrated.strategies.some(strategy => strategy.revive == null)) {
   throw new Error("旧保存データを補助効果対応形式へ移行できませんでした。");
 }
 console.log("Data validation and persistence: OK");

@@ -15,9 +15,11 @@
       title: "敵", fields: [
         ["id", "ID", "text"], ["name", "表示名", "text"], ["icon", "アイコン文字", "text"], ["recommendedLevel", "出現目安Lv", "number"],
         ["maxHp", "最大HP", "number"], ["maxMp", "最大MP", "number"], ["attack", "攻撃力", "number"], ["defense", "守備力", "number"], ["speed", "素早さ", "number"], ["resistances.fire", "炎耐性倍率", "number-step"],
-        ["resistances.ice", "氷耐性倍率", "number-step"], ["resistances.wind", "風耐性倍率", "number-step"], ["resistances.bang", "爆発耐性倍率", "number-step"],
+        ["resistances.ice", "氷耐性倍率", "number-step"], ["resistances.wind", "風耐性倍率", "number-step"], ["resistances.bang", "爆発耐性倍率", "number-step"], ["resistances.zap", "デイン耐性倍率", "number-step"],
         ["resistances.instantDeath", "即死成功倍率", "number-step"], ["resistances.poison", "毒成功倍率", "number-step"],
-        ["resistances.blind", "幻惑成功倍率", "number-step"], ["resistances.petrify", "石化成功倍率", "number-step"], ["actions", "使用可能な技", "actions"],
+        ["resistances.blind", "幻惑成功倍率", "number-step"], ["resistances.petrify", "石化成功倍率", "number-step"],
+        ["resistances.sleep", "眠り成功倍率", "number-step"], ["resistances.silence", "呪文封じ成功倍率", "number-step"],
+        ["resistances.paralysis", "マヒ成功倍率", "number-step"], ["resistances.confusion", "混乱成功倍率", "number-step"], ["actions", "使用可能な技", "actions"],
       ],
     },
     encounters: {
@@ -27,8 +29,8 @@
     },
     actions: {
       title: "技・魔法", fields: [
-        ["id", "ID", "text"], ["name", "エディター上の名前", "text"], ["battleName", "戦闘中の名前（省略可）", "text"],
-        ["type", "AI評価タイプ", "select", [["attack", "物理攻撃・物理スキル"], ["heal", "HP回復"], ["magic", "攻撃魔法"], ["support", "能力強化"], ["instantDeath", "即死"], ["status", "状態異常"], ["cure", "状態治療"], ["revive", "蘇生"]]],
+        ["id", "ID", "text"], ["name", "エディター上の名前", "text"], ["battleName", "戦闘中の名前（省略可）", "text"], ["description", "効果・補足", "text"],
+        ["type", "AI評価タイプ", "select", [["attack", "物理攻撃・物理スキル"], ["heal", "HP回復"], ["magic", "攻撃魔法"], ["support", "能力強化・弱体"], ["instantDeath", "即死"], ["status", "状態異常"], ["cure", "状態治療"], ["revive", "蘇生"], ["utility", "戦闘外・未対応"]]],
         ["target", "対象", "select", [["enemyOne", "敵単体"], ["allEnemies", "敵全体"], ["allyOne", "味方単体"], ["allAllies", "味方全体"], ["self", "自分"]]],
         ["mpCost", "消費MP", "number"], ["baseScore", "基本評価", "number-step"], ["priority", "行動優先度（現在未使用）", "number-step"],
         ["effects", "実行する効果（上から順番）", "effects"],
@@ -63,8 +65,10 @@
     ["support.lowAffinityThreshold", "補助：低適性とみなす値"], ["support.lowAffinityPenalty", "補助：低適性への減点"],
     ["instantDeath.learningMultiplier", "即死：学習値倍率"], ["instantDeath.extraTargetBonus", "即死：追加対象1体の加点"],
     ["status.poisonValue", "状態異常：毒の価値"], ["status.blindValue", "状態異常：幻惑の価値"], ["status.petrifyValue", "状態異常：石化の価値"],
+    ["status.sleepValue", "状態異常：眠りの価値"], ["status.silenceValue", "状態異常：呪文封じの価値"], ["status.paralysisValue", "状態異常：マヒの価値"], ["status.confusionValue", "状態異常：混乱の価値"],
     ["status.alreadyAffectedPenalty", "状態異常：付与済みへの減点"], ["status.blindAttackDivisor", "幻惑：対象攻撃力の評価除数"], ["status.poisonHpDivisor", "毒：対象HPの評価除数"],
-    ["cure.poisonValue", "治療：毒の価値"], ["cure.blindValue", "治療：幻惑の価値"], ["cure.petrifyValue", "治療：石化の価値"], ["cure.multiStatusBonus", "治療：複数同時治療の加点"],
+    ["cure.poisonValue", "治療：毒の価値"], ["cure.blindValue", "治療：幻惑の価値"], ["cure.petrifyValue", "治療：石化の価値"],
+    ["cure.sleepValue", "治療：眠りの価値"], ["cure.silenceValue", "治療：呪文封じの価値"], ["cure.paralysisValue", "治療：マヒの価値"], ["cure.confusionValue", "治療：混乱の価値"], ["cure.multiStatusBonus", "治療：複数同時治療の加点"],
     ["revive.downAllyBonus", "蘇生：戦闘不能者への加点"], ["revive.maxHpDivisor", "蘇生：対象最大HPの評価除数"], ["revive.lastStandingBonus", "蘇生：残り1人の場合の加点"],
   ];
 
@@ -160,7 +164,7 @@
     effectsEditorHtml(item, label) {
       item.effects = (item.effects || []).map(effect => DQ.ActionSchema.normalizeEffect(effect));
       const cards = item.effects.map((effect, index) => {
-        const kindLabels = { damage: "ダメージ", heal: "HP回復", modifyStat: "能力変化", instantDeath: "即死", recoil: "反動", applyStatus: "状態異常付与", cureStatus: "状態異常治療", revive: "蘇生" };
+        const kindLabels = { damage: "ダメージ", heal: "HP回復", modifyStat: "能力変化", instantDeath: "即死", recoil: "反動", applyStatus: "状態異常付与", cureStatus: "状態異常治療", revive: "蘇生", drainMp: "MP吸収", sacrifice: "自己犠牲", noop: "効果なし" };
         return `<section class="effect-card" data-effect-index="${index}"><div class="effect-card-header"><b>効果 ${index + 1}：${kindLabels[effect.kind] || this.escape(effect.kind)}</b><div><button type="button" data-effect-action="up" data-effect-index="${index}" ${index === 0 ? "disabled" : ""}>↑</button><button type="button" data-effect-action="down" data-effect-index="${index}" ${index === item.effects.length - 1 ? "disabled" : ""}>↓</button><button type="button" data-effect-action="delete" data-effect-index="${index}" ${item.effects.length === 1 ? "disabled" : ""}>削除</button></div></div><div class="effect-field-grid">${this.effectFieldsHtml(effect, index)}</div></section>`;
       }).join("");
       return `<div class="editor-field wide effects-editor"><div class="effects-editor-title"><span>${label}</span><button type="button" data-effect-action="add">＋ 効果を追加</button></div>${cards}<small>効果ごとに対象を「選択対象」または「使用者」にできます。複数効果は表示順に処理されます。</small></div>`;
@@ -170,20 +174,21 @@
       const select = (path, label, value, options, multiple = false) => `<label><span>${label}</span><select data-effect-path="${path}" data-effect-index="${index}" ${multiple ? "multiple size=3" : ""}>${options.map(([id, text]) => `<option value="${id}" ${(multiple ? value.includes(id) : String(value ?? "") === id) ? "selected" : ""}>${text}</option>`).join("")}</select></label>`;
       const number = (path, label, value, step = "any") => `<label><span>${label}</span><input type="number" step="${step}" data-effect-path="${path}" data-effect-index="${index}" value="${this.escape(value ?? 0)}"></label>`;
       const rows = [
-        select("kind", "効果タイプ", effect.kind, [["damage", "ダメージ"], ["heal", "HP回復"], ["modifyStat", "能力変化"], ["instantDeath", "即死"], ["recoil", "反動"], ["applyStatus", "状態異常付与"], ["cureStatus", "状態異常治療"], ["revive", "蘇生"]]),
+        select("kind", "効果タイプ", effect.kind, [["damage", "ダメージ"], ["heal", "HP回復"], ["modifyStat", "能力変化"], ["instantDeath", "即死"], ["recoil", "反動"], ["applyStatus", "状態異常付与"], ["cureStatus", "状態異常治療"], ["revive", "蘇生"], ["drainMp", "MP吸収"], ["sacrifice", "自己犠牲"], ["noop", "効果なし"]]),
         select("target", "効果対象", effect.target, [["selected", "行動で選択した対象"], ["caster", "技の使用者"]]),
       ];
-      const elements = [["", "なし"], ["fire", "炎"], ["ice", "氷"], ["wind", "風"], ["bang", "爆発"]];
-      const statuses = [["poison", "毒"], ["blind", "幻惑"], ["petrify", "石化"]];
+      const elements = [["", "なし"], ["fire", "炎"], ["ice", "氷"], ["wind", "風"], ["bang", "爆発"], ["zap", "デイン"]];
+      const statuses = [["poison", "毒"], ["blind", "幻惑"], ["petrify", "石化"], ["sleep", "眠り"], ["silence", "呪文封じ"], ["paralysis", "マヒ"], ["confusion", "混乱"]];
       if (effect.kind === "damage") {
         rows.push(select("formula", "計算式", effect.formula, [["physical", "物理（攻撃力－守備力）"], ["fixed", "固定威力"]]));
         if (effect.formula === "physical") rows.push(number("powerMultiplier", "物理攻撃倍率", effect.powerMultiplier));
         else rows.push(number("power", "基礎威力", effect.power));
+        rows.push(select("damageClass", "ダメージ区分", effect.damageClass || (effect.formula === "fixed" ? "magic" : "physical"), [["physical", "物理"], ["magic", "呪文"], ["breath", "ブレス"], ["skill", "固定特技"]]));
         rows.push(select("element", "属性", effect.element || "", elements), number("varianceMin", "乱数倍率・最小", effect.varianceMin), number("varianceMax", "乱数倍率・最大", effect.varianceMax));
       }
       if (effect.kind === "heal") rows.push(number("power", "基礎回復量", effect.power), number("varianceMin", "乱数倍率・最小", effect.varianceMin), number("varianceMax", "乱数倍率・最大", effect.varianceMax));
       if (effect.kind === "modifyStat") rows.push(
-        select("stat", "対象能力", effect.stat, [["attack", "攻撃力"], ["defense", "守備力"], ["speed", "素早さ"]]),
+        select("stat", "対象能力", effect.stat, [["attack", "攻撃力"], ["defense", "守備力"], ["speed", "素早さ"], ["magicResistance", "呪文耐性"], ["breathResistance", "ブレス耐性"], ["damageResistance", "全ダメージ耐性"]]),
         select("mode", "計算方法", effect.mode, [["add", "加算"], ["multiply", "倍率"]]),
         number("value", "効果量", effect.value), number("duration", "持続ターン", effect.duration, "1"), number("maxStacks", "重ね掛け上限", effect.maxStacks, "1"),
       );
@@ -196,6 +201,7 @@
       }
       if (effect.kind === "cureStatus") rows.push(select("statuses", "治療する状態（複数選択可）", effect.statuses || [], statuses, true));
       if (effect.kind === "revive") rows.push(number("successRate", "蘇生成功率（0～1）", effect.successRate), number("hpRate", "復活時HP率（0～1）", effect.hpRate));
+      if (effect.kind === "drainMp") rows.push(number("power", "基礎吸収量", effect.power), number("varianceMin", "乱数倍率・最小", effect.varianceMin), number("varianceMax", "乱数倍率・最大", effect.varianceMax));
       return rows.join("");
     }
 
@@ -359,7 +365,7 @@
     add() {
       const base = {
         jobs: { name: "新しい職業", icon: "新", enabled: false, level: 1, levelStats: { "1": { maxHp: 100, maxMp: 30, attack: 30, defense: 30, speed: 30 } }, actions: ["attack"], actionLevels: { attack: 1 }, aiTraits: { buffAffinity: { attack: 1, defense: 1, speed: 1 }, healPriority: 1, magicPriority: 1 } },
-        enemies: { name: "新しい敵", icon: "敵", recommendedLevel: 1, maxHp: 20, maxMp: 0, attack: 10, defense: 8, speed: 8, actions: ["attack"], resistances: { fire: 1, ice: 1, wind: 1, bang: 1, instantDeath: 1, poison: 1, blind: 1, petrify: 1 } },
+        enemies: { name: "新しい敵", icon: "敵", recommendedLevel: 1, maxHp: 20, maxMp: 0, attack: 10, defense: 8, speed: 8, actions: ["attack"], resistances: { fire: 1, ice: 1, wind: 1, bang: 1, zap: 1, instantDeath: 1, poison: 1, blind: 1, petrify: 1, sleep: 1, silence: 1, paralysis: 1, confusion: 1 } },
         encounters: { name: "新しい敵グループ", recommendedLevel: 1, members: [{ enemyId: this.draft.enemies[0]?.id || "", count: 1 }] },
         actions: DQ.ActionSchema.ensureEffects({ name: "新しい技", type: "attack", mpCost: 0, target: "enemyOne", power: 0, powerMultiplier: 1, baseScore: 40, effectStat: "", effectMode: "add", effectValue: 0, duration: 4, maxStacks: 1 }),
         strategies: { name: "新しい作戦", attack: 1, heal: 1, magic: 1, support: 1, instantDeath: 1, status: 1, cure: 1, revive: 1 },

@@ -25,7 +25,8 @@
         });
         if (effect.kind === "heal") outcomes.forEach(outcome => this.battle.log.add(`${actor.name}は${actionName}を唱えた。${outcome.target.name}のHPが${outcome.amount}回復。`, "heal"));
         if (effect.kind === "modifyStat" && outcomes.length) {
-          this.battle.log.add(`${actor.name}は${actionName}を唱えた。${outcomes.map(outcome => outcome.target.name).join("、")}の${this.battle.statLabel(outcomes[0].stat)}が上がった！`, "heal");
+          const decreased = outcomes[0].mode === "multiply" ? Number(outcomes[0].value) < 1 : Number(outcomes[0].value) < 0;
+          this.battle.log.add(`${actor.name}は${actionName}を使った。${outcomes.map(outcome => outcome.target.name).join("、")}の${this.battle.statLabel(outcomes[0].stat)}が${decreased ? "下がった" : "上がった"}！`, decreased ? "magic" : "heal");
         }
         if (effect.kind === "instantDeath") outcomes.forEach(outcome => {
           if (outcome.skipped) return;
@@ -51,6 +52,8 @@
             ? `${outcome.target.name}はHP${outcome.reviveHp}で生き返った！`
             : `${outcome.target.name}は生き返らなかった。`, outcome.success ? "heal" : "system");
         });
+        if (effect.kind === "drainMp") outcomes.filter(outcome => outcome.amount > 0).forEach(outcome => this.battle.log.add(`${actor.name}は${outcome.target.name}からMPを${outcome.amount}吸収した。`, "magic"));
+        if (effect.kind === "sacrifice") outcomes.forEach(() => this.battle.log.add(`${actor.name}は命を投げ出した！`, "danger"));
         if (effect.kind === "recoil") outcomes.filter(outcome => outcome.amount > 0).forEach(outcome => this.battle.log.add(`${actor.name}は反動で${outcome.amount}ダメージを受けた。`, "danger"));
       });
       return result;

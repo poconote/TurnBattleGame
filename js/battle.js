@@ -335,7 +335,12 @@
     }
 
     actionName(action) { return action.battleName || action.name; }
-    statLabel(stat) { return { attack: "攻撃力", defense: "守備力", speed: "素早さ" }[stat] || stat; }
+    statLabel(stat) {
+      return {
+        attack: "攻撃力", defense: "守備力", speed: "素早さ",
+        magicResistance: "呪文耐性", breathResistance: "ブレス耐性", damageResistance: "ダメージ耐性",
+      }[stat] || stat;
+    }
 
     updateDeaths() {
       this.characters.forEach(unit => {

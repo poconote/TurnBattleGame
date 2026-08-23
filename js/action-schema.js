@@ -10,6 +10,7 @@
     status: "applyStatus",
     cure: "cureStatus",
     revive: "revive",
+    utility: "noop",
   };
 
   const createEffect = kind => ({
@@ -21,6 +22,9 @@
     applyStatus: { kind: "applyStatus", target: "selected", status: "poison", successRate: 0.5, resistanceKey: "poison", duration: 0, potency: 1, tickRate: 0.08 },
     cureStatus: { kind: "cureStatus", target: "selected", statuses: ["poison"] },
     revive: { kind: "revive", target: "selected", successRate: 1, hpRate: 1 },
+    drainMp: { kind: "drainMp", target: "selected", power: 8, varianceMin: 0.65, varianceMax: 1.35 },
+    sacrifice: { kind: "sacrifice", target: "caster" },
+    noop: { kind: "noop", target: "caster" },
   }[kind] || { kind, target: "selected" });
 
   const normalizeEffect = effect => {
@@ -86,6 +90,7 @@
     if (action.type === "status") return { ...createEffect("applyStatus"), status: action.status || "poison", successRate: Number(action.successRate ?? 0.5), resistanceKey: action.status || "poison" };
     if (action.type === "cure") return { ...createEffect("cureStatus"), statuses: [action.status || "poison"] };
     if (action.type === "revive") return { ...createEffect("revive"), successRate: Number(action.successRate ?? 1), hpRate: Number(action.hpRate ?? 1) };
+    if (action.type === "utility") return createEffect("noop");
     return null;
   };
 

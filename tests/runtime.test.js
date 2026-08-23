@@ -117,11 +117,11 @@ for (const file of ["action-schema.js", "data-store.js", "models.js", "battle-ev
     throw new Error("行動順へ設定した素早さ乱数倍率が反映されませんでした。");
   }
   const warriorCard = battle.ui.card(warrior);
-  if (!warriorCard.includes("status-popover") || !warriorCard.includes("攻撃力") || !warriorCard.includes("使える技") || !warriorCard.includes("炎斬り") || !warriorCard.includes("前衛") || !warriorCard.includes("狙われやすさ")) {
+  if (!warriorCard.includes("status-popover") || !warriorCard.includes("攻撃力") || !warriorCard.includes("使える技") || !warriorCard.includes("もろば斬り") || !warriorCard.includes("前衛") || !warriorCard.includes("狙われやすさ")) {
     throw new Error("戦闘カードにステータスと習得済みの技が表示されませんでした。");
   }
   const slimeCard = battle.ui.card(battle.getCharacter("slime"));
-  if (!slimeCard.includes("弱点・耐性倍率") || !slimeCard.includes("×1.25") || !slimeCard.includes("弱点")) {
+  if (!slimeCard.includes("弱点・耐性倍率") || !slimeCard.includes("×1.20") || !slimeCard.includes("弱点")) {
     throw new Error("敵カードに属性の弱点・耐性倍率が表示されませんでした。");
   }
   warrior.currentHp = warrior.maxHp - 1;
@@ -186,7 +186,8 @@ for (const file of ["action-schema.js", "data-store.js", "models.js", "battle-ev
   }
   warrior.currentHp = warriorHpBeforeEffects;
   golem.currentHp = golemHpBeforeEffects;
-  if (!warrior.actions.includes("flameSlash") || warrior.maxMp < flameSlash.mpCost) throw new Error("戦士が炎斬りを使用できません。");
+  warrior.actions.push("flameSlash");
+  if (warrior.maxMp < flameSlash.mpCost) throw new Error("物理職がかえん斬りのMPを支払えません。");
   if (battle.estimatePhysicalDamage(warrior, slime, flameSlash) <= battle.estimatePhysicalDamage(warrior, slime, normalAttack)) throw new Error("炎弱点に炎斬りの属性倍率が反映されませんでした。");
   if (battle.estimatePhysicalDamage(warrior, golem, flameSlash) >= battle.estimatePhysicalDamage(warrior, golem, normalAttack)) throw new Error("炎耐性に炎斬りの属性倍率が反映されませんでした。");
   const warriorDecision = battle.ai.decide(warrior);
@@ -208,7 +209,7 @@ for (const file of ["action-schema.js", "data-store.js", "models.js", "battle-ev
   if (editor.store.getData().jobs.find(job => job.id === "warrior").levelStats["1"].maxHp === 999) throw new Error("個別保存で別項目の未保存変更まで保存されました。");
   const baikilt = battle.getAction("baikilt");
   battle.actionExecutor.execute(mage, baikilt, [warrior]);
-  if (warrior.effectiveAttack !== warrior.attack * 2 || warrior.buffs.attack.turns !== 4) throw new Error("バイキルトの攻撃力倍率が反映されませんでした。");
+  if (warrior.effectiveAttack !== warrior.attack * 2 || warrior.buffs.attack.turns !== baikilt.effects[0].duration) throw new Error("バイキルトの攻撃力倍率が反映されませんでした。");
   if (battle.ai.decide(mage).selected.action.id === "baikilt") throw new Error("戦士強化後も低適性職へバイキルトを使用しようとしました。");
   const actionCount = editor.draft.actions.length;
   editor.duplicate();
@@ -345,6 +346,7 @@ for (const file of ["action-schema.js", "data-store.js", "models.js", "battle-ev
 
   statusWarrior.currentHp = 0;
   statusWarrior.alive = false;
+  statusPriest.actions.push("zaoriku");
   const reviveDecision = battle.ai.decide(statusPriest);
   const zaorikuCandidate = reviveDecision.candidates.find(candidate => candidate.action.id === "zaoriku");
   if (!zaorikuCandidate?.available || zaorikuCandidate.targets[0] !== statusWarrior || reviveDecision.selected.action.id !== "zaoriku") {
@@ -376,6 +378,35 @@ for (const file of ["action-schema.js", "data-store.js", "models.js", "battle-ev
   if (combinedTargets.length !== 2 || statusPriest.currentHp !== statusPriest.maxHp || statusWarrior.hasStatus("poison") || !combinedEvaluation.reasons.some(reason => reason.label.includes("毒を治療"))) {
     throw new Error("全体HP回復と毒治療を組み合わせた複数効果を評価・実行できませんでした。");
   }
+  battle.statusEngine.clear(statusWarrior);
+  battle.statusEngine.apply(statusWarrior, "sleep", { duration: 3 });
+  const sleepGate = battle.events.emit("beforeAction", { actor: statusWarrior, cancelled: false });
+  if (!sleepGate.cancelled || sleepGate.reason !== "sleep") throw new Error("眠り状態で行動を停止できませんでした。");
+  battle.statusEngine.clear(statusWarrior);
+
+  battle.statusEngine.apply(mage, "silence", { duration: 3 });
+  const silencedDecision = battle.ai.decide(mage);
+  if (silencedDecision.candidates.find(candidate => candidate.action.id === "mera")?.available !== false || !silencedDecision.candidates.find(candidate => candidate.action.id === "attack")?.available) {
+    throw new Error("呪文封じで呪文だけを使用不可にできませんでした。");
+  }
+  battle.statusEngine.clear(mage);
+
+  statusWarrior.buffs.magicResistance.value = 1;
+  statusWarrior.buffs.magicResistance.turns = 0;
+  const magicBeforeBarrier = battle.effectEngine.previewAction(statusEnemy, battle.getAction("merami"), [statusWarrior]).totalExpectedDamage;
+  battle.effectEngine.applyAction(statusPriest, battle.getAction("magicBarrier"), battle.getLiving("ally"), () => 0.5);
+  const magicAfterBarrier = battle.effectEngine.previewAction(statusEnemy, battle.getAction("merami"), [statusWarrior]).totalExpectedDamage;
+  if (magicAfterBarrier > Math.ceil(magicBeforeBarrier * 0.51)) throw new Error("マジックバリアの呪文軽減が反映されませんでした。");
+
+  const swordDance = battle.getAction("swordDance");
+  const swordDancePreview = battle.effectEngine.previewAction(statusWarrior, swordDance, [statusEnemy]);
+  if (swordDance.effects.filter(effect => effect.kind === "damage").length !== 4 || swordDancePreview.totalExpectedDamage <= battle.estimatePhysicalDamage(statusWarrior, statusEnemy, battle.getAction("attack")) * 2) {
+    throw new Error("つるぎのまいの4回攻撃を合計ダメージとして評価できませんでした。");
+  }
+
+  mage.actions.push("palpunte");
+  const utilityCandidate = battle.ai.decide(mage).candidates.find(candidate => candidate.action.id === "palpunte");
+  if (utilityCandidate?.available !== false || !utilityCandidate.reasons[0].label.includes("未対応")) throw new Error("未対応呪文をデータに残したまま戦闘候補外にできませんでした。");
   statusEnemy.currentHp = 1;
   battle.statusEngine.apply(statusEnemy, "poison", { tickRate: 0.08 });
   battle.finishTurn();

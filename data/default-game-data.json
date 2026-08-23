@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 13,
+  "schemaVersion": 14,
   "actions": [
     {
       "id": "attack",
@@ -15,6 +15,7 @@
           "kind": "damage",
           "target": "selected",
           "formula": "physical",
+          "damageClass": "physical",
           "powerMultiplier": 1,
           "element": null,
           "varianceMin": 0.88,
@@ -24,21 +25,22 @@
     },
     {
       "id": "flameSlash",
-      "name": "炎斬り（検証用）",
-      "battleName": "炎斬り",
+      "name": "かえん斬り",
       "type": "attack",
-      "mpCost": 4,
+      "mpCost": 5,
       "target": "enemyOne",
       "power": 0,
-      "powerMultiplier": 1.25,
+      "powerMultiplier": 1.3,
       "element": "fire",
-      "baseScore": 48,
+      "baseScore": 54,
+      "description": "通常攻撃の約1.3倍の炎属性物理ダメージ。",
       "effects": [
         {
           "kind": "damage",
           "target": "selected",
           "formula": "physical",
-          "powerMultiplier": 1.25,
+          "damageClass": "physical",
+          "powerMultiplier": 1.3,
           "element": "fire",
           "varianceMin": 0.88,
           "varianceMax": 1.12
@@ -55,11 +57,13 @@
       "powerMultiplier": 1,
       "priority": 100,
       "baseScore": 43,
+      "description": "最速で通常攻撃相当の物理ダメージ。",
       "effects": [
         {
           "kind": "damage",
           "target": "selected",
           "formula": "physical",
+          "damageClass": "physical",
           "powerMultiplier": 1,
           "element": null,
           "varianceMin": 0.88,
@@ -75,13 +79,14 @@
       "target": "enemyOne",
       "power": 0,
       "powerMultiplier": 1.6,
-      "recoilRate": 0.16,
-      "baseScore": 58,
+      "baseScore": 64,
+      "description": "通常攻撃の約1.6倍。与えたダメージの約3割を受ける。",
       "effects": [
         {
           "kind": "damage",
           "target": "selected",
           "formula": "physical",
+          "damageClass": "physical",
           "powerMultiplier": 1.6,
           "element": null,
           "varianceMin": 0.88,
@@ -90,9 +95,10 @@
         {
           "kind": "recoil",
           "target": "caster",
-          "rate": 0.16
+          "rate": 0.3
         }
-      ]
+      ],
+      "recoilRate": 0.3
     },
     {
       "id": "heavyBlow",
@@ -108,6 +114,7 @@
           "kind": "damage",
           "target": "selected",
           "formula": "physical",
+          "damageClass": "physical",
           "powerMultiplier": 1.18,
           "element": null,
           "varianceMin": 0.88,
@@ -139,13 +146,13 @@
       "type": "heal",
       "mpCost": 5,
       "target": "allyOne",
-      "power": 85,
+      "power": 80,
       "baseScore": 20,
       "effects": [
         {
           "kind": "heal",
           "target": "selected",
-          "power": 85,
+          "power": 80,
           "varianceMin": 0.92,
           "varianceMax": 1.08
         }
@@ -157,12 +164,13 @@
       "type": "support",
       "mpCost": 3,
       "target": "allyOne",
-      "power": 24,
+      "power": 40,
       "baseScore": 25,
+      "description": "味方1人の守備力を大きく上げる。",
       "effectStat": "defense",
       "effectMode": "add",
-      "effectValue": 24,
-      "duration": 4,
+      "effectValue": 40,
+      "duration": 5,
       "maxStacks": 2,
       "effects": [
         {
@@ -170,8 +178,8 @@
           "target": "selected",
           "stat": "defense",
           "mode": "add",
-          "value": 24,
-          "duration": 4,
+          "value": 40,
+          "duration": 5,
           "maxStacks": 2
         }
       ]
@@ -182,12 +190,13 @@
       "type": "support",
       "mpCost": 5,
       "target": "allAllies",
-      "power": 14,
+      "power": 24,
       "baseScore": 25,
+      "description": "味方全員の守備力を上げる。",
       "effectStat": "defense",
       "effectMode": "add",
-      "effectValue": 14,
-      "duration": 4,
+      "effectValue": 24,
+      "duration": 5,
       "maxStacks": 2,
       "effects": [
         {
@@ -195,8 +204,8 @@
           "target": "selected",
           "stat": "defense",
           "mode": "add",
-          "value": 14,
-          "duration": 4,
+          "value": 24,
+          "duration": 5,
           "maxStacks": 2
         }
       ]
@@ -207,22 +216,23 @@
       "type": "support",
       "mpCost": 3,
       "target": "allAllies",
-      "power": 18,
+      "power": 28,
       "baseScore": 23,
+      "description": "味方全員の素早さを上げる。",
       "effectStat": "speed",
       "effectMode": "add",
-      "effectValue": 18,
-      "duration": 4,
-      "maxStacks": 2,
+      "effectValue": 28,
+      "duration": 5,
+      "maxStacks": 1,
       "effects": [
         {
           "kind": "modifyStat",
           "target": "selected",
           "stat": "speed",
           "mode": "add",
-          "value": 18,
-          "duration": 4,
-          "maxStacks": 2
+          "value": 28,
+          "duration": 5,
+          "maxStacks": 1
         }
       ]
     },
@@ -234,10 +244,11 @@
       "target": "allyOne",
       "power": 2,
       "baseScore": 28,
+      "description": "味方1人の攻撃力を2倍にする。",
       "effectStat": "attack",
       "effectMode": "multiply",
       "effectValue": 2,
-      "duration": 4,
+      "duration": 5,
       "maxStacks": 1,
       "effects": [
         {
@@ -246,7 +257,7 @@
           "stat": "attack",
           "mode": "multiply",
           "value": 2,
-          "duration": 4,
+          "duration": 5,
           "maxStacks": 1
         }
       ]
@@ -259,12 +270,13 @@
       "target": "enemyOne",
       "power": 11,
       "element": "fire",
-      "baseScore": 34,
+      "baseScore": 32,
       "effects": [
         {
           "kind": "damage",
           "target": "selected",
           "formula": "fixed",
+          "damageClass": "magic",
           "power": 11,
           "element": "fire",
           "varianceMin": 0.9,
@@ -286,6 +298,7 @@
           "kind": "damage",
           "target": "selected",
           "formula": "fixed",
+          "damageClass": "magic",
           "power": 30,
           "element": "ice",
           "varianceMin": 0.9,
@@ -299,15 +312,16 @@
       "type": "magic",
       "mpCost": 4,
       "target": "allEnemies",
-      "power": 23,
+      "power": 22,
       "element": "fire",
-      "baseScore": 42,
+      "baseScore": 40,
       "effects": [
         {
           "kind": "damage",
           "target": "selected",
           "formula": "fixed",
-          "power": 23,
+          "damageClass": "magic",
+          "power": 22,
           "element": "fire",
           "varianceMin": 0.9,
           "varianceMax": 1.1
@@ -322,12 +336,13 @@
       "target": "allEnemies",
       "power": 18,
       "element": "bang",
-      "baseScore": 41,
+      "baseScore": 39,
       "effects": [
         {
           "kind": "damage",
           "target": "selected",
           "formula": "fixed",
+          "damageClass": "magic",
           "power": 18,
           "element": "bang",
           "varianceMin": 0.9,
@@ -341,15 +356,16 @@
       "type": "magic",
       "mpCost": 6,
       "target": "allEnemies",
-      "power": 39,
+      "power": 40,
       "element": "fire",
-      "baseScore": 48,
+      "baseScore": 47,
       "effects": [
         {
           "kind": "damage",
           "target": "selected",
           "formula": "fixed",
-          "power": 39,
+          "damageClass": "magic",
+          "power": 40,
           "element": "fire",
           "varianceMin": 0.9,
           "varianceMax": 1.1
@@ -362,15 +378,16 @@
       "type": "magic",
       "mpCost": 6,
       "target": "enemyOne",
-      "power": 63,
+      "power": 65,
       "element": "fire",
-      "baseScore": 52,
+      "baseScore": 50,
       "effects": [
         {
           "kind": "damage",
           "target": "selected",
           "formula": "fixed",
-          "power": 63,
+          "damageClass": "magic",
+          "power": 65,
           "element": "fire",
           "varianceMin": 0.9,
           "varianceMax": 1.1
@@ -381,17 +398,18 @@
       "id": "hyadaruko",
       "name": "ヒャダルコ",
       "type": "magic",
-      "mpCost": 7,
+      "mpCost": 6,
       "target": "allEnemies",
-      "power": 48,
+      "power": 45,
       "element": "ice",
-      "baseScore": 51,
+      "baseScore": 49,
       "effects": [
         {
           "kind": "damage",
           "target": "selected",
           "formula": "fixed",
-          "power": 48,
+          "damageClass": "magic",
+          "power": 45,
           "element": "ice",
           "varianceMin": 0.9,
           "varianceMax": 1.1
@@ -404,7 +422,7 @@
       "type": "magic",
       "mpCost": 4,
       "target": "allEnemies",
-      "power": 16,
+      "power": 20,
       "element": "wind",
       "baseScore": 39,
       "effects": [
@@ -412,7 +430,8 @@
           "kind": "damage",
           "target": "selected",
           "formula": "fixed",
-          "power": 16,
+          "damageClass": "magic",
+          "power": 20,
           "element": "wind",
           "varianceMin": 0.9,
           "varianceMax": 1.1
@@ -427,12 +446,13 @@
       "target": "allEnemies",
       "power": 40,
       "element": "wind",
-      "baseScore": 48,
+      "baseScore": 47,
       "effects": [
         {
           "kind": "damage",
           "target": "selected",
           "formula": "fixed",
+          "damageClass": "magic",
           "power": 40,
           "element": "wind",
           "varianceMin": 0.9,
@@ -468,7 +488,6 @@
       "type": "instantDeath",
       "mpCost": 7,
       "target": "enemyOne",
-      "power": 0,
       "successRate": 0.4,
       "baseScore": 50,
       "effects": [
@@ -482,19 +501,17 @@
     },
     {
       "id": "zaraki",
-      "name": "ザラキ（検証用）",
-      "battleName": "ザラキ",
+      "name": "ザラキ",
       "type": "instantDeath",
       "mpCost": 10,
       "target": "allEnemies",
-      "power": 0,
-      "successRate": 0.25,
-      "baseScore": 46,
+      "successRate": 0.3,
+      "baseScore": 48,
       "effects": [
         {
           "kind": "instantDeath",
           "target": "selected",
-          "successRate": 0.25,
+          "successRate": 0.3,
           "resistanceKey": "instantDeath"
         }
       ]
@@ -505,6 +522,7 @@
       "type": "attack",
       "mpCost": 0,
       "target": "enemyOne",
+      "power": 0,
       "powerMultiplier": 0.9,
       "baseScore": 38,
       "effects": [
@@ -512,6 +530,7 @@
           "kind": "damage",
           "target": "selected",
           "formula": "physical",
+          "damageClass": "physical",
           "powerMultiplier": 0.9,
           "element": null,
           "varianceMin": 0.88,
@@ -535,6 +554,7 @@
       "type": "attack",
       "mpCost": 0,
       "target": "enemyOne",
+      "power": 0,
       "powerMultiplier": 0.8,
       "baseScore": 34,
       "effects": [
@@ -542,6 +562,7 @@
           "kind": "damage",
           "target": "selected",
           "formula": "physical",
+          "damageClass": "physical",
           "powerMultiplier": 0.8,
           "element": null,
           "varianceMin": 0.88,
@@ -565,6 +586,7 @@
       "type": "status",
       "mpCost": 4,
       "target": "allEnemies",
+      "successRate": 0.65,
       "baseScore": 35,
       "effects": [
         {
@@ -573,7 +595,7 @@
           "status": "blind",
           "successRate": 0.65,
           "resistanceKey": "blind",
-          "duration": 4,
+          "duration": 3,
           "potency": 0.55,
           "tickRate": 0.08
         }
@@ -590,7 +612,9 @@
         {
           "kind": "cureStatus",
           "target": "selected",
-          "statuses": ["poison"]
+          "statuses": [
+            "poison"
+          ]
         }
       ]
     },
@@ -600,13 +624,1416 @@
       "type": "revive",
       "mpCost": 20,
       "target": "allyOne",
+      "successRate": 1,
+      "hpRate": 1,
       "baseScore": 55,
+      "description": "味方1人をHP全快で確実に蘇生。",
       "effects": [
         {
           "kind": "revive",
           "target": "selected",
           "successRate": 1,
           "hpRate": 1
+        }
+      ]
+    },
+    {
+      "id": "ukegashi",
+      "name": "うけながし",
+      "type": "utility",
+      "mpCost": 2,
+      "target": "self",
+      "baseScore": 0,
+      "battleUsable": false,
+      "description": "物理攻撃を受け流す特技。攻撃先の変更は現在のシミュレーターでは未対応。",
+      "effects": [
+        {
+          "kind": "noop",
+          "target": "caster"
+        }
+      ]
+    },
+    {
+      "id": "cover",
+      "name": "かばう",
+      "type": "utility",
+      "mpCost": 1,
+      "target": "self",
+      "baseScore": 0,
+      "battleUsable": false,
+      "description": "選んだ仲間への攻撃を肩代わりする特技。対象変更は現在未対応。",
+      "effects": [
+        {
+          "kind": "noop",
+          "target": "caster"
+        }
+      ]
+    },
+    {
+      "id": "vitalThrust",
+      "name": "きゅうしょ突き",
+      "type": "instantDeath",
+      "mpCost": 4,
+      "target": "enemyOne",
+      "successRate": 0.18,
+      "baseScore": 46,
+      "description": "急所に当たれば即死。失敗時も通常攻撃の約半分のダメージ。",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "physical",
+          "damageClass": "physical",
+          "powerMultiplier": 0.5,
+          "element": null,
+          "varianceMin": 0.88,
+          "varianceMax": 1.12
+        },
+        {
+          "kind": "instantDeath",
+          "target": "selected",
+          "successRate": 0.18,
+          "resistanceKey": "instantDeath"
+        }
+      ]
+    },
+    {
+      "id": "standGround",
+      "name": "におうだち",
+      "type": "utility",
+      "mpCost": 4,
+      "target": "self",
+      "baseScore": 0,
+      "battleUsable": false,
+      "description": "味方全員への攻撃を肩代わりする特技。対象変更は現在未対応。",
+      "effects": [
+        {
+          "kind": "noop",
+          "target": "caster"
+        }
+      ]
+    },
+    {
+      "id": "swordDance",
+      "name": "つるぎのまい",
+      "type": "attack",
+      "mpCost": 10,
+      "target": "enemyOne",
+      "power": 0,
+      "powerMultiplier": 0.6,
+      "baseScore": 96,
+      "description": "通常攻撃の約0.6倍を4回。",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "physical",
+          "damageClass": "physical",
+          "powerMultiplier": 0.6,
+          "element": null,
+          "varianceMin": 0.88,
+          "varianceMax": 1.12
+        },
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "physical",
+          "damageClass": "physical",
+          "powerMultiplier": 0.6,
+          "element": null,
+          "varianceMin": 0.88,
+          "varianceMax": 1.12
+        },
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "physical",
+          "damageClass": "physical",
+          "powerMultiplier": 0.6,
+          "element": null,
+          "varianceMin": 0.88,
+          "varianceMax": 1.12
+        },
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "physical",
+          "damageClass": "physical",
+          "powerMultiplier": 0.6,
+          "element": null,
+          "varianceMin": 0.88,
+          "varianceMax": 1.12
+        }
+      ]
+    },
+    {
+      "id": "metalSlash",
+      "name": "メタル斬り",
+      "type": "attack",
+      "mpCost": 6,
+      "target": "enemyOne",
+      "power": 0,
+      "powerMultiplier": 1.5,
+      "baseScore": 62,
+      "description": "メタル系への最低保証は未実装。物理1.5倍として計算。",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "physical",
+          "damageClass": "physical",
+          "powerMultiplier": 1.5,
+          "element": null,
+          "varianceMin": 0.88,
+          "varianceMax": 1.12
+        }
+      ]
+    },
+    {
+      "id": "rainOfSwords",
+      "name": "さみだれけん",
+      "type": "attack",
+      "mpCost": 8,
+      "target": "allEnemies",
+      "power": 0,
+      "powerMultiplier": 1,
+      "baseScore": 88,
+      "description": "敵全体へ通常攻撃相当。",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "physical",
+          "damageClass": "physical",
+          "powerMultiplier": 1,
+          "element": null,
+          "varianceMin": 0.88,
+          "varianceMax": 1.12
+        }
+      ]
+    },
+    {
+      "id": "fullForceSlash",
+      "name": "渾身斬り",
+      "type": "attack",
+      "mpCost": 14,
+      "target": "enemyOne",
+      "power": 0,
+      "powerMultiplier": 2.2,
+      "baseScore": 112,
+      "description": "敵単体へ通常攻撃の約2.2倍。",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "physical",
+          "damageClass": "physical",
+          "powerMultiplier": 2.2,
+          "element": null,
+          "varianceMin": 0.88,
+          "varianceMax": 1.12
+        }
+      ]
+    },
+    {
+      "id": "lightningSlash",
+      "name": "いなずま斬り",
+      "type": "attack",
+      "mpCost": 7,
+      "target": "enemyOne",
+      "power": 0,
+      "powerMultiplier": 1.3,
+      "element": "zap",
+      "baseScore": 56,
+      "description": "通常攻撃の約1.3倍のデイン属性物理ダメージ。",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "physical",
+          "damageClass": "physical",
+          "powerMultiplier": 1.3,
+          "element": "zap",
+          "varianceMin": 0.88,
+          "varianceMax": 1.12
+        }
+      ]
+    },
+    {
+      "id": "vacuumSlash",
+      "name": "しんくう斬り",
+      "type": "attack",
+      "mpCost": 7,
+      "target": "enemyOne",
+      "power": 0,
+      "powerMultiplier": 1.3,
+      "element": "wind",
+      "baseScore": 56,
+      "description": "通常攻撃の約1.3倍のバギ属性物理ダメージ。",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "physical",
+          "damageClass": "physical",
+          "powerMultiplier": 1.3,
+          "element": "wind",
+          "varianceMin": 0.88,
+          "varianceMax": 1.12
+        }
+      ]
+    },
+    {
+      "id": "falconSlash",
+      "name": "はやぶさ斬り",
+      "type": "attack",
+      "mpCost": 9,
+      "target": "enemyOne",
+      "power": 0,
+      "powerMultiplier": 0.7,
+      "baseScore": 74,
+      "description": "通常攻撃の約0.7倍を2回。",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "physical",
+          "damageClass": "physical",
+          "powerMultiplier": 0.7,
+          "element": null,
+          "varianceMin": 0.88,
+          "varianceMax": 1.12
+        },
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "physical",
+          "damageClass": "physical",
+          "powerMultiplier": 0.7,
+          "element": null,
+          "varianceMin": 0.88,
+          "varianceMax": 1.12
+        }
+      ]
+    },
+    {
+      "id": "gigaSlash",
+      "name": "ギガスラッシュ",
+      "type": "attack",
+      "mpCost": 38,
+      "target": "allEnemies",
+      "power": 250,
+      "powerMultiplier": 1,
+      "element": "zap",
+      "baseScore": 110,
+      "description": "敵全体へ約250のデイン属性固定特技ダメージ。",
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "fixed",
+          "damageClass": "skill",
+          "power": 250,
+          "element": "zap",
+          "varianceMin": 0.9,
+          "varianceMax": 1.1
+        }
+      ]
+    },
+    {
+      "id": "dodgeStep",
+      "name": "みかわしきゃく",
+      "type": "support",
+      "mpCost": 4,
+      "target": "self",
+      "power": 1.4,
+      "baseScore": 28,
+      "description": "回避率の代わりに素早さ上昇で近似。",
+      "effectStat": "speed",
+      "effectMode": "multiply",
+      "effectValue": 1.4,
+      "duration": 4,
+      "maxStacks": 1,
+      "effects": [
+        {
+          "kind": "modifyStat",
+          "target": "selected",
+          "stat": "speed",
+          "mode": "multiply",
+          "value": 1.4,
+          "duration": 4,
+          "maxStacks": 1
+        }
+      ]
+    },
+    {
+      "id": "greatDefense",
+      "name": "大ぼうぎょ",
+      "type": "support",
+      "mpCost": 2,
+      "target": "self",
+      "power": 0.1,
+      "baseScore": 42,
+      "description": "1ターンの被ダメージを約1/10にする。",
+      "effectStat": "damageResistance",
+      "effectMode": "multiply",
+      "effectValue": 0.1,
+      "duration": 1,
+      "maxStacks": 1,
+      "effects": [
+        {
+          "kind": "modifyStat",
+          "target": "selected",
+          "stat": "damageResistance",
+          "mode": "multiply",
+          "value": 0.1,
+          "duration": 1,
+          "maxStacks": 1
+        }
+      ]
+    },
+    {
+      "id": "meditation",
+      "name": "めいそう",
+      "type": "heal",
+      "mpCost": 5,
+      "target": "self",
+      "power": 500,
+      "baseScore": 50,
+      "description": "自分のHPを約500回復。",
+      "effects": [
+        {
+          "kind": "heal",
+          "target": "selected",
+          "power": 500,
+          "varianceMin": 0.92,
+          "varianceMax": 1.08
+        }
+      ]
+    },
+    {
+      "id": "merazoma",
+      "name": "メラゾーマ",
+      "type": "magic",
+      "mpCost": 12,
+      "target": "enemyOne",
+      "power": 180,
+      "element": "fire",
+      "baseScore": 70,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "fixed",
+          "damageClass": "magic",
+          "power": 180,
+          "element": "fire",
+          "varianceMin": 0.9,
+          "varianceMax": 1.1
+        }
+      ]
+    },
+    {
+      "id": "begiragon",
+      "name": "ベギラゴン",
+      "type": "magic",
+      "mpCost": 12,
+      "target": "allEnemies",
+      "power": 100,
+      "element": "fire",
+      "baseScore": 65,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "fixed",
+          "damageClass": "magic",
+          "power": 100,
+          "element": "fire",
+          "varianceMin": 0.9,
+          "varianceMax": 1.1
+        }
+      ]
+    },
+    {
+      "id": "iora",
+      "name": "イオラ",
+      "type": "magic",
+      "mpCost": 9,
+      "target": "allEnemies",
+      "power": 55,
+      "element": "bang",
+      "baseScore": 52,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "fixed",
+          "damageClass": "magic",
+          "power": 55,
+          "element": "bang",
+          "varianceMin": 0.9,
+          "varianceMax": 1.1
+        }
+      ]
+    },
+    {
+      "id": "ionazun",
+      "name": "イオナズン",
+      "type": "magic",
+      "mpCost": 18,
+      "target": "allEnemies",
+      "power": 140,
+      "element": "bang",
+      "baseScore": 76,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "fixed",
+          "damageClass": "magic",
+          "power": 140,
+          "element": "bang",
+          "varianceMin": 0.9,
+          "varianceMax": 1.1
+        }
+      ]
+    },
+    {
+      "id": "hyadain",
+      "name": "ヒャダイン",
+      "type": "magic",
+      "mpCost": 10,
+      "target": "allEnemies",
+      "power": 75,
+      "element": "ice",
+      "baseScore": 58,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "fixed",
+          "damageClass": "magic",
+          "power": 75,
+          "element": "ice",
+          "varianceMin": 0.9,
+          "varianceMax": 1.1
+        }
+      ]
+    },
+    {
+      "id": "mahyado",
+      "name": "マヒャド",
+      "type": "magic",
+      "mpCost": 14,
+      "target": "allEnemies",
+      "power": 100,
+      "element": "ice",
+      "baseScore": 66,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "fixed",
+          "damageClass": "magic",
+          "power": 100,
+          "element": "ice",
+          "varianceMin": 0.9,
+          "varianceMax": 1.1
+        }
+      ]
+    },
+    {
+      "id": "bagicross",
+      "name": "バギクロス",
+      "type": "magic",
+      "mpCost": 10,
+      "target": "allEnemies",
+      "power": 105,
+      "element": "wind",
+      "baseScore": 66,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "fixed",
+          "damageClass": "magic",
+          "power": 105,
+          "element": "wind",
+          "varianceMin": 0.9,
+          "varianceMax": 1.1
+        }
+      ]
+    },
+    {
+      "id": "dein",
+      "name": "デイン",
+      "type": "magic",
+      "mpCost": 6,
+      "target": "enemyOne",
+      "power": 45,
+      "element": "zap",
+      "baseScore": 48,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "fixed",
+          "damageClass": "magic",
+          "power": 45,
+          "element": "zap",
+          "varianceMin": 0.9,
+          "varianceMax": 1.1
+        }
+      ]
+    },
+    {
+      "id": "raidein",
+      "name": "ライデイン",
+      "type": "magic",
+      "mpCost": 8,
+      "target": "enemyOne",
+      "power": 85,
+      "element": "zap",
+      "baseScore": 58,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "fixed",
+          "damageClass": "magic",
+          "power": 85,
+          "element": "zap",
+          "varianceMin": 0.9,
+          "varianceMax": 1.1
+        }
+      ]
+    },
+    {
+      "id": "gigadein",
+      "name": "ギガデイン",
+      "type": "magic",
+      "mpCost": 30,
+      "target": "allEnemies",
+      "power": 250,
+      "element": "zap",
+      "baseScore": 105,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "fixed",
+          "damageClass": "magic",
+          "power": 250,
+          "element": "zap",
+          "varianceMin": 0.9,
+          "varianceMax": 1.1
+        }
+      ]
+    },
+    {
+      "id": "behoimu",
+      "name": "ベホイム",
+      "type": "heal",
+      "mpCost": 7,
+      "target": "allyOne",
+      "power": 170,
+      "baseScore": 28,
+      "effects": [
+        {
+          "kind": "heal",
+          "target": "selected",
+          "power": 170,
+          "varianceMin": 0.92,
+          "varianceMax": 1.08
+        }
+      ]
+    },
+    {
+      "id": "behoma",
+      "name": "ベホマ",
+      "type": "heal",
+      "mpCost": 9,
+      "target": "allyOne",
+      "power": 9999,
+      "baseScore": 35,
+      "description": "味方1人のHPを全回復。",
+      "effects": [
+        {
+          "kind": "heal",
+          "target": "selected",
+          "power": 9999,
+          "varianceMin": 0.92,
+          "varianceMax": 1.08
+        }
+      ]
+    },
+    {
+      "id": "behomaler",
+      "name": "ベホマラー",
+      "type": "heal",
+      "mpCost": 18,
+      "target": "allAllies",
+      "power": 85,
+      "baseScore": 32,
+      "effects": [
+        {
+          "kind": "heal",
+          "target": "selected",
+          "power": 85,
+          "varianceMin": 0.92,
+          "varianceMax": 1.08
+        }
+      ]
+    },
+    {
+      "id": "behomazun",
+      "name": "ベホマズン",
+      "type": "heal",
+      "mpCost": 62,
+      "target": "allAllies",
+      "power": 9999,
+      "baseScore": 58,
+      "description": "味方全員のHPを全回復。",
+      "effects": [
+        {
+          "kind": "heal",
+          "target": "selected",
+          "power": 9999,
+          "varianceMin": 0.92,
+          "varianceMax": 1.08
+        }
+      ]
+    },
+    {
+      "id": "fubaha",
+      "name": "フバーハ",
+      "type": "support",
+      "mpCost": 8,
+      "target": "allAllies",
+      "power": 0.67,
+      "baseScore": 30,
+      "description": "味方全員のブレス被ダメージを約33%軽減。",
+      "effectStat": "breathResistance",
+      "effectMode": "multiply",
+      "effectValue": 0.67,
+      "duration": 5,
+      "maxStacks": 1,
+      "effects": [
+        {
+          "kind": "modifyStat",
+          "target": "selected",
+          "stat": "breathResistance",
+          "mode": "multiply",
+          "value": 0.67,
+          "duration": 5,
+          "maxStacks": 1
+        }
+      ]
+    },
+    {
+      "id": "magicBarrier",
+      "name": "マジックバリア",
+      "type": "support",
+      "mpCost": 6,
+      "target": "allAllies",
+      "power": 0.5,
+      "baseScore": 31,
+      "description": "味方全員の呪文被ダメージを半減。",
+      "effectStat": "magicResistance",
+      "effectMode": "multiply",
+      "effectValue": 0.5,
+      "duration": 5,
+      "maxStacks": 1,
+      "effects": [
+        {
+          "kind": "modifyStat",
+          "target": "selected",
+          "stat": "magicResistance",
+          "mode": "multiply",
+          "value": 0.5,
+          "duration": 5,
+          "maxStacks": 1
+        }
+      ]
+    },
+    {
+      "id": "mahocanta",
+      "name": "マホカンタ",
+      "type": "support",
+      "mpCost": 8,
+      "target": "allyOne",
+      "power": 0.25,
+      "baseScore": 31,
+      "description": "呪文反射の代わりに呪文被ダメージ75%軽減で近似。",
+      "effectStat": "magicResistance",
+      "effectMode": "multiply",
+      "effectValue": 0.25,
+      "duration": 5,
+      "maxStacks": 1,
+      "effects": [
+        {
+          "kind": "modifyStat",
+          "target": "selected",
+          "stat": "magicResistance",
+          "mode": "multiply",
+          "value": 0.25,
+          "duration": 5,
+          "maxStacks": 1
+        }
+      ]
+    },
+    {
+      "id": "astron",
+      "name": "アストロン",
+      "type": "support",
+      "mpCost": 6,
+      "target": "allAllies",
+      "power": 0.1,
+      "baseScore": 18,
+      "description": "完全無効の代わりに被ダメージ90%軽減で近似。",
+      "effectStat": "damageResistance",
+      "effectMode": "multiply",
+      "effectValue": 0.1,
+      "duration": 3,
+      "maxStacks": 1,
+      "effects": [
+        {
+          "kind": "modifyStat",
+          "target": "selected",
+          "stat": "damageResistance",
+          "mode": "multiply",
+          "value": 0.1,
+          "duration": 3,
+          "maxStacks": 1
+        }
+      ]
+    },
+    {
+      "id": "bomios",
+      "name": "ボミオス",
+      "type": "support",
+      "mpCost": 3,
+      "target": "allEnemies",
+      "power": -35,
+      "baseScore": 28,
+      "description": "敵全体の素早さを下げる。",
+      "effectStat": "speed",
+      "effectMode": "add",
+      "effectValue": -35,
+      "duration": 5,
+      "maxStacks": 1,
+      "effects": [
+        {
+          "kind": "modifyStat",
+          "target": "selected",
+          "stat": "speed",
+          "mode": "add",
+          "value": -35,
+          "duration": 5,
+          "maxStacks": 1
+        }
+      ]
+    },
+    {
+      "id": "lukani",
+      "name": "ルカニ",
+      "type": "support",
+      "mpCost": 3,
+      "target": "enemyOne",
+      "power": -60,
+      "baseScore": 31,
+      "description": "敵1体の守備力を大きく下げる。",
+      "effectStat": "defense",
+      "effectMode": "add",
+      "effectValue": -60,
+      "duration": 5,
+      "maxStacks": 1,
+      "effects": [
+        {
+          "kind": "modifyStat",
+          "target": "selected",
+          "stat": "defense",
+          "mode": "add",
+          "value": -60,
+          "duration": 5,
+          "maxStacks": 1
+        }
+      ]
+    },
+    {
+      "id": "lukanan",
+      "name": "ルカナン",
+      "type": "support",
+      "mpCost": 5,
+      "target": "allEnemies",
+      "power": -35,
+      "baseScore": 31,
+      "description": "敵全体の守備力を下げる。",
+      "effectStat": "defense",
+      "effectMode": "add",
+      "effectValue": -35,
+      "duration": 5,
+      "maxStacks": 1,
+      "effects": [
+        {
+          "kind": "modifyStat",
+          "target": "selected",
+          "stat": "defense",
+          "mode": "add",
+          "value": -35,
+          "duration": 5,
+          "maxStacks": 1
+        }
+      ]
+    },
+    {
+      "id": "mahotoon",
+      "name": "マホトーン",
+      "type": "status",
+      "mpCost": 5,
+      "target": "allEnemies",
+      "successRate": 0.6,
+      "baseScore": 38,
+      "effects": [
+        {
+          "kind": "applyStatus",
+          "target": "selected",
+          "status": "silence",
+          "successRate": 0.6,
+          "resistanceKey": "silence",
+          "duration": 3,
+          "potency": 1,
+          "tickRate": 0.08
+        }
+      ]
+    },
+    {
+      "id": "medapani",
+      "name": "メダパニ",
+      "type": "status",
+      "mpCost": 6,
+      "target": "enemyOne",
+      "successRate": 0.6,
+      "baseScore": 41,
+      "effects": [
+        {
+          "kind": "applyStatus",
+          "target": "selected",
+          "status": "confusion",
+          "successRate": 0.6,
+          "resistanceKey": "confusion",
+          "duration": 3,
+          "potency": 1,
+          "tickRate": 0.08
+        }
+      ]
+    },
+    {
+      "id": "lariho",
+      "name": "ラリホー",
+      "type": "status",
+      "mpCost": 3,
+      "target": "allEnemies",
+      "successRate": 0.55,
+      "baseScore": 42,
+      "effects": [
+        {
+          "kind": "applyStatus",
+          "target": "selected",
+          "status": "sleep",
+          "successRate": 0.55,
+          "resistanceKey": "sleep",
+          "duration": 3,
+          "potency": 1,
+          "tickRate": 0.08
+        }
+      ]
+    },
+    {
+      "id": "nifuram",
+      "name": "ニフラム",
+      "type": "instantDeath",
+      "mpCost": 2,
+      "target": "allEnemies",
+      "successRate": 0.48,
+      "baseScore": 38,
+      "description": "敵を光の彼方へ消す。経験値差は扱わず即死効果として計算。",
+      "effects": [
+        {
+          "kind": "instantDeath",
+          "target": "selected",
+          "successRate": 0.48,
+          "resistanceKey": "instantDeath"
+        }
+      ]
+    },
+    {
+      "id": "bashirula",
+      "name": "バシルーラ",
+      "type": "instantDeath",
+      "mpCost": 7,
+      "target": "enemyOne",
+      "successRate": 0.42,
+      "baseScore": 42,
+      "description": "敵を戦闘から排除。即死効果として計算。",
+      "effects": [
+        {
+          "kind": "instantDeath",
+          "target": "selected",
+          "successRate": 0.42,
+          "resistanceKey": "instantDeath"
+        }
+      ]
+    },
+    {
+      "id": "megante",
+      "name": "メガンテ",
+      "type": "instantDeath",
+      "mpCost": 1,
+      "target": "allEnemies",
+      "successRate": 0.125,
+      "baseScore": -30,
+      "description": "敵全体へ即死判定後、使用者も戦闘不能になる。",
+      "effects": [
+        {
+          "kind": "instantDeath",
+          "target": "selected",
+          "successRate": 0.125,
+          "resistanceKey": "instantDeath"
+        },
+        {
+          "kind": "sacrifice",
+          "target": "caster"
+        }
+      ]
+    },
+    {
+      "id": "mahotra",
+      "name": "マホトラ",
+      "type": "support",
+      "mpCost": 0,
+      "target": "enemyOne",
+      "baseScore": 18,
+      "description": "敵1体からMPを約5～10吸収。",
+      "effects": [
+        {
+          "kind": "drainMp",
+          "target": "selected",
+          "power": 8,
+          "varianceMin": 0.65,
+          "varianceMax": 1.35
+        }
+      ]
+    },
+    {
+      "id": "kiariku",
+      "name": "キアリク",
+      "type": "cure",
+      "mpCost": 6,
+      "target": "allyOne",
+      "baseScore": 20,
+      "effects": [
+        {
+          "kind": "cureStatus",
+          "target": "selected",
+          "statuses": [
+            "paralysis"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "zameha",
+      "name": "ザメハ",
+      "type": "cure",
+      "mpCost": 3,
+      "target": "allAllies",
+      "baseScore": 20,
+      "effects": [
+        {
+          "kind": "cureStatus",
+          "target": "selected",
+          "statuses": [
+            "sleep"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mahori",
+      "name": "マホリー",
+      "type": "cure",
+      "mpCost": 4,
+      "target": "allyOne",
+      "baseScore": 20,
+      "effects": [
+        {
+          "kind": "cureStatus",
+          "target": "selected",
+          "statuses": [
+            "silence"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "zawo",
+      "name": "ザオ",
+      "type": "revive",
+      "mpCost": 5,
+      "target": "allyOne",
+      "successRate": 0.4,
+      "hpRate": 0.01,
+      "baseScore": 55,
+      "description": "味方1人をHP1相当で蘇生。成功率は固定近似。",
+      "effects": [
+        {
+          "kind": "revive",
+          "target": "selected",
+          "successRate": 0.4,
+          "hpRate": 0.01
+        }
+      ]
+    },
+    {
+      "id": "zaoral",
+      "name": "ザオラル",
+      "type": "revive",
+      "mpCost": 10,
+      "target": "allyOne",
+      "successRate": 0.5,
+      "hpRate": 0.5,
+      "baseScore": 55,
+      "description": "味方1人をHP半分で蘇生。成功率は固定近似。",
+      "effects": [
+        {
+          "kind": "revive",
+          "target": "selected",
+          "successRate": 0.5,
+          "hpRate": 0.5
+        }
+      ]
+    },
+    {
+      "id": "rura",
+      "name": "ルーラ",
+      "type": "utility",
+      "mpCost": 0,
+      "target": "self",
+      "baseScore": 0,
+      "battleUsable": false,
+      "description": "移動呪文のため戦闘では使用しない。",
+      "effects": [
+        {
+          "kind": "noop",
+          "target": "caster"
+        }
+      ]
+    },
+    {
+      "id": "riremito",
+      "name": "リレミト",
+      "type": "utility",
+      "mpCost": 0,
+      "target": "self",
+      "baseScore": 0,
+      "battleUsable": false,
+      "description": "移動呪文のため戦闘では使用しない。",
+      "effects": [
+        {
+          "kind": "noop",
+          "target": "caster"
+        }
+      ]
+    },
+    {
+      "id": "toheros",
+      "name": "トヘロス",
+      "type": "utility",
+      "mpCost": 4,
+      "target": "self",
+      "baseScore": 0,
+      "battleUsable": false,
+      "description": "移動中の遭遇抑制呪文。",
+      "effects": [
+        {
+          "kind": "noop",
+          "target": "caster"
+        }
+      ]
+    },
+    {
+      "id": "toramana",
+      "name": "トラマナ",
+      "type": "utility",
+      "mpCost": 2,
+      "target": "self",
+      "baseScore": 0,
+      "battleUsable": false,
+      "description": "移動中のダメージ床無効化呪文。",
+      "effects": [
+        {
+          "kind": "noop",
+          "target": "caster"
+        }
+      ]
+    },
+    {
+      "id": "inpass",
+      "name": "インパス",
+      "type": "utility",
+      "mpCost": 3,
+      "target": "self",
+      "baseScore": 0,
+      "battleUsable": false,
+      "description": "宝箱鑑定呪文。",
+      "effects": [
+        {
+          "kind": "noop",
+          "target": "caster"
+        }
+      ]
+    },
+    {
+      "id": "ranaluta",
+      "name": "ラナルータ",
+      "type": "utility",
+      "mpCost": 12,
+      "target": "self",
+      "baseScore": 0,
+      "battleUsable": false,
+      "description": "昼夜変更呪文。",
+      "effects": [
+        {
+          "kind": "noop",
+          "target": "caster"
+        }
+      ]
+    },
+    {
+      "id": "shanaku",
+      "name": "シャナク",
+      "type": "utility",
+      "mpCost": 18,
+      "target": "self",
+      "baseScore": 0,
+      "battleUsable": false,
+      "description": "呪われた装備を外す呪文。装備システムは未対応。",
+      "effects": [
+        {
+          "kind": "noop",
+          "target": "caster"
+        }
+      ]
+    },
+    {
+      "id": "remuor",
+      "name": "レムオル",
+      "type": "utility",
+      "mpCost": 15,
+      "target": "self",
+      "baseScore": 0,
+      "battleUsable": false,
+      "description": "姿を消す移動用呪文。",
+      "effects": [
+        {
+          "kind": "noop",
+          "target": "caster"
+        }
+      ]
+    },
+    {
+      "id": "abakam",
+      "name": "アバカム",
+      "type": "utility",
+      "mpCost": 0,
+      "target": "self",
+      "baseScore": 0,
+      "battleUsable": false,
+      "description": "扉を開く移動用呪文。",
+      "effects": [
+        {
+          "kind": "noop",
+          "target": "caster"
+        }
+      ]
+    },
+    {
+      "id": "moshas",
+      "name": "モシャス",
+      "type": "utility",
+      "mpCost": 12,
+      "target": "self",
+      "baseScore": 0,
+      "battleUsable": false,
+      "description": "仲間の能力・呪文・特技のコピーは現在未対応。",
+      "effects": [
+        {
+          "kind": "noop",
+          "target": "caster"
+        }
+      ]
+    },
+    {
+      "id": "dragonram",
+      "name": "ドラゴラム",
+      "type": "utility",
+      "mpCost": 24,
+      "target": "self",
+      "baseScore": 0,
+      "battleUsable": false,
+      "description": "ドラゴン変身と複数ターンの自動行動は現在未対応。",
+      "effects": [
+        {
+          "kind": "noop",
+          "target": "caster"
+        }
+      ]
+    },
+    {
+      "id": "palpunte",
+      "name": "パルプンテ",
+      "type": "utility",
+      "mpCost": 20,
+      "target": "self",
+      "baseScore": 0,
+      "battleUsable": false,
+      "description": "16種類からのランダム効果は現在未対応。",
+      "effects": [
+        {
+          "kind": "noop",
+          "target": "caster"
+        }
+      ]
+    },
+    {
+      "id": "paralyzingAttack",
+      "name": "マヒ攻撃",
+      "type": "attack",
+      "mpCost": 0,
+      "target": "enemyOne",
+      "power": 0,
+      "powerMultiplier": 0.85,
+      "baseScore": 38,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "physical",
+          "damageClass": "physical",
+          "powerMultiplier": 0.85,
+          "element": null,
+          "varianceMin": 0.88,
+          "varianceMax": 1.12
+        },
+        {
+          "kind": "applyStatus",
+          "target": "selected",
+          "status": "paralysis",
+          "successRate": 0.32,
+          "resistanceKey": "paralysis",
+          "duration": 4,
+          "potency": 1,
+          "tickRate": 0.08
+        }
+      ]
+    },
+    {
+      "id": "sleepAttack",
+      "name": "眠り攻撃",
+      "type": "attack",
+      "mpCost": 0,
+      "target": "enemyOne",
+      "power": 0,
+      "powerMultiplier": 0.85,
+      "baseScore": 38,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "physical",
+          "damageClass": "physical",
+          "powerMultiplier": 0.85,
+          "element": null,
+          "varianceMin": 0.88,
+          "varianceMax": 1.12
+        },
+        {
+          "kind": "applyStatus",
+          "target": "selected",
+          "status": "sleep",
+          "successRate": 0.35,
+          "resistanceKey": "sleep",
+          "duration": 3,
+          "potency": 1,
+          "tickRate": 0.08
+        }
+      ]
+    },
+    {
+      "id": "fireBreath",
+      "name": "かえんのいき",
+      "type": "magic",
+      "mpCost": 0,
+      "target": "allEnemies",
+      "power": 35,
+      "element": "fire",
+      "baseScore": 45,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "fixed",
+          "damageClass": "breath",
+          "power": 35,
+          "element": "fire",
+          "varianceMin": 0.9,
+          "varianceMax": 1.1
+        }
+      ]
+    },
+    {
+      "id": "fierceFire",
+      "name": "はげしいほのお",
+      "type": "magic",
+      "mpCost": 0,
+      "target": "allEnemies",
+      "power": 90,
+      "element": "fire",
+      "baseScore": 65,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "fixed",
+          "damageClass": "breath",
+          "power": 90,
+          "element": "fire",
+          "varianceMin": 0.9,
+          "varianceMax": 1.1
+        }
+      ]
+    },
+    {
+      "id": "iceBreath",
+      "name": "こごえるふぶき",
+      "type": "magic",
+      "mpCost": 0,
+      "target": "allEnemies",
+      "power": 85,
+      "element": "ice",
+      "baseScore": 65,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "fixed",
+          "damageClass": "breath",
+          "power": 85,
+          "element": "ice",
+          "varianceMin": 0.9,
+          "varianceMax": 1.1
         }
       ]
     }
@@ -619,15 +2046,29 @@
       "enabled": true,
       "actions": [
         "attack",
-        "flameSlash",
+        "ukegashi",
+        "cover",
         "quickThrust",
-        "doubleEdgedSlash"
+        "doubleEdgedSlash",
+        "vitalThrust",
+        "standGround",
+        "swordDance",
+        "metalSlash",
+        "rainOfSwords",
+        "fullForceSlash"
       ],
       "actionLevels": {
         "attack": 1,
-        "flameSlash": 6,
+        "ukegashi": 1,
+        "cover": 3,
         "quickThrust": 9,
-        "doubleEdgedSlash": 16
+        "doubleEdgedSlash": 16,
+        "vitalThrust": 21,
+        "standGround": 25,
+        "swordDance": 37,
+        "metalSlash": 39,
+        "rainOfSwords": 43,
+        "fullForceSlash": 48
       },
       "aiTraits": {
         "buffAffinity": {
@@ -781,32 +2222,214 @@
           "speed": 33
         },
         "21": {
-          "maxHp": 175,
-          "maxMp": 32,
-          "attack": 88,
-          "defense": 73,
-          "speed": 35
+          "maxHp": 182,
+          "maxMp": 35,
+          "attack": 95,
+          "defense": 80,
+          "speed": 39
         },
         "22": {
-          "maxHp": 184,
-          "maxMp": 33,
-          "attack": 92,
-          "defense": 76,
-          "speed": 36
+          "maxHp": 199,
+          "maxMp": 40,
+          "attack": 106,
+          "defense": 89,
+          "speed": 44
         },
         "23": {
-          "maxHp": 184,
-          "maxMp": 33,
-          "attack": 92,
-          "defense": 76,
-          "speed": 36
+          "maxHp": 215,
+          "maxMp": 45,
+          "attack": 116,
+          "defense": 99,
+          "speed": 49
         },
         "24": {
-          "maxHp": 184,
-          "maxMp": 33,
-          "attack": 92,
-          "defense": 76,
-          "speed": 36
+          "maxHp": 231,
+          "maxMp": 50,
+          "attack": 127,
+          "defense": 108,
+          "speed": 54
+        },
+        "25": {
+          "maxHp": 246,
+          "maxMp": 55,
+          "attack": 137,
+          "defense": 117,
+          "speed": 59
+        },
+        "26": {
+          "maxHp": 262,
+          "maxMp": 60,
+          "attack": 147,
+          "defense": 125,
+          "speed": 64
+        },
+        "27": {
+          "maxHp": 278,
+          "maxMp": 65,
+          "attack": 157,
+          "defense": 134,
+          "speed": 69
+        },
+        "28": {
+          "maxHp": 293,
+          "maxMp": 69,
+          "attack": 167,
+          "defense": 143,
+          "speed": 74
+        },
+        "29": {
+          "maxHp": 308,
+          "maxMp": 74,
+          "attack": 177,
+          "defense": 152,
+          "speed": 79
+        },
+        "30": {
+          "maxHp": 323,
+          "maxMp": 79,
+          "attack": 187,
+          "defense": 161,
+          "speed": 84
+        },
+        "31": {
+          "maxHp": 339,
+          "maxMp": 83,
+          "attack": 197,
+          "defense": 169,
+          "speed": 89
+        },
+        "32": {
+          "maxHp": 354,
+          "maxMp": 88,
+          "attack": 207,
+          "defense": 178,
+          "speed": 94
+        },
+        "33": {
+          "maxHp": 369,
+          "maxMp": 93,
+          "attack": 217,
+          "defense": 186,
+          "speed": 99
+        },
+        "34": {
+          "maxHp": 384,
+          "maxMp": 97,
+          "attack": 226,
+          "defense": 195,
+          "speed": 104
+        },
+        "35": {
+          "maxHp": 399,
+          "maxMp": 102,
+          "attack": 236,
+          "defense": 204,
+          "speed": 109
+        },
+        "36": {
+          "maxHp": 414,
+          "maxMp": 107,
+          "attack": 246,
+          "defense": 212,
+          "speed": 113
+        },
+        "37": {
+          "maxHp": 429,
+          "maxMp": 111,
+          "attack": 256,
+          "defense": 221,
+          "speed": 118
+        },
+        "38": {
+          "maxHp": 444,
+          "maxMp": 116,
+          "attack": 265,
+          "defense": 229,
+          "speed": 123
+        },
+        "39": {
+          "maxHp": 458,
+          "maxMp": 120,
+          "attack": 275,
+          "defense": 238,
+          "speed": 128
+        },
+        "40": {
+          "maxHp": 473,
+          "maxMp": 125,
+          "attack": 285,
+          "defense": 246,
+          "speed": 133
+        },
+        "41": {
+          "maxHp": 488,
+          "maxMp": 129,
+          "attack": 294,
+          "defense": 255,
+          "speed": 137
+        },
+        "42": {
+          "maxHp": 503,
+          "maxMp": 134,
+          "attack": 304,
+          "defense": 263,
+          "speed": 142
+        },
+        "43": {
+          "maxHp": 518,
+          "maxMp": 138,
+          "attack": 313,
+          "defense": 271,
+          "speed": 147
+        },
+        "44": {
+          "maxHp": 532,
+          "maxMp": 143,
+          "attack": 323,
+          "defense": 280,
+          "speed": 152
+        },
+        "45": {
+          "maxHp": 547,
+          "maxMp": 148,
+          "attack": 332,
+          "defense": 288,
+          "speed": 156
+        },
+        "46": {
+          "maxHp": 562,
+          "maxMp": 152,
+          "attack": 342,
+          "defense": 297,
+          "speed": 161
+        },
+        "47": {
+          "maxHp": 576,
+          "maxMp": 157,
+          "attack": 352,
+          "defense": 305,
+          "speed": 166
+        },
+        "48": {
+          "maxHp": 591,
+          "maxMp": 161,
+          "attack": 361,
+          "defense": 313,
+          "speed": 171
+        },
+        "49": {
+          "maxHp": 605,
+          "maxMp": 166,
+          "attack": 371,
+          "defense": 322,
+          "speed": 175
+        },
+        "50": {
+          "maxHp": 620,
+          "maxMp": 170,
+          "attack": 380,
+          "defense": 330,
+          "speed": 180
         }
       }
     },
@@ -818,34 +2441,70 @@
       "actions": [
         "attack",
         "hoimi",
-        "kiari",
+        "nifuram",
         "manusa",
         "bagi",
+        "lukani",
+        "kiari",
+        "lariho",
         "piorim",
+        "zameha",
+        "zawo",
+        "mahotoon",
         "behoimi",
+        "kiariku",
+        "magicBarrier",
+        "lukanan",
         "bagima",
+        "bashirula",
+        "behoimu",
         "zaki",
+        "zaoral",
+        "zaraki",
+        "fubaha",
+        "bagicross",
+        "behoma",
+        "behomaler",
+        "megante",
         "zaoriku"
       ],
       "actionLevels": {
         "attack": 1,
         "hoimi": 1,
-        "kiari": 5,
-        "manusa": 6,
-        "bagi": 5,
-        "piorim": 10,
-        "behoimi": 14,
-        "bagima": 20,
+        "nifuram": 2,
+        "manusa": 3,
+        "bagi": 4,
+        "lukani": 6,
+        "kiari": 7,
+        "lariho": 8,
+        "piorim": 9,
+        "zameha": 10,
+        "zawo": 10,
+        "mahotoon": 12,
+        "behoimi": 12,
+        "kiariku": 14,
+        "magicBarrier": 16,
+        "lukanan": 16,
+        "bagima": 18,
+        "bashirula": 20,
+        "behoimu": 22,
         "zaki": 22,
-        "zaoriku": 20
+        "zaoral": 23,
+        "zaraki": 26,
+        "fubaha": 27,
+        "bagicross": 31,
+        "behoma": 32,
+        "behomaler": 33,
+        "megante": 33,
+        "zaoriku": 37
       },
       "aiTraits": {
         "buffAffinity": {
-          "attack": 0.2,
+          "attack": 0.25,
           "defense": 1.2,
           "speed": 1
         },
-        "healPriority": 1.3,
+        "healPriority": 1.35,
         "magicPriority": 0.8
       },
       "level": 20,
@@ -991,32 +2650,214 @@
           "speed": 60
         },
         "21": {
-          "maxHp": 123,
-          "maxMp": 93,
-          "attack": 51,
-          "defense": 53,
-          "speed": 63
+          "maxHp": 128,
+          "maxMp": 101,
+          "attack": 56,
+          "defense": 58,
+          "speed": 68
         },
         "22": {
-          "maxHp": 129,
-          "maxMp": 98,
-          "attack": 53,
-          "defense": 55,
-          "speed": 65
+          "maxHp": 139,
+          "maxMp": 113,
+          "attack": 62,
+          "defense": 66,
+          "speed": 76
         },
         "23": {
-          "maxHp": 129,
-          "maxMp": 98,
-          "attack": 53,
-          "defense": 55,
-          "speed": 65
+          "maxHp": 150,
+          "maxMp": 125,
+          "attack": 68,
+          "defense": 74,
+          "speed": 84
         },
         "24": {
-          "maxHp": 129,
-          "maxMp": 98,
-          "attack": 53,
-          "defense": 55,
-          "speed": 65
+          "maxHp": 161,
+          "maxMp": 137,
+          "attack": 74,
+          "defense": 81,
+          "speed": 92
+        },
+        "25": {
+          "maxHp": 172,
+          "maxMp": 149,
+          "attack": 80,
+          "defense": 88,
+          "speed": 99
+        },
+        "26": {
+          "maxHp": 183,
+          "maxMp": 161,
+          "attack": 85,
+          "defense": 96,
+          "speed": 107
+        },
+        "27": {
+          "maxHp": 194,
+          "maxMp": 173,
+          "attack": 91,
+          "defense": 103,
+          "speed": 114
+        },
+        "28": {
+          "maxHp": 204,
+          "maxMp": 184,
+          "attack": 97,
+          "defense": 110,
+          "speed": 122
+        },
+        "29": {
+          "maxHp": 215,
+          "maxMp": 196,
+          "attack": 103,
+          "defense": 118,
+          "speed": 129
+        },
+        "30": {
+          "maxHp": 225,
+          "maxMp": 207,
+          "attack": 109,
+          "defense": 125,
+          "speed": 137
+        },
+        "31": {
+          "maxHp": 236,
+          "maxMp": 219,
+          "attack": 114,
+          "defense": 132,
+          "speed": 144
+        },
+        "32": {
+          "maxHp": 246,
+          "maxMp": 230,
+          "attack": 120,
+          "defense": 139,
+          "speed": 151
+        },
+        "33": {
+          "maxHp": 257,
+          "maxMp": 241,
+          "attack": 126,
+          "defense": 146,
+          "speed": 159
+        },
+        "34": {
+          "maxHp": 267,
+          "maxMp": 253,
+          "attack": 131,
+          "defense": 153,
+          "speed": 166
+        },
+        "35": {
+          "maxHp": 277,
+          "maxMp": 264,
+          "attack": 137,
+          "defense": 161,
+          "speed": 173
+        },
+        "36": {
+          "maxHp": 288,
+          "maxMp": 275,
+          "attack": 143,
+          "defense": 168,
+          "speed": 180
+        },
+        "37": {
+          "maxHp": 298,
+          "maxMp": 286,
+          "attack": 148,
+          "defense": 175,
+          "speed": 188
+        },
+        "38": {
+          "maxHp": 308,
+          "maxMp": 297,
+          "attack": 154,
+          "defense": 182,
+          "speed": 195
+        },
+        "39": {
+          "maxHp": 319,
+          "maxMp": 309,
+          "attack": 159,
+          "defense": 189,
+          "speed": 202
+        },
+        "40": {
+          "maxHp": 329,
+          "maxMp": 320,
+          "attack": 165,
+          "defense": 196,
+          "speed": 209
+        },
+        "41": {
+          "maxHp": 339,
+          "maxMp": 331,
+          "attack": 170,
+          "defense": 203,
+          "speed": 216
+        },
+        "42": {
+          "maxHp": 349,
+          "maxMp": 342,
+          "attack": 176,
+          "defense": 210,
+          "speed": 223
+        },
+        "43": {
+          "maxHp": 359,
+          "maxMp": 353,
+          "attack": 182,
+          "defense": 217,
+          "speed": 230
+        },
+        "44": {
+          "maxHp": 369,
+          "maxMp": 364,
+          "attack": 187,
+          "defense": 224,
+          "speed": 238
+        },
+        "45": {
+          "maxHp": 380,
+          "maxMp": 375,
+          "attack": 193,
+          "defense": 230,
+          "speed": 245
+        },
+        "46": {
+          "maxHp": 390,
+          "maxMp": 386,
+          "attack": 198,
+          "defense": 237,
+          "speed": 252
+        },
+        "47": {
+          "maxHp": 400,
+          "maxMp": 397,
+          "attack": 204,
+          "defense": 244,
+          "speed": 259
+        },
+        "48": {
+          "maxHp": 410,
+          "maxMp": 408,
+          "attack": 209,
+          "defense": 251,
+          "speed": 266
+        },
+        "49": {
+          "maxHp": 420,
+          "maxMp": 419,
+          "attack": 215,
+          "defense": 258,
+          "speed": 273
+        },
+        "50": {
+          "maxHp": 430,
+          "maxMp": 430,
+          "attack": 220,
+          "defense": 265,
+          "speed": 280
         }
       }
     },
@@ -1032,12 +2873,33 @@
         "hyado",
         "gira",
         "sukurlt",
+        "riremito",
+        "bomios",
         "io",
+        "rura",
+        "mahotra",
         "begirama",
+        "mahori",
+        "inpass",
         "merami",
+        "toramana",
         "hyadaruko",
         "baikilt",
-        "zaraki"
+        "mahocanta",
+        "iora",
+        "ranaluta",
+        "hyadain",
+        "medapani",
+        "begiragon",
+        "shanaku",
+        "remuor",
+        "merazoma",
+        "abakam",
+        "mahyado",
+        "moshas",
+        "dragonram",
+        "ionazun",
+        "palpunte"
       ],
       "actionLevels": {
         "attack": 1,
@@ -1046,12 +2908,33 @@
         "hyado": 4,
         "gira": 7,
         "sukurlt": 8,
+        "riremito": 9,
+        "bomios": 10,
         "io": 11,
+        "rura": 12,
+        "mahotra": 12,
         "begirama": 13,
+        "mahori": 14,
+        "inpass": 15,
         "merami": 16,
-        "hyadaruko": 20,
+        "toramana": 19,
+        "hyadaruko": 19,
         "baikilt": 21,
-        "zaraki": 24
+        "mahocanta": 22,
+        "iora": 23,
+        "ranaluta": 25,
+        "hyadain": 25,
+        "medapani": 27,
+        "begiragon": 29,
+        "shanaku": 30,
+        "remuor": 31,
+        "merazoma": 31,
+        "abakam": 33,
+        "mahyado": 34,
+        "moshas": 36,
+        "dragonram": 37,
+        "ionazun": 38,
+        "palpunte": 40
       },
       "aiTraits": {
         "buffAffinity": {
@@ -1060,7 +2943,7 @@
           "speed": 1.2
         },
         "healPriority": 0.5,
-        "magicPriority": 1.3
+        "magicPriority": 1.35
       },
       "level": 20,
       "levelStats": {
@@ -1205,32 +3088,1138 @@
           "speed": 72
         },
         "21": {
-          "maxHp": 97,
-          "maxMp": 112,
-          "attack": 34,
-          "defense": 37,
-          "speed": 76
+          "maxHp": 102,
+          "maxMp": 122,
+          "attack": 37,
+          "defense": 42,
+          "speed": 82
         },
         "22": {
-          "maxHp": 102,
-          "maxMp": 117,
-          "attack": 35,
-          "defense": 38,
-          "speed": 79
+          "maxHp": 112,
+          "maxMp": 137,
+          "attack": 42,
+          "defense": 48,
+          "speed": 92
         },
         "23": {
-          "maxHp": 102,
-          "maxMp": 117,
-          "attack": 35,
-          "defense": 38,
-          "speed": 79
+          "maxHp": 121,
+          "maxMp": 151,
+          "attack": 46,
+          "defense": 54,
+          "speed": 101
         },
         "24": {
-          "maxHp": 102,
-          "maxMp": 117,
-          "attack": 35,
+          "maxHp": 131,
+          "maxMp": 166,
+          "attack": 50,
+          "defense": 60,
+          "speed": 111
+        },
+        "25": {
+          "maxHp": 140,
+          "maxMp": 180,
+          "attack": 55,
+          "defense": 66,
+          "speed": 120
+        },
+        "26": {
+          "maxHp": 149,
+          "maxMp": 194,
+          "attack": 59,
+          "defense": 72,
+          "speed": 129
+        },
+        "27": {
+          "maxHp": 158,
+          "maxMp": 208,
+          "attack": 64,
+          "defense": 78,
+          "speed": 138
+        },
+        "28": {
+          "maxHp": 167,
+          "maxMp": 222,
+          "attack": 68,
+          "defense": 84,
+          "speed": 147
+        },
+        "29": {
+          "maxHp": 176,
+          "maxMp": 236,
+          "attack": 72,
+          "defense": 90,
+          "speed": 156
+        },
+        "30": {
+          "maxHp": 185,
+          "maxMp": 250,
+          "attack": 77,
+          "defense": 96,
+          "speed": 165
+        },
+        "31": {
+          "maxHp": 194,
+          "maxMp": 264,
+          "attack": 81,
+          "defense": 102,
+          "speed": 174
+        },
+        "32": {
+          "maxHp": 203,
+          "maxMp": 278,
+          "attack": 85,
+          "defense": 108,
+          "speed": 183
+        },
+        "33": {
+          "maxHp": 212,
+          "maxMp": 292,
+          "attack": 89,
+          "defense": 113,
+          "speed": 192
+        },
+        "34": {
+          "maxHp": 221,
+          "maxMp": 305,
+          "attack": 94,
+          "defense": 119,
+          "speed": 201
+        },
+        "35": {
+          "maxHp": 230,
+          "maxMp": 319,
+          "attack": 98,
+          "defense": 125,
+          "speed": 210
+        },
+        "36": {
+          "maxHp": 239,
+          "maxMp": 332,
+          "attack": 102,
+          "defense": 131,
+          "speed": 219
+        },
+        "37": {
+          "maxHp": 247,
+          "maxMp": 346,
+          "attack": 106,
+          "defense": 136,
+          "speed": 227
+        },
+        "38": {
+          "maxHp": 256,
+          "maxMp": 360,
+          "attack": 110,
+          "defense": 142,
+          "speed": 236
+        },
+        "39": {
+          "maxHp": 265,
+          "maxMp": 373,
+          "attack": 115,
+          "defense": 148,
+          "speed": 245
+        },
+        "40": {
+          "maxHp": 274,
+          "maxMp": 387,
+          "attack": 119,
+          "defense": 154,
+          "speed": 254
+        },
+        "41": {
+          "maxHp": 282,
+          "maxMp": 400,
+          "attack": 123,
+          "defense": 159,
+          "speed": 262
+        },
+        "42": {
+          "maxHp": 291,
+          "maxMp": 413,
+          "attack": 127,
+          "defense": 165,
+          "speed": 271
+        },
+        "43": {
+          "maxHp": 300,
+          "maxMp": 427,
+          "attack": 131,
+          "defense": 171,
+          "speed": 280
+        },
+        "44": {
+          "maxHp": 308,
+          "maxMp": 440,
+          "attack": 135,
+          "defense": 176,
+          "speed": 288
+        },
+        "45": {
+          "maxHp": 317,
+          "maxMp": 454,
+          "attack": 139,
+          "defense": 182,
+          "speed": 297
+        },
+        "46": {
+          "maxHp": 326,
+          "maxMp": 467,
+          "attack": 144,
+          "defense": 188,
+          "speed": 306
+        },
+        "47": {
+          "maxHp": 334,
+          "maxMp": 480,
+          "attack": 148,
+          "defense": 193,
+          "speed": 314
+        },
+        "48": {
+          "maxHp": 343,
+          "maxMp": 493,
+          "attack": 152,
+          "defense": 199,
+          "speed": 323
+        },
+        "49": {
+          "maxHp": 351,
+          "maxMp": 507,
+          "attack": 156,
+          "defense": 204,
+          "speed": 331
+        },
+        "50": {
+          "maxHp": 360,
+          "maxMp": 520,
+          "attack": 160,
+          "defense": 210,
+          "speed": 340
+        }
+      }
+    },
+    {
+      "id": "hero",
+      "name": "勇者",
+      "icon": "勇",
+      "enabled": false,
+      "actions": [
+        "attack",
+        "mera",
+        "hoimi",
+        "nifuram",
+        "riremito",
+        "flameSlash",
+        "gira",
+        "astron",
+        "lariho",
+        "mahotoon",
+        "dodgeStep",
+        "zawo",
+        "dein",
+        "rura",
+        "lightningSlash",
+        "behoimi",
+        "begirama",
+        "toheros",
+        "greatDefense",
+        "vacuumSlash",
+        "raidein",
+        "zaoral",
+        "iora",
+        "meditation",
+        "falconSlash",
+        "begiragon",
+        "behoma",
+        "gigadein",
+        "behomazun",
+        "gigaSlash"
+      ],
+      "actionLevels": {
+        "attack": 1,
+        "mera": 2,
+        "hoimi": 3,
+        "nifuram": 6,
+        "riremito": 7,
+        "flameSlash": 8,
+        "gira": 9,
+        "astron": 11,
+        "lariho": 12,
+        "mahotoon": 12,
+        "dodgeStep": 13,
+        "zawo": 14,
+        "dein": 14,
+        "rura": 14,
+        "lightningSlash": 17,
+        "behoimi": 18,
+        "begirama": 18,
+        "toheros": 20,
+        "greatDefense": 22,
+        "vacuumSlash": 23,
+        "raidein": 24,
+        "zaoral": 25,
+        "iora": 26,
+        "meditation": 28,
+        "falconSlash": 30,
+        "begiragon": 32,
+        "behoma": 33,
+        "gigadein": 38,
+        "behomazun": 39,
+        "gigaSlash": 45
+      },
+      "aiTraits": {
+        "buffAffinity": {
+          "attack": 1.35,
+          "defense": 1.2,
+          "speed": 1.1
+        },
+        "healPriority": 1.05,
+        "magicPriority": 1.05
+      },
+      "level": 20,
+      "levelStats": {
+        "1": {
+          "maxHp": 22,
+          "maxMp": 8,
+          "attack": 11,
+          "defense": 10,
+          "speed": 8
+        },
+        "2": {
+          "maxHp": 28,
+          "maxMp": 11,
+          "attack": 14,
+          "defense": 12,
+          "speed": 10
+        },
+        "3": {
+          "maxHp": 34,
+          "maxMp": 15,
+          "attack": 17,
+          "defense": 15,
+          "speed": 13
+        },
+        "4": {
+          "maxHp": 40,
+          "maxMp": 19,
+          "attack": 20,
+          "defense": 18,
+          "speed": 15
+        },
+        "5": {
+          "maxHp": 46,
+          "maxMp": 23,
+          "attack": 23,
+          "defense": 21,
+          "speed": 18
+        },
+        "6": {
+          "maxHp": 52,
+          "maxMp": 27,
+          "attack": 27,
+          "defense": 24,
+          "speed": 20
+        },
+        "7": {
+          "maxHp": 59,
+          "maxMp": 31,
+          "attack": 30,
+          "defense": 26,
+          "speed": 23
+        },
+        "8": {
+          "maxHp": 65,
+          "maxMp": 35,
+          "attack": 33,
+          "defense": 29,
+          "speed": 26
+        },
+        "9": {
+          "maxHp": 72,
+          "maxMp": 39,
+          "attack": 36,
+          "defense": 32,
+          "speed": 28
+        },
+        "10": {
+          "maxHp": 78,
+          "maxMp": 43,
+          "attack": 40,
+          "defense": 35,
+          "speed": 31
+        },
+        "11": {
+          "maxHp": 85,
+          "maxMp": 47,
+          "attack": 43,
           "defense": 38,
-          "speed": 79
+          "speed": 33
+        },
+        "12": {
+          "maxHp": 91,
+          "maxMp": 51,
+          "attack": 46,
+          "defense": 41,
+          "speed": 36
+        },
+        "13": {
+          "maxHp": 98,
+          "maxMp": 56,
+          "attack": 50,
+          "defense": 44,
+          "speed": 39
+        },
+        "14": {
+          "maxHp": 105,
+          "maxMp": 60,
+          "attack": 53,
+          "defense": 47,
+          "speed": 42
+        },
+        "15": {
+          "maxHp": 111,
+          "maxMp": 64,
+          "attack": 57,
+          "defense": 50,
+          "speed": 44
+        },
+        "16": {
+          "maxHp": 118,
+          "maxMp": 68,
+          "attack": 60,
+          "defense": 53,
+          "speed": 47
+        },
+        "17": {
+          "maxHp": 125,
+          "maxMp": 72,
+          "attack": 64,
+          "defense": 56,
+          "speed": 50
+        },
+        "18": {
+          "maxHp": 131,
+          "maxMp": 77,
+          "attack": 67,
+          "defense": 59,
+          "speed": 52
+        },
+        "19": {
+          "maxHp": 138,
+          "maxMp": 81,
+          "attack": 71,
+          "defense": 62,
+          "speed": 55
+        },
+        "20": {
+          "maxHp": 145,
+          "maxMp": 85,
+          "attack": 74,
+          "defense": 65,
+          "speed": 58
+        },
+        "21": {
+          "maxHp": 160,
+          "maxMp": 96,
+          "attack": 84,
+          "defense": 74,
+          "speed": 66
+        },
+        "22": {
+          "maxHp": 175,
+          "maxMp": 106,
+          "attack": 94,
+          "defense": 82,
+          "speed": 73
+        },
+        "23": {
+          "maxHp": 189,
+          "maxMp": 117,
+          "attack": 104,
+          "defense": 90,
+          "speed": 81
+        },
+        "24": {
+          "maxHp": 204,
+          "maxMp": 127,
+          "attack": 113,
+          "defense": 98,
+          "speed": 88
+        },
+        "25": {
+          "maxHp": 218,
+          "maxMp": 137,
+          "attack": 123,
+          "defense": 106,
+          "speed": 95
+        },
+        "26": {
+          "maxHp": 232,
+          "maxMp": 147,
+          "attack": 132,
+          "defense": 114,
+          "speed": 102
+        },
+        "27": {
+          "maxHp": 246,
+          "maxMp": 157,
+          "attack": 141,
+          "defense": 122,
+          "speed": 110
+        },
+        "28": {
+          "maxHp": 260,
+          "maxMp": 167,
+          "attack": 151,
+          "defense": 130,
+          "speed": 117
+        },
+        "29": {
+          "maxHp": 274,
+          "maxMp": 177,
+          "attack": 160,
+          "defense": 138,
+          "speed": 124
+        },
+        "30": {
+          "maxHp": 288,
+          "maxMp": 187,
+          "attack": 169,
+          "defense": 146,
+          "speed": 131
+        },
+        "31": {
+          "maxHp": 302,
+          "maxMp": 196,
+          "attack": 178,
+          "defense": 154,
+          "speed": 138
+        },
+        "32": {
+          "maxHp": 316,
+          "maxMp": 206,
+          "attack": 187,
+          "defense": 162,
+          "speed": 145
+        },
+        "33": {
+          "maxHp": 329,
+          "maxMp": 216,
+          "attack": 197,
+          "defense": 169,
+          "speed": 152
+        },
+        "34": {
+          "maxHp": 343,
+          "maxMp": 226,
+          "attack": 206,
+          "defense": 177,
+          "speed": 159
+        },
+        "35": {
+          "maxHp": 357,
+          "maxMp": 236,
+          "attack": 215,
+          "defense": 185,
+          "speed": 166
+        },
+        "36": {
+          "maxHp": 371,
+          "maxMp": 245,
+          "attack": 224,
+          "defense": 193,
+          "speed": 173
+        },
+        "37": {
+          "maxHp": 384,
+          "maxMp": 255,
+          "attack": 233,
+          "defense": 200,
+          "speed": 180
+        },
+        "38": {
+          "maxHp": 398,
+          "maxMp": 265,
+          "attack": 242,
+          "defense": 208,
+          "speed": 187
+        },
+        "39": {
+          "maxHp": 411,
+          "maxMp": 274,
+          "attack": 251,
+          "defense": 216,
+          "speed": 194
+        },
+        "40": {
+          "maxHp": 425,
+          "maxMp": 284,
+          "attack": 260,
+          "defense": 224,
+          "speed": 201
+        },
+        "41": {
+          "maxHp": 439,
+          "maxMp": 294,
+          "attack": 269,
+          "defense": 231,
+          "speed": 208
+        },
+        "42": {
+          "maxHp": 452,
+          "maxMp": 303,
+          "attack": 278,
+          "defense": 239,
+          "speed": 215
+        },
+        "43": {
+          "maxHp": 466,
+          "maxMp": 313,
+          "attack": 287,
+          "defense": 247,
+          "speed": 222
+        },
+        "44": {
+          "maxHp": 479,
+          "maxMp": 323,
+          "attack": 296,
+          "defense": 254,
+          "speed": 229
+        },
+        "45": {
+          "maxHp": 493,
+          "maxMp": 332,
+          "attack": 305,
+          "defense": 262,
+          "speed": 236
+        },
+        "46": {
+          "maxHp": 506,
+          "maxMp": 342,
+          "attack": 314,
+          "defense": 270,
+          "speed": 243
+        },
+        "47": {
+          "maxHp": 520,
+          "maxMp": 351,
+          "attack": 323,
+          "defense": 277,
+          "speed": 249
+        },
+        "48": {
+          "maxHp": 533,
+          "maxMp": 361,
+          "attack": 332,
+          "defense": 285,
+          "speed": 256
+        },
+        "49": {
+          "maxHp": 547,
+          "maxMp": 370,
+          "attack": 341,
+          "defense": 292,
+          "speed": 263
+        },
+        "50": {
+          "maxHp": 560,
+          "maxMp": 380,
+          "attack": 350,
+          "defense": 300,
+          "speed": 270
+        }
+      }
+    },
+    {
+      "id": "sage",
+      "name": "賢者",
+      "icon": "賢",
+      "enabled": false,
+      "actions": [
+        "attack",
+        "mera",
+        "hoimi",
+        "scara",
+        "nifuram",
+        "manusa",
+        "hyado",
+        "bagi",
+        "lukani",
+        "gira",
+        "kiari",
+        "sukurlt",
+        "lariho",
+        "piorim",
+        "riremito",
+        "bomios",
+        "zameha",
+        "zawo",
+        "io",
+        "rura",
+        "mahotra",
+        "mahotoon",
+        "begirama",
+        "behoimi",
+        "mahori",
+        "inpass",
+        "kiariku",
+        "merami",
+        "magicBarrier",
+        "lukanan",
+        "hyadaruko",
+        "bagima",
+        "bashirula",
+        "toramana",
+        "baikilt",
+        "mahocanta",
+        "zaki",
+        "iora",
+        "behoimu",
+        "zaoral",
+        "ranaluta",
+        "hyadain",
+        "zaraki",
+        "medapani",
+        "fubaha",
+        "begiragon",
+        "shanaku",
+        "remuor",
+        "merazoma",
+        "bagicross",
+        "behoma",
+        "behomaler",
+        "megante",
+        "abakam",
+        "mahyado",
+        "moshas",
+        "dragonram",
+        "zaoriku",
+        "ionazun",
+        "palpunte"
+      ],
+      "actionLevels": {
+        "attack": 1,
+        "mera": 1,
+        "hoimi": 1,
+        "scara": 2,
+        "nifuram": 2,
+        "manusa": 3,
+        "hyado": 4,
+        "bagi": 5,
+        "lukani": 6,
+        "gira": 7,
+        "kiari": 7,
+        "sukurlt": 8,
+        "lariho": 8,
+        "piorim": 9,
+        "riremito": 9,
+        "bomios": 10,
+        "zameha": 10,
+        "zawo": 10,
+        "io": 11,
+        "rura": 12,
+        "mahotra": 12,
+        "mahotoon": 12,
+        "begirama": 13,
+        "behoimi": 13,
+        "mahori": 14,
+        "inpass": 15,
+        "kiariku": 15,
+        "merami": 16,
+        "magicBarrier": 16,
+        "lukanan": 17,
+        "hyadaruko": 20,
+        "bagima": 20,
+        "bashirula": 20,
+        "toramana": 21,
+        "baikilt": 21,
+        "mahocanta": 22,
+        "zaki": 22,
+        "iora": 23,
+        "behoimu": 23,
+        "zaoral": 24,
+        "ranaluta": 25,
+        "hyadain": 26,
+        "zaraki": 26,
+        "medapani": 27,
+        "fubaha": 27,
+        "begiragon": 29,
+        "shanaku": 30,
+        "remuor": 31,
+        "merazoma": 31,
+        "bagicross": 31,
+        "behoma": 32,
+        "behomaler": 33,
+        "megante": 33,
+        "abakam": 34,
+        "mahyado": 36,
+        "moshas": 36,
+        "dragonram": 37,
+        "zaoriku": 37,
+        "ionazun": 38,
+        "palpunte": 40
+      },
+      "aiTraits": {
+        "buffAffinity": {
+          "attack": 0.85,
+          "defense": 1.15,
+          "speed": 1.15
+        },
+        "healPriority": 1.25,
+        "magicPriority": 1.25
+      },
+      "level": 20,
+      "levelStats": {
+        "1": {
+          "maxHp": 18,
+          "maxMp": 15,
+          "attack": 7,
+          "defense": 8,
+          "speed": 10
+        },
+        "2": {
+          "maxHp": 22,
+          "maxMp": 20,
+          "attack": 9,
+          "defense": 10,
+          "speed": 13
+        },
+        "3": {
+          "maxHp": 27,
+          "maxMp": 25,
+          "attack": 11,
+          "defense": 12,
+          "speed": 16
+        },
+        "4": {
+          "maxHp": 31,
+          "maxMp": 30,
+          "attack": 13,
+          "defense": 14,
+          "speed": 20
+        },
+        "5": {
+          "maxHp": 36,
+          "maxMp": 36,
+          "attack": 15,
+          "defense": 16,
+          "speed": 23
+        },
+        "6": {
+          "maxHp": 41,
+          "maxMp": 41,
+          "attack": 16,
+          "defense": 18,
+          "speed": 26
+        },
+        "7": {
+          "maxHp": 46,
+          "maxMp": 47,
+          "attack": 18,
+          "defense": 20,
+          "speed": 30
+        },
+        "8": {
+          "maxHp": 51,
+          "maxMp": 52,
+          "attack": 20,
+          "defense": 22,
+          "speed": 33
+        },
+        "9": {
+          "maxHp": 55,
+          "maxMp": 58,
+          "attack": 22,
+          "defense": 24,
+          "speed": 36
+        },
+        "10": {
+          "maxHp": 60,
+          "maxMp": 63,
+          "attack": 24,
+          "defense": 26,
+          "speed": 40
+        },
+        "11": {
+          "maxHp": 65,
+          "maxMp": 69,
+          "attack": 26,
+          "defense": 29,
+          "speed": 43
+        },
+        "12": {
+          "maxHp": 70,
+          "maxMp": 74,
+          "attack": 29,
+          "defense": 31,
+          "speed": 47
+        },
+        "13": {
+          "maxHp": 75,
+          "maxMp": 80,
+          "attack": 31,
+          "defense": 33,
+          "speed": 50
+        },
+        "14": {
+          "maxHp": 80,
+          "maxMp": 86,
+          "attack": 33,
+          "defense": 35,
+          "speed": 54
+        },
+        "15": {
+          "maxHp": 85,
+          "maxMp": 91,
+          "attack": 35,
+          "defense": 37,
+          "speed": 57
+        },
+        "16": {
+          "maxHp": 90,
+          "maxMp": 97,
+          "attack": 37,
+          "defense": 39,
+          "speed": 61
+        },
+        "17": {
+          "maxHp": 95,
+          "maxMp": 103,
+          "attack": 39,
+          "defense": 41,
+          "speed": 64
+        },
+        "18": {
+          "maxHp": 100,
+          "maxMp": 109,
+          "attack": 41,
+          "defense": 44,
+          "speed": 68
+        },
+        "19": {
+          "maxHp": 105,
+          "maxMp": 114,
+          "attack": 43,
+          "defense": 46,
+          "speed": 71
+        },
+        "20": {
+          "maxHp": 110,
+          "maxMp": 120,
+          "attack": 45,
+          "defense": 48,
+          "speed": 75
+        },
+        "21": {
+          "maxHp": 123,
+          "maxMp": 136,
+          "attack": 52,
+          "defense": 56,
+          "speed": 84
+        },
+        "22": {
+          "maxHp": 135,
+          "maxMp": 150,
+          "attack": 59,
+          "defense": 64,
+          "speed": 93
+        },
+        "23": {
+          "maxHp": 148,
+          "maxMp": 165,
+          "attack": 66,
+          "defense": 72,
+          "speed": 101
+        },
+        "24": {
+          "maxHp": 160,
+          "maxMp": 179,
+          "attack": 73,
+          "defense": 80,
+          "speed": 110
+        },
+        "25": {
+          "maxHp": 172,
+          "maxMp": 194,
+          "attack": 80,
+          "defense": 88,
+          "speed": 118
+        },
+        "26": {
+          "maxHp": 183,
+          "maxMp": 208,
+          "attack": 87,
+          "defense": 96,
+          "speed": 126
+        },
+        "27": {
+          "maxHp": 195,
+          "maxMp": 222,
+          "attack": 94,
+          "defense": 103,
+          "speed": 135
+        },
+        "28": {
+          "maxHp": 207,
+          "maxMp": 237,
+          "attack": 100,
+          "defense": 111,
+          "speed": 143
+        },
+        "29": {
+          "maxHp": 219,
+          "maxMp": 251,
+          "attack": 107,
+          "defense": 119,
+          "speed": 151
+        },
+        "30": {
+          "maxHp": 231,
+          "maxMp": 265,
+          "attack": 114,
+          "defense": 126,
+          "speed": 159
+        },
+        "31": {
+          "maxHp": 242,
+          "maxMp": 279,
+          "attack": 121,
+          "defense": 134,
+          "speed": 168
+        },
+        "32": {
+          "maxHp": 254,
+          "maxMp": 293,
+          "attack": 127,
+          "defense": 141,
+          "speed": 176
+        },
+        "33": {
+          "maxHp": 266,
+          "maxMp": 307,
+          "attack": 134,
+          "defense": 149,
+          "speed": 184
+        },
+        "34": {
+          "maxHp": 277,
+          "maxMp": 321,
+          "attack": 140,
+          "defense": 156,
+          "speed": 192
+        },
+        "35": {
+          "maxHp": 289,
+          "maxMp": 334,
+          "attack": 147,
+          "defense": 164,
+          "speed": 200
+        },
+        "36": {
+          "maxHp": 300,
+          "maxMp": 348,
+          "attack": 154,
+          "defense": 171,
+          "speed": 208
+        },
+        "37": {
+          "maxHp": 312,
+          "maxMp": 362,
+          "attack": 160,
+          "defense": 179,
+          "speed": 216
+        },
+        "38": {
+          "maxHp": 323,
+          "maxMp": 376,
+          "attack": 167,
+          "defense": 186,
+          "speed": 224
+        },
+        "39": {
+          "maxHp": 335,
+          "maxMp": 390,
+          "attack": 173,
+          "defense": 194,
+          "speed": 232
+        },
+        "40": {
+          "maxHp": 346,
+          "maxMp": 403,
+          "attack": 180,
+          "defense": 201,
+          "speed": 240
+        },
+        "41": {
+          "maxHp": 358,
+          "maxMp": 417,
+          "attack": 187,
+          "defense": 209,
+          "speed": 248
+        },
+        "42": {
+          "maxHp": 369,
+          "maxMp": 431,
+          "attack": 193,
+          "defense": 216,
+          "speed": 256
+        },
+        "43": {
+          "maxHp": 380,
+          "maxMp": 445,
+          "attack": 200,
+          "defense": 223,
+          "speed": 264
+        },
+        "44": {
+          "maxHp": 392,
+          "maxMp": 458,
+          "attack": 206,
+          "defense": 231,
+          "speed": 272
+        },
+        "45": {
+          "maxHp": 403,
+          "maxMp": 472,
+          "attack": 213,
+          "defense": 238,
+          "speed": 280
+        },
+        "46": {
+          "maxHp": 415,
+          "maxMp": 486,
+          "attack": 219,
+          "defense": 246,
+          "speed": 288
+        },
+        "47": {
+          "maxHp": 426,
+          "maxMp": 499,
+          "attack": 226,
+          "defense": 253,
+          "speed": 296
+        },
+        "48": {
+          "maxHp": 437,
+          "maxMp": 513,
+          "attack": 232,
+          "defense": 260,
+          "speed": 304
+        },
+        "49": {
+          "maxHp": 449,
+          "maxMp": 526,
+          "attack": 239,
+          "defense": 268,
+          "speed": 312
+        },
+        "50": {
+          "maxHp": 460,
+          "maxMp": 540,
+          "attack": 245,
+          "defense": 275,
+          "speed": 320
         }
       }
     }
@@ -1240,32 +4229,69 @@
       "id": "slime",
       "name": "スライム",
       "icon": "●",
-      "recommendedLevel": 1,
-      "maxHp": 14,
-      "maxMp": 0,
-      "attack": 8,
-      "defense": 6,
+      "recommendedLevel": 2,
+      "maxHp": 7,
+      "maxMp": 1,
+      "attack": 13,
+      "defense": 18,
       "speed": 8,
       "actions": [
         "attack"
       ],
       "resistances": {
-        "fire": 1.25,
+        "fire": 1.2,
         "ice": 0.9,
         "wind": 1,
         "bang": 1,
-        "instantDeath": 0.72
+        "zap": 1,
+        "instantDeath": 0.75,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
       }
     },
     {
       "id": "greatRaven",
       "name": "おおがらす",
       "icon": "烏",
+      "recommendedLevel": 3,
+      "maxHp": 12,
+      "maxMp": 3,
+      "attack": 14,
+      "defense": 23,
+      "speed": 9,
+      "actions": [
+        "attack"
+      ],
+      "resistances": {
+        "fire": 1,
+        "ice": 1,
+        "wind": 1.2,
+        "bang": 1,
+        "zap": 1,
+        "instantDeath": 0.75,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
+      }
+    },
+    {
+      "id": "hornedRabbit",
+      "name": "いっかくうさぎ",
+      "icon": "兎",
       "recommendedLevel": 2,
-      "maxHp": 18,
-      "maxMp": 0,
-      "attack": 11,
-      "defense": 7,
+      "maxHp": 10,
+      "maxMp": 4,
+      "attack": 15,
+      "defense": 24,
       "speed": 14,
       "actions": [
         "attack"
@@ -1273,42 +4299,29 @@
       "resistances": {
         "fire": 1,
         "ice": 1,
-        "wind": 1.25,
-        "bang": 1,
-        "instantDeath": 0.75
-      }
-    },
-    {
-      "id": "hornedRabbit",
-      "name": "いっかくうさぎ",
-      "icon": "兎",
-      "recommendedLevel": 3,
-      "maxHp": 22,
-      "maxMp": 0,
-      "attack": 14,
-      "defense": 9,
-      "speed": 16,
-      "actions": [
-        "attack"
-      ],
-      "resistances": {
-        "fire": 1,
-        "ice": 1,
         "wind": 1,
         "bang": 1,
-        "instantDeath": 0.72
+        "zap": 1,
+        "instantDeath": 0.75,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
       }
     },
     {
       "id": "giantAnteater",
       "name": "おおありくい",
       "icon": "食",
-      "recommendedLevel": 4,
-      "maxHp": 28,
-      "maxMp": 0,
+      "recommendedLevel": 5,
+      "maxHp": 14,
+      "maxMp": 6,
       "attack": 17,
-      "defense": 12,
-      "speed": 10,
+      "defense": 35,
+      "speed": 8,
       "actions": [
         "attack"
       ],
@@ -1317,7 +4330,15 @@
         "ice": 1,
         "wind": 1,
         "bang": 1,
-        "instantDeath": 0.68
+        "zap": 1,
+        "instantDeath": 0.5,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
       }
     },
     {
@@ -1325,11 +4346,11 @@
       "name": "じんめんちょう",
       "icon": "蝶",
       "recommendedLevel": 4,
-      "maxHp": 20,
-      "maxMp": 8,
-      "attack": 13,
-      "defense": 10,
-      "speed": 19,
+      "maxHp": 13,
+      "maxMp": 10,
+      "attack": 16,
+      "defense": 27,
+      "speed": 10,
       "actions": [
         "attack",
         "manusa"
@@ -1339,19 +4360,27 @@
         "ice": 1,
         "wind": 0.8,
         "bang": 1,
-        "instantDeath": 0.7
+        "zap": 1,
+        "instantDeath": 0.5,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
       }
     },
     {
       "id": "frogger",
       "name": "フロッガー",
       "icon": "蛙",
-      "recommendedLevel": 5,
-      "maxHp": 34,
-      "maxMp": 0,
-      "attack": 20,
-      "defense": 14,
-      "speed": 12,
+      "recommendedLevel": 6,
+      "maxHp": 18,
+      "maxMp": 8,
+      "attack": 21,
+      "defense": 38,
+      "speed": 14,
       "actions": [
         "attack",
         "heavyBlow"
@@ -1361,7 +4390,15 @@
         "ice": 0.85,
         "wind": 1,
         "bang": 1,
-        "instantDeath": 0.65
+        "zap": 1,
+        "instantDeath": 0.5,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
       }
     },
     {
@@ -1369,11 +4406,11 @@
       "name": "バブルスライム",
       "icon": "毒",
       "recommendedLevel": 5,
-      "maxHp": 27,
-      "maxMp": 0,
-      "attack": 18,
-      "defense": 13,
-      "speed": 17,
+      "maxHp": 14,
+      "maxMp": 7,
+      "attack": 19,
+      "defense": 34,
+      "speed": 19,
       "actions": [
         "attack",
         "poisonAttack"
@@ -1383,7 +4420,15 @@
         "ice": 0.9,
         "wind": 1,
         "bang": 1,
-        "instantDeath": 0.6
+        "zap": 1,
+        "instantDeath": 0.5,
+        "poison": 0.15,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
       }
     },
     {
@@ -1391,21 +4436,29 @@
       "name": "まほうつかい",
       "icon": "妖",
       "recommendedLevel": 6,
-      "maxHp": 31,
-      "maxMp": 20,
-      "attack": 13,
-      "defense": 14,
-      "speed": 22,
+      "maxHp": 27,
+      "maxMp": 8,
+      "attack": 23,
+      "defense": 40,
+      "speed": 18,
       "actions": [
         "attack",
-        "enemyMera"
+        "mera"
       ],
       "resistances": {
         "fire": 0.75,
         "ice": 1.2,
         "wind": 1,
         "bang": 1.1,
-        "instantDeath": 0.5
+        "zap": 1,
+        "instantDeath": 0.5,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 1.1,
+        "paralysis": 0.7,
+        "confusion": 0.75
       }
     },
     {
@@ -1413,11 +4466,11 @@
       "name": "さそりばち",
       "icon": "蜂",
       "recommendedLevel": 6,
-      "maxHp": 29,
-      "maxMp": 0,
-      "attack": 21,
-      "defense": 15,
-      "speed": 25,
+      "maxHp": 18,
+      "maxMp": 5,
+      "attack": 24,
+      "defense": 33,
+      "speed": 21,
       "actions": [
         "attack",
         "poisonAttack"
@@ -1427,7 +4480,15 @@
         "ice": 1,
         "wind": 1.2,
         "bang": 1,
-        "instantDeath": 0.62
+        "zap": 1,
+        "instantDeath": 0.5,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
       }
     },
     {
@@ -1435,11 +4496,11 @@
       "name": "ホイミスライム",
       "icon": "癒",
       "recommendedLevel": 7,
-      "maxHp": 38,
-      "maxMp": 24,
-      "attack": 16,
-      "defense": 18,
-      "speed": 20,
+      "maxHp": 30,
+      "maxMp": 14,
+      "attack": 20,
+      "defense": 38,
+      "speed": 17,
       "actions": [
         "attack",
         "hoimi"
@@ -1449,63 +4510,87 @@
         "ice": 1,
         "wind": 1,
         "bang": 1.1,
-        "instantDeath": 0.55
+        "zap": 1,
+        "instantDeath": 0.5,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
       }
     },
     {
       "id": "caterpillar",
       "name": "キャタピラー",
       "icon": "虫",
-      "recommendedLevel": 8,
-      "maxHp": 48,
-      "maxMp": 0,
-      "attack": 27,
-      "defense": 23,
-      "speed": 13,
+      "recommendedLevel": 9,
+      "maxHp": 44,
+      "maxMp": 14,
+      "attack": 38,
+      "defense": 58,
+      "speed": 18,
       "actions": [
         "attack",
-        "heavyBlow",
-        "petrifyingAttack"
+        "heavyBlow"
       ],
       "resistances": {
         "fire": 1.25,
         "ice": 1,
         "wind": 1,
         "bang": 1,
-        "instantDeath": 0.5
+        "zap": 1,
+        "instantDeath": 0.5,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
       }
     },
     {
       "id": "killerBee",
       "name": "キラービー",
       "icon": "殺",
-      "recommendedLevel": 9,
-      "maxHp": 42,
-      "maxMp": 0,
-      "attack": 31,
-      "defense": 20,
-      "speed": 33,
+      "recommendedLevel": 10,
+      "maxHp": 37,
+      "maxMp": 10,
+      "attack": 40,
+      "defense": 56,
+      "speed": 28,
       "actions": [
-        "attack"
+        "attack",
+        "paralyzingAttack"
       ],
       "resistances": {
         "fire": 1.15,
         "ice": 1,
         "wind": 1.2,
         "bang": 1,
-        "instantDeath": 0.5
+        "zap": 1,
+        "instantDeath": 0.5,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
       }
     },
     {
       "id": "armyCrab",
       "name": "ぐんたいガニ",
       "icon": "蟹",
-      "recommendedLevel": 10,
-      "maxHp": 55,
-      "maxMp": 0,
-      "attack": 30,
-      "defense": 42,
-      "speed": 16,
+      "recommendedLevel": 11,
+      "maxHp": 35,
+      "maxMp": 8,
+      "attack": 37,
+      "defense": 77,
+      "speed": 23,
       "actions": [
         "attack"
       ],
@@ -1514,63 +4599,86 @@
         "ice": 1.15,
         "wind": 0.85,
         "bang": 1.15,
-        "instantDeath": 0.42
+        "zap": 1,
+        "instantDeath": 0.5,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
       }
     },
     {
       "id": "wanderingArmor",
       "name": "さまようよろい",
       "icon": "鎧",
-      "recommendedLevel": 12,
-      "maxHp": 72,
-      "maxMp": 0,
-      "attack": 42,
-      "defense": 48,
-      "speed": 18,
+      "recommendedLevel": 13,
+      "maxHp": 56,
+      "maxMp": 14,
+      "attack": 53,
+      "defense": 81,
+      "speed": 34,
       "actions": [
         "attack",
         "heavyBlow"
       ],
       "resistances": {
         "fire": 0.8,
-        "ice": 0.9,
+        "ice": 1,
         "wind": 0.8,
         "bang": 1.15,
-        "instantDeath": 0.25
+        "zap": 1,
+        "instantDeath": 0.25,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
       }
     },
     {
       "id": "mummy",
       "name": "ミイラおとこ",
       "icon": "包",
-      "recommendedLevel": 15,
-      "maxHp": 88,
-      "maxMp": 0,
-      "attack": 49,
-      "defense": 38,
-      "speed": 22,
+      "recommendedLevel": 17,
+      "maxHp": 60,
+      "maxMp": 4,
+      "attack": 73,
+      "defense": 80,
+      "speed": 41,
       "actions": [
         "attack",
-        "heavyBlow",
-        "petrifyingAttack"
+        "sleepAttack"
       ],
       "resistances": {
         "fire": 1.25,
-        "ice": 0.9,
+        "ice": 1,
         "wind": 1,
         "bang": 1,
-        "instantDeath": 0.2
+        "zap": 1,
+        "instantDeath": 0.2,
+        "poison": 0.2,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
       }
     },
     {
       "id": "heatGizmo",
       "name": "ヒートギズモ",
       "icon": "炎",
-      "recommendedLevel": 18,
-      "maxHp": 96,
-      "maxMp": 36,
-      "attack": 42,
-      "defense": 40,
+      "recommendedLevel": 19,
+      "maxHp": 76,
+      "maxMp": 16,
+      "attack": 75,
+      "defense": 151,
       "speed": 48,
       "actions": [
         "attack",
@@ -1581,19 +4689,27 @@
         "ice": 1.35,
         "wind": 0.8,
         "bang": 1,
-        "instantDeath": 0.18
+        "zap": 1,
+        "instantDeath": 0.2,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
       }
     },
     {
       "id": "killerApe",
       "name": "キラーエイプ",
       "icon": "猿",
-      "recommendedLevel": 20,
-      "maxHp": 128,
-      "maxMp": 0,
-      "attack": 64,
-      "defense": 46,
-      "speed": 38,
+      "recommendedLevel": 22,
+      "maxHp": 118,
+      "maxMp": 18,
+      "attack": 111,
+      "defense": 164,
+      "speed": 59,
       "actions": [
         "attack",
         "heavyBlow"
@@ -1603,7 +4719,15 @@
         "ice": 1.1,
         "wind": 1,
         "bang": 1,
-        "instantDeath": 0.14
+        "zap": 1,
+        "instantDeath": 0.18,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
       }
     },
     {
@@ -1627,6 +4751,1075 @@
         "wind": 0.8,
         "bang": 0.9,
         "instantDeath": 0.06
+      }
+    },
+    {
+      "id": "slimeSnail",
+      "name": "スライムつむり",
+      "icon": "殻",
+      "recommendedLevel": 21,
+      "maxHp": 32,
+      "maxMp": 45,
+      "attack": 90,
+      "defense": 250,
+      "speed": 62,
+      "actions": [
+        "attack",
+        "scara"
+      ],
+      "resistances": {
+        "fire": 0.65,
+        "ice": 0.65,
+        "wind": 1,
+        "bang": 1,
+        "zap": 1,
+        "instantDeath": 0.4,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
+      }
+    },
+    {
+      "id": "madOx",
+      "name": "マッドオックス",
+      "icon": "牛",
+      "recommendedLevel": 22,
+      "maxHp": 95,
+      "maxMp": 36,
+      "attack": 95,
+      "defense": 144,
+      "speed": 58,
+      "actions": [
+        "attack",
+        "heavyBlow"
+      ],
+      "resistances": {
+        "fire": 1,
+        "ice": 1.15,
+        "wind": 1,
+        "bang": 1,
+        "zap": 1,
+        "instantDeath": 0.5,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
+      }
+    },
+    {
+      "id": "metalSlime",
+      "name": "メタルスライム",
+      "icon": "銀",
+      "recommendedLevel": 23,
+      "maxHp": 4,
+      "maxMp": 12,
+      "attack": 40,
+      "defense": 1536,
+      "speed": 316,
+      "actions": [
+        "attack",
+        "mera"
+      ],
+      "resistances": {
+        "fire": 0.05,
+        "ice": 0.05,
+        "wind": 0.05,
+        "bang": 0.05,
+        "zap": 0.05,
+        "instantDeath": 0.01,
+        "poison": 0.01,
+        "blind": 0.01,
+        "petrify": 0.5,
+        "sleep": 0.01,
+        "silence": 0.01,
+        "paralysis": 0.01,
+        "confusion": 0.01
+      }
+    },
+    {
+      "id": "witch",
+      "name": "まじょ",
+      "icon": "女",
+      "recommendedLevel": 24,
+      "maxHp": 86,
+      "maxMp": 72,
+      "attack": 106,
+      "defense": 160,
+      "speed": 77,
+      "actions": [
+        "attack",
+        "begirama",
+        "mahotoon"
+      ],
+      "resistances": {
+        "fire": 0.75,
+        "ice": 1.15,
+        "wind": 1,
+        "bang": 1,
+        "zap": 1,
+        "instantDeath": 0.5,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.45,
+        "paralysis": 0.7,
+        "confusion": 0.75
+      }
+    },
+    {
+      "id": "hellArmor",
+      "name": "じごくのよろい",
+      "icon": "獄",
+      "recommendedLevel": 25,
+      "maxHp": 96,
+      "maxMp": 13,
+      "attack": 127,
+      "defense": 248,
+      "speed": 69,
+      "actions": [
+        "attack",
+        "doubleEdgedSlash"
+      ],
+      "resistances": {
+        "fire": 0.7,
+        "ice": 1,
+        "wind": 0.75,
+        "bang": 1.15,
+        "zap": 1,
+        "instantDeath": 0.15,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
+      }
+    },
+    {
+      "id": "giantSquid",
+      "name": "だいおうイカ",
+      "icon": "烏",
+      "recommendedLevel": 26,
+      "maxHp": 216,
+      "maxMp": 23,
+      "attack": 134,
+      "defense": 192,
+      "speed": 50,
+      "actions": [
+        "attack",
+        "heavyBlow"
+      ],
+      "resistances": {
+        "fire": 1.15,
+        "ice": 1,
+        "wind": 1,
+        "bang": 1,
+        "zap": 1.2,
+        "instantDeath": 0.5,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
+      }
+    },
+    {
+      "id": "skyDragon",
+      "name": "スカイドラゴン",
+      "icon": "竜",
+      "recommendedLevel": 27,
+      "maxHp": 168,
+      "maxMp": 29,
+      "attack": 124,
+      "defense": 179,
+      "speed": 58,
+      "actions": [
+        "attack",
+        "fireBreath"
+      ],
+      "resistances": {
+        "fire": 0.45,
+        "ice": 1.2,
+        "wind": 1,
+        "bang": 1,
+        "zap": 1,
+        "instantDeath": 0.18,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
+      }
+    },
+    {
+      "id": "toxicZombie",
+      "name": "どくどくゾンビ",
+      "icon": "腐",
+      "recommendedLevel": 28,
+      "maxHp": 128,
+      "maxMp": 11,
+      "attack": 134,
+      "defense": 190,
+      "speed": 95,
+      "actions": [
+        "attack",
+        "poisonAttack"
+      ],
+      "resistances": {
+        "fire": 1.25,
+        "ice": 1,
+        "wind": 1,
+        "bang": 1,
+        "zap": 1,
+        "instantDeath": 0.12,
+        "poison": 0.05,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
+      }
+    },
+    {
+      "id": "eliminator",
+      "name": "エリミネーター",
+      "icon": "斧",
+      "recommendedLevel": 29,
+      "maxHp": 192,
+      "maxMp": 18,
+      "attack": 148,
+      "defense": 170,
+      "speed": 86,
+      "actions": [
+        "attack",
+        "doubleEdgedSlash"
+      ],
+      "resistances": {
+        "fire": 1,
+        "ice": 1.1,
+        "wind": 1,
+        "bang": 1,
+        "zap": 1,
+        "instantDeath": 0.5,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
+      }
+    },
+    {
+      "id": "iceMan",
+      "name": "ひょうがまじん",
+      "icon": "氷",
+      "recommendedLevel": 30,
+      "maxHp": 244,
+      "maxMp": 48,
+      "attack": 141,
+      "defense": 276,
+      "speed": 105,
+      "actions": [
+        "attack",
+        "hyadaruko",
+        "iceBreath"
+      ],
+      "resistances": {
+        "fire": 1.4,
+        "ice": 0.2,
+        "wind": 1,
+        "bang": 1,
+        "zap": 1,
+        "instantDeath": 0.15,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
+      }
+    },
+    {
+      "id": "skeletonSwordsman",
+      "name": "がいこつけんし",
+      "icon": "骨",
+      "recommendedLevel": 31,
+      "maxHp": 140,
+      "maxMp": 54,
+      "attack": 164,
+      "defense": 182,
+      "speed": 108,
+      "actions": [
+        "attack",
+        "falconSlash"
+      ],
+      "resistances": {
+        "fire": 1.15,
+        "ice": 1,
+        "wind": 1,
+        "bang": 1,
+        "zap": 1,
+        "instantDeath": 0.5,
+        "poison": 0.05,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
+      }
+    },
+    {
+      "id": "killerArmor",
+      "name": "キラーアーマー",
+      "icon": "甲",
+      "recommendedLevel": 32,
+      "maxHp": 112,
+      "maxMp": 15,
+      "attack": 140,
+      "defense": 310,
+      "speed": 106,
+      "actions": [
+        "attack",
+        "vitalThrust"
+      ],
+      "resistances": {
+        "fire": 0.65,
+        "ice": 1,
+        "wind": 0.7,
+        "bang": 1.15,
+        "zap": 1,
+        "instantDeath": 0.1,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
+      }
+    },
+    {
+      "id": "frostGizmo",
+      "name": "フロストギズモ",
+      "icon": "凍",
+      "recommendedLevel": 33,
+      "maxHp": 128,
+      "maxMp": 54,
+      "attack": 163,
+      "defense": 244,
+      "speed": 147,
+      "actions": [
+        "attack",
+        "hyadain"
+      ],
+      "resistances": {
+        "fire": 1.35,
+        "ice": 0.25,
+        "wind": 0.75,
+        "bang": 1,
+        "zap": 1,
+        "instantDeath": 0.5,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
+      }
+    },
+    {
+      "id": "snowDragon",
+      "name": "スノードラゴン",
+      "icon": "雪",
+      "recommendedLevel": 34,
+      "maxHp": 216,
+      "maxMp": 34,
+      "attack": 181,
+      "defense": 248,
+      "speed": 130,
+      "actions": [
+        "attack",
+        "iceBreath"
+      ],
+      "resistances": {
+        "fire": 1.3,
+        "ice": 0.35,
+        "wind": 1,
+        "bang": 1,
+        "zap": 1,
+        "instantDeath": 0.12,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
+      }
+    },
+    {
+      "id": "troll",
+      "name": "トロル",
+      "icon": "巨",
+      "recommendedLevel": 34,
+      "maxHp": 400,
+      "maxMp": 25,
+      "attack": 212,
+      "defense": 220,
+      "speed": 121,
+      "actions": [
+        "attack",
+        "heavyBlow"
+      ],
+      "resistances": {
+        "fire": 1,
+        "ice": 1,
+        "wind": 1,
+        "bang": 1,
+        "zap": 1,
+        "instantDeath": 0.5,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 1.1,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 1.1
+      }
+    },
+    {
+      "id": "tentaculus",
+      "name": "テンタクルス",
+      "icon": "触",
+      "recommendedLevel": 35,
+      "maxHp": 320,
+      "maxMp": 17,
+      "attack": 174,
+      "defense": 260,
+      "speed": 132,
+      "actions": [
+        "attack",
+        "swordDance"
+      ],
+      "resistances": {
+        "fire": 1,
+        "ice": 1,
+        "wind": 1,
+        "bang": 1,
+        "zap": 1.2,
+        "instantDeath": 0.5,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
+      }
+    },
+    {
+      "id": "kingMerman",
+      "name": "キングマーマン",
+      "icon": "海",
+      "recommendedLevel": 36,
+      "maxHp": 292,
+      "maxMp": 36,
+      "attack": 253,
+      "defense": 309,
+      "speed": 151,
+      "actions": [
+        "attack",
+        "bagima",
+        "behoimi"
+      ],
+      "resistances": {
+        "fire": 1.1,
+        "ice": 1,
+        "wind": 1,
+        "bang": 1,
+        "zap": 1.25,
+        "instantDeath": 0.5,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
+      }
+    },
+    {
+      "id": "movingStatue",
+      "name": "うごくせきぞう",
+      "icon": "像",
+      "recommendedLevel": 37,
+      "maxHp": 312,
+      "maxMp": 14,
+      "attack": 242,
+      "defense": 282,
+      "speed": 122,
+      "actions": [
+        "attack",
+        "heavyBlow"
+      ],
+      "resistances": {
+        "fire": 1,
+        "ice": 1,
+        "wind": 0.65,
+        "bang": 1,
+        "zap": 1,
+        "instantDeath": 0.04,
+        "poison": 0.05,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.1,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
+      }
+    },
+    {
+      "id": "kingSquid",
+      "name": "クラーゴン",
+      "icon": "蛸",
+      "recommendedLevel": 38,
+      "maxHp": 720,
+      "maxMp": 17,
+      "attack": 265,
+      "defense": 318,
+      "speed": 133,
+      "actions": [
+        "attack",
+        "swordDance"
+      ],
+      "resistances": {
+        "fire": 1,
+        "ice": 1,
+        "wind": 1,
+        "bang": 1,
+        "zap": 1.25,
+        "instantDeath": 0.08,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
+      }
+    },
+    {
+      "id": "shadowLord",
+      "name": "まおうのかげ",
+      "icon": "影",
+      "recommendedLevel": 38,
+      "maxHp": 208,
+      "maxMp": 90,
+      "attack": 187,
+      "defense": 318,
+      "speed": 148,
+      "actions": [
+        "attack",
+        "zaki",
+        "mahotoon"
+      ],
+      "resistances": {
+        "fire": 0.65,
+        "ice": 1,
+        "wind": 1,
+        "bang": 1,
+        "zap": 1,
+        "instantDeath": 0.03,
+        "poison": 0.05,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
+      }
+    },
+    {
+      "id": "skullgon",
+      "name": "スカルゴン",
+      "icon": "骸",
+      "recommendedLevel": 39,
+      "maxHp": 320,
+      "maxMp": 42,
+      "attack": 259,
+      "defense": 336,
+      "speed": 143,
+      "actions": [
+        "attack",
+        "iceBreath"
+      ],
+      "resistances": {
+        "fire": 1.3,
+        "ice": 0.5,
+        "wind": 1,
+        "bang": 1,
+        "zap": 1,
+        "instantDeath": 0.5,
+        "poison": 0.05,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
+      }
+    },
+    {
+      "id": "goldGolem",
+      "name": "おうごんまじん",
+      "icon": "金",
+      "recommendedLevel": 40,
+      "maxHp": 336,
+      "maxMp": 63,
+      "attack": 284,
+      "defense": 378,
+      "speed": 148,
+      "actions": [
+        "attack",
+        "heavyBlow"
+      ],
+      "resistances": {
+        "fire": 1,
+        "ice": 1,
+        "wind": 1,
+        "bang": 1.15,
+        "zap": 1,
+        "instantDeath": 0.03,
+        "poison": 0.05,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
+      }
+    },
+    {
+      "id": "hydra",
+      "name": "ヒドラ",
+      "icon": "蛇",
+      "recommendedLevel": 41,
+      "maxHp": 320,
+      "maxMp": 26,
+      "attack": 258,
+      "defense": 366,
+      "speed": 156,
+      "actions": [
+        "attack",
+        "fierceFire"
+      ],
+      "resistances": {
+        "fire": 0.45,
+        "ice": 1.2,
+        "wind": 1,
+        "bang": 1,
+        "zap": 1,
+        "instantDeath": 0.05,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
+      }
+    },
+    {
+      "id": "salamander",
+      "name": "サラマンダー",
+      "icon": "焔",
+      "recommendedLevel": 42,
+      "maxHp": 320,
+      "maxMp": 31,
+      "attack": 270,
+      "defense": 346,
+      "speed": 170,
+      "actions": [
+        "attack",
+        "fierceFire"
+      ],
+      "resistances": {
+        "fire": 0.2,
+        "ice": 1.45,
+        "wind": 1,
+        "bang": 1,
+        "zap": 1,
+        "instantDeath": 0.04,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
+      }
+    },
+    {
+      "id": "archmage",
+      "name": "アークマージ",
+      "icon": "賢",
+      "recommendedLevel": 43,
+      "maxHp": 208,
+      "maxMp": 300,
+      "attack": 197,
+      "defense": 311,
+      "speed": 175,
+      "actions": [
+        "attack",
+        "merazoma",
+        "ionazun",
+        "zaoriku"
+      ],
+      "resistances": {
+        "fire": 0.65,
+        "ice": 0.75,
+        "wind": 1,
+        "bang": 1,
+        "zap": 1,
+        "instantDeath": 0.03,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.25,
+        "paralysis": 0.7,
+        "confusion": 0.75
+      }
+    },
+    {
+      "id": "greatDemon",
+      "name": "だいまじん",
+      "icon": "魔",
+      "recommendedLevel": 43,
+      "maxHp": 560,
+      "maxMp": 27,
+      "attack": 310,
+      "defense": 374,
+      "speed": 150,
+      "actions": [
+        "attack",
+        "fullForceSlash"
+      ],
+      "resistances": {
+        "fire": 1,
+        "ice": 1,
+        "wind": 0.6,
+        "bang": 1.15,
+        "zap": 1,
+        "instantDeath": 0.02,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
+      }
+    },
+    {
+      "id": "trollKing",
+      "name": "トロルキング",
+      "icon": "王",
+      "recommendedLevel": 44,
+      "maxHp": 400,
+      "maxMp": 81,
+      "attack": 278,
+      "defense": 310,
+      "speed": 164,
+      "actions": [
+        "attack",
+        "fullForceSlash"
+      ],
+      "resistances": {
+        "fire": 1,
+        "ice": 1,
+        "wind": 1,
+        "bang": 1,
+        "zap": 1,
+        "instantDeath": 0.5,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.65,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.65
+      }
+    },
+    {
+      "id": "dragonZombie",
+      "name": "ドラゴンゾンビ",
+      "icon": "屍",
+      "recommendedLevel": 44,
+      "maxHp": 660,
+      "maxMp": 49,
+      "attack": 311,
+      "defense": 326,
+      "speed": 160,
+      "actions": [
+        "attack",
+        "iceBreath",
+        "petrifyingAttack"
+      ],
+      "resistances": {
+        "fire": 1.3,
+        "ice": 0.55,
+        "wind": 1,
+        "bang": 1,
+        "zap": 1,
+        "instantDeath": 0.02,
+        "poison": 0.02,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
+      }
+    },
+    {
+      "id": "swordoid",
+      "name": "ソードイド",
+      "icon": "剣",
+      "recommendedLevel": 45,
+      "maxHp": 381,
+      "maxMp": 93,
+      "attack": 285,
+      "defense": 382,
+      "speed": 180,
+      "actions": [
+        "attack",
+        "swordDance",
+        "rainOfSwords"
+      ],
+      "resistances": {
+        "fire": 0.8,
+        "ice": 1,
+        "wind": 1,
+        "bang": 1,
+        "zap": 1,
+        "instantDeath": 0.02,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
+      }
+    },
+    {
+      "id": "baramos",
+      "name": "バラモス",
+      "icon": "魔",
+      "recommendedLevel": 45,
+      "maxHp": 5400,
+      "maxMp": 720,
+      "attack": 261,
+      "defense": 340,
+      "speed": 145,
+      "actions": [
+        "attack",
+        "merazoma",
+        "ionazun",
+        "fierceFire",
+        "manusa",
+        "medapani"
+      ],
+      "resistances": {
+        "fire": 0.5,
+        "ice": 1.2,
+        "wind": 1.2,
+        "bang": 0.65,
+        "zap": 1,
+        "instantDeath": 0,
+        "poison": 0,
+        "blind": 0.8,
+        "petrify": 0,
+        "sleep": 0.45,
+        "silence": 0.55,
+        "paralysis": 0.35,
+        "confusion": 0.55
+      }
+    },
+    {
+      "id": "metalChimera",
+      "name": "メタルキメラ",
+      "icon": "鋼",
+      "recommendedLevel": 48,
+      "maxHp": 240,
+      "maxMp": 222,
+      "attack": 307,
+      "defense": 861,
+      "speed": 281,
+      "actions": [
+        "attack",
+        "fierceFire",
+        "behoimi"
+      ],
+      "resistances": {
+        "fire": 0.1,
+        "ice": 0.1,
+        "wind": 0.1,
+        "bang": 0.1,
+        "zap": 0.1,
+        "instantDeath": 0,
+        "poison": 0,
+        "blind": 0.1,
+        "petrify": 0.5,
+        "sleep": 0.1,
+        "silence": 0.1,
+        "paralysis": 0.1,
+        "confusion": 0.1
+      }
+    },
+    {
+      "id": "kingHydra",
+      "name": "キングヒドラ",
+      "icon": "王",
+      "recommendedLevel": 48,
+      "maxHp": 5800,
+      "maxMp": 660,
+      "attack": 393,
+      "defense": 384,
+      "speed": 184,
+      "actions": [
+        "attack",
+        "fierceFire",
+        "iceBreath"
+      ],
+      "resistances": {
+        "fire": 0.35,
+        "ice": 0.65,
+        "wind": 1,
+        "bang": 1,
+        "zap": 1,
+        "instantDeath": 0,
+        "poison": 0,
+        "blind": 0.8,
+        "petrify": 0,
+        "sleep": 0.25,
+        "silence": 0.4,
+        "paralysis": 0.2,
+        "confusion": 0.3
+      }
+    },
+    {
+      "id": "killerCrab",
+      "name": "キラークラブ",
+      "icon": "蟹",
+      "recommendedLevel": 49,
+      "maxHp": 330,
+      "maxMp": 255,
+      "attack": 301,
+      "defense": 804,
+      "speed": 233,
+      "actions": [
+        "attack",
+        "sukurlt",
+        "paralyzingAttack"
+      ],
+      "resistances": {
+        "fire": 0.65,
+        "ice": 0.75,
+        "wind": 0.6,
+        "bang": 1.3,
+        "zap": 1.15,
+        "instantDeath": 0.02,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.75,
+        "paralysis": 0.7,
+        "confusion": 0.75
+      }
+    },
+    {
+      "id": "devilWizard",
+      "name": "デビルウィザード",
+      "icon": "悪",
+      "recommendedLevel": 50,
+      "maxHp": 580,
+      "maxMp": 345,
+      "attack": 305,
+      "defense": 508,
+      "speed": 239,
+      "actions": [
+        "attack",
+        "merazoma",
+        "mahyado",
+        "ionazun",
+        "mahotoon"
+      ],
+      "resistances": {
+        "fire": 0.55,
+        "ice": 0.55,
+        "wind": 0.65,
+        "bang": 0.65,
+        "zap": 1,
+        "instantDeath": 0,
+        "poison": 0.8,
+        "blind": 0.8,
+        "petrify": 0.5,
+        "sleep": 0.75,
+        "silence": 0.15,
+        "paralysis": 0.7,
+        "confusion": 0.75
+      }
+    },
+    {
+      "id": "baramosBros",
+      "name": "バラモスブロス",
+      "icon": "兄",
+      "recommendedLevel": 50,
+      "maxHp": 4300,
+      "maxMp": 500,
+      "attack": 310,
+      "defense": 340,
+      "speed": 168,
+      "actions": [
+        "attack",
+        "ionazun",
+        "fierceFire"
+      ],
+      "resistances": {
+        "fire": 0.4,
+        "ice": 0.75,
+        "wind": 0.8,
+        "bang": 0.55,
+        "zap": 1,
+        "instantDeath": 0,
+        "poison": 0,
+        "blind": 0.8,
+        "petrify": 0,
+        "sleep": 0.2,
+        "silence": 0.3,
+        "paralysis": 0.15,
+        "confusion": 0.2
       }
     }
   ],
@@ -1841,6 +6034,269 @@
           "count": 1
         }
       ]
+    },
+    {
+      "id": "seaPassage",
+      "name": "海辺の魔物",
+      "recommendedLevel": 21,
+      "members": [
+        {
+          "enemyId": "slimeSnail",
+          "count": 2
+        },
+        {
+          "enemyId": "killerApe",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "metalHunt",
+      "name": "メタルスライム狩り",
+      "recommendedLevel": 23,
+      "members": [
+        {
+          "enemyId": "metalSlime",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "id": "upperWorld",
+      "name": "地獄のよろい隊",
+      "recommendedLevel": 25,
+      "members": [
+        {
+          "enemyId": "hellArmor",
+          "count": 2
+        },
+        {
+          "enemyId": "witch",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "openSea",
+      "name": "大海原",
+      "recommendedLevel": 27,
+      "members": [
+        {
+          "enemyId": "giantSquid",
+          "count": 1
+        },
+        {
+          "enemyId": "skyDragon",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "necrogondFoothills",
+      "name": "ネクロゴンド山麓",
+      "recommendedLevel": 30,
+      "members": [
+        {
+          "enemyId": "eliminator",
+          "count": 1
+        },
+        {
+          "enemyId": "toxicZombie",
+          "count": 1
+        },
+        {
+          "enemyId": "iceMan",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "necrogondCave",
+      "name": "ネクロゴンドの洞窟",
+      "recommendedLevel": 32,
+      "members": [
+        {
+          "enemyId": "killerArmor",
+          "count": 1
+        },
+        {
+          "enemyId": "skeletonSwordsman",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "snowField",
+      "name": "雪原の竜",
+      "recommendedLevel": 34,
+      "members": [
+        {
+          "enemyId": "snowDragon",
+          "count": 1
+        },
+        {
+          "enemyId": "frostGizmo",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "baramosCastle",
+      "name": "バラモス城",
+      "recommendedLevel": 36,
+      "members": [
+        {
+          "enemyId": "tentaculus",
+          "count": 1
+        },
+        {
+          "enemyId": "kingMerman",
+          "count": 1
+        },
+        {
+          "enemyId": "movingStatue",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "underworldGate",
+      "name": "アレフガルド入口",
+      "recommendedLevel": 38,
+      "members": [
+        {
+          "enemyId": "kingSquid",
+          "count": 1
+        },
+        {
+          "enemyId": "shadowLord",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "alephgardWild",
+      "name": "アレフガルド周辺",
+      "recommendedLevel": 40,
+      "members": [
+        {
+          "enemyId": "skullgon",
+          "count": 1
+        },
+        {
+          "enemyId": "goldGolem",
+          "count": 1
+        },
+        {
+          "enemyId": "hydra",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "zomaApproach",
+      "name": "ゾーマ城への道",
+      "recommendedLevel": 42,
+      "members": [
+        {
+          "enemyId": "salamander",
+          "count": 1
+        },
+        {
+          "enemyId": "archmage",
+          "count": 1
+        },
+        {
+          "enemyId": "greatDemon",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "zomaCastle",
+      "name": "ゾーマ城",
+      "recommendedLevel": 45,
+      "members": [
+        {
+          "enemyId": "dragonZombie",
+          "count": 1
+        },
+        {
+          "enemyId": "swordoid",
+          "count": 1
+        },
+        {
+          "enemyId": "trollKing",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "baramosBoss",
+      "name": "バラモス",
+      "recommendedLevel": 45,
+      "members": [
+        {
+          "enemyId": "baramos",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "metalTrial",
+      "name": "メタルキメラ隊",
+      "recommendedLevel": 48,
+      "members": [
+        {
+          "enemyId": "metalChimera",
+          "count": 1
+        },
+        {
+          "enemyId": "killerCrab",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "kingHydraBoss",
+      "name": "キングヒドラ",
+      "recommendedLevel": 48,
+      "members": [
+        {
+          "enemyId": "kingHydra",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "level50Trial",
+      "name": "Lv50試練",
+      "recommendedLevel": 50,
+      "members": [
+        {
+          "enemyId": "devilWizard",
+          "count": 1
+        },
+        {
+          "enemyId": "killerCrab",
+          "count": 1
+        },
+        {
+          "enemyId": "metalChimera",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "baramosBrosBoss",
+      "name": "バラモスブロス",
+      "recommendedLevel": 50,
+      "members": [
+        {
+          "enemyId": "baramosBros",
+          "count": 1
+        }
+      ]
     }
   ],
   "strategies": [
@@ -1968,13 +6424,21 @@
       "petrifyValue": 105,
       "alreadyAffectedPenalty": -140,
       "blindAttackDivisor": 4,
-      "poisonHpDivisor": 20
+      "poisonHpDivisor": 20,
+      "sleepValue": 82,
+      "silenceValue": 62,
+      "paralysisValue": 92,
+      "confusionValue": 76
     },
     "cure": {
       "poisonValue": 115,
       "blindValue": 90,
       "petrifyValue": 190,
-      "multiStatusBonus": 35
+      "multiStatusBonus": 35,
+      "sleepValue": 145,
+      "silenceValue": 105,
+      "paralysisValue": 165,
+      "confusionValue": 140
     },
     "revive": {
       "downAllyBonus": 190,
