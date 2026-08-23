@@ -132,7 +132,7 @@
       document.querySelector("#decision-choice").textContent = `${decision.selected.action.battleName || decision.selected.action.name} → ${this.targetLabel(decision.selected.targets)}`;
       document.querySelector("#decision-score").textContent = decision.selected.finalScore;
       this.candidateList.innerHTML = decision.candidates.map((candidate, index) => `<button class="candidate-item ${index === 0 ? "winner active" : ""}" data-index="${index}" aria-controls="breakdown" aria-label="${this.escape(`${candidate.action.battleName || candidate.action.name}の評価内訳を表示`)}">
-        <span class="candidate-rank">${candidate.available ? index + 1 : "–"}</span><span class="candidate-name">${this.escape(candidate.action.battleName || candidate.action.name)}<small>${candidate.available ? this.escape(this.targetLabel(candidate.targets)) : this.escape(candidate.reasons[0].label)}</small></span><span class="candidate-score">${candidate.available ? `${candidate.finalScore}点` : "不可"}</span></button>`).join("");
+        <span class="candidate-rank">${candidate.available ? index + 1 : "–"}</span><span class="candidate-name">${this.escape(candidate.action.battleName || candidate.action.name)}<small>${candidate.available ? this.escape(this.candidateTargetLabel(candidate)) : this.escape(candidate.reasons[0].label)}</small></span><span class="candidate-score">${candidate.available ? `${candidate.finalScore}点` : "不可"}</span></button>`).join("");
       this.candidateList.querySelectorAll(".candidate-item").forEach(button => {
         const showCandidateSettings = () => {
           this.candidateList.querySelectorAll(".candidate-item").forEach(item => item.classList.remove("active"));
@@ -146,7 +146,7 @@
     }
     showBreakdown(candidate) {
       document.querySelector("#breakdown-action").textContent = candidate.action.battleName || candidate.action.name;
-      document.querySelector("#breakdown-target").textContent = candidate.available ? `対象：${this.targetLabel(candidate.targets)}` : "使用不可";
+      document.querySelector("#breakdown-target").textContent = candidate.available ? `対象：${this.candidateTargetLabel(candidate)}` : "使用不可";
       const settings = this.actionSettingRows(candidate);
       const reasons = candidate.reasons.map(reason => {
         let value = reason.value;
@@ -182,6 +182,20 @@
         rows.push(["最大重ね掛け", settings.maxStacks]);
       }
       if (settings.type === "instantDeath") rows.push(["基本成功率", `${(Number(settings.successRate) * 100).toFixed(1)}%`]);
+      const showTargetOptions = (candidate.targetOptions || []).length > 1
+        || (candidate.targetOptions || []).some(option => option.targetIds?.length > 1);
+      if (showTargetOptions) {
+        rows.push(["対象候補の比較", "ランダム補正前"]);
+        candidate.targetOptions.forEach(option => {
+          const count = option.targetIds?.length > 1 ? `・同条件${option.targetIds.length}体` : "";
+          const details = [`${option.score}点`];
+          if (Number.isFinite(option.resistance)) details.push(`倍率×${Number(option.resistance).toFixed(2)}`);
+          if (Number.isFinite(option.expectedDamage)) details.push(`予想${option.expectedDamage}ダメージ`);
+          if (Number.isFinite(option.expectedHeal)) details.push(`予想${option.expectedHeal}回復`);
+          if (Number.isFinite(option.successRate)) details.push(`成功率${(Number(option.successRate) * 100).toFixed(1)}%`);
+          rows.push([`対象評価（${option.label}${count}）`, details.join(" / "), Number(option.resistance) < 1 ? "resistant-setting" : ""]);
+        });
+      }
       (settings.outcomes || []).forEach(outcome => {
         if ((settings.type === "magic" || settings.type === "attack") && settings.element) {
           const state = outcome.resistance > 1 ? "弱点" : outcome.resistance < 1 ? "耐性" : "通常";
@@ -205,6 +219,9 @@
       if (!targets.length) return "対象なし";
       if (targets.length > 1) return targets[0].side === "ally" ? "味方全体" : "敵全体";
       return targets[0].name;
+    }
+    candidateTargetLabel(candidate) {
+      return candidate.targetLabel || this.targetLabel(candidate.targets || []);
     }
     clearDecision() {
       this.selectedDecisionActor = null;

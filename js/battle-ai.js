@@ -17,17 +17,19 @@
         } else if (!targets.length) {
           candidates.push(this.unavailable(actor, action, targets, "有効な対象がいない"));
         } else if (isGroupTarget(action)) {
-          candidates.push(this.evaluate(actor, action, targets));
+          candidates.push(this.finalizeCandidate(this.evaluate(actor, action, targets)));
         } else {
-          targets.forEach(target => candidates.push(this.evaluate(actor, action, [target])));
+          candidates.push(this.evaluateSingleTargetAction(actor, action, targets));
         }
       }
       const usable = candidates.filter(candidate => candidate.available).sort((a, b) => b.finalScore - a.finalScore);
+      const selected = usable[0] || null;
+      if (selected) this.resolveConcreteTarget(selected);
       return {
         actorId: actor.id,
         turn: this.battle.turn,
         strategy: this.battle.strategy,
-        selected: usable[0] || null,
+        selected,
         candidates: [...usable, ...candidates.filter(candidate => !candidate.available)],
       };
     }
@@ -44,6 +46,82 @@
         return action.type === "heal" ? allies.filter(unit => unit.currentHp < unit.maxHp) : allies;
       }
       return enemies;
+    }
+
+    evaluateSingleTargetAction(actor, action, targets) {
+      const groups = this.groupEquivalentTargets(actor, action, targets);
+      const options = groups.map(group => {
+        const evaluated = this.evaluate(actor, action, [group.targets[0]]);
+        const outcome = evaluated.settings.outcomes[0] || {};
+        return {
+          label: this.groupLabel(group.targets),
+          score: evaluated.finalScore,
+          targets: group.targets,
+          targetIds: group.targets.map(target => target.id),
+          templateId: group.targets[0].templateId,
+          resistance: outcome.resistance,
+          expectedDamage: outcome.expectedDamage,
+          damageMin: outcome.damageMin,
+          damageMax: outcome.damageMax,
+          expectedHeal: outcome.expectedHeal,
+          healMin: outcome.healMin,
+          healMax: outcome.healMax,
+          successRate: outcome.successRate,
+          evaluated,
+        };
+      }).sort((a, b) => b.score - a.score);
+      const best = options[0];
+      const candidate = best.evaluated;
+      candidate.targetGroup = best.targets;
+      candidate.targetLabel = best.label;
+      candidate.targetOptions = options.map(({ evaluated, targets: groupedTargets, ...option }) => option);
+      return this.finalizeCandidate(candidate);
+    }
+
+    groupEquivalentTargets(actor, action, targets) {
+      const groups = new Map();
+      targets.forEach(target => {
+        const resistanceKey = action.type === "instantDeath" ? "instantDeath" : action.element;
+        const signature = JSON.stringify({
+          templateId: target.templateId,
+          side: target.side,
+          currentHp: target.currentHp,
+          maxHp: target.maxHp,
+          attack: target.effectiveAttack,
+          defense: target.effectiveDefense,
+          speed: target.effectiveSpeed,
+          resistance: resistanceKey ? Number(target.resistances[resistanceKey] ?? 1) : 1,
+          buffs: target.buffs,
+          buffAffinity: target.aiTraits?.buffAffinity,
+          knowledge: actor.side === "ally" && action.type === "instantDeath" ? this.battle.knowledge.get(target.templateId, "instantDeath") : 0,
+        });
+        if (!groups.has(signature)) groups.set(signature, []);
+        groups.get(signature).push(target);
+      });
+      return [...groups.values()].map(groupTargets => ({ targets: groupTargets }));
+    }
+
+    groupLabel(targets) {
+      if (targets.length === 1) return targets[0].name;
+      const template = this.battle.data.enemies.find(enemy => enemy.id === targets[0].templateId)
+        || this.battle.data.jobs.find(job => job.id === targets[0].templateId);
+      return template?.battleName || template?.name || targets[0].name;
+    }
+
+    finalizeCandidate(candidate) {
+      const random = this.randomInt(this.battle.data.ai.randomMin, this.battle.data.ai.randomMax);
+      candidate.finalScore = Math.round(candidate.finalScore + random);
+      candidate.reasons.push({ label: "ランダム補正", value: random, kind: "add" });
+      return candidate;
+    }
+
+    resolveConcreteTarget(candidate) {
+      if (isGroupTarget(candidate.action) || !candidate.targetGroup?.length) return;
+      const targets = candidate.targetGroup;
+      const target = targets.length === 1 ? targets[0] : targets[Math.floor(Math.random() * targets.length)];
+      candidate.targets = [target];
+      candidate.targetLabel = target.name;
+      candidate.settings = this.describeAction(this.battle.getCharacter(candidate.actorId) || null, candidate.action, [target]);
     }
 
     evaluate(actor, action, targets) {
@@ -71,10 +149,7 @@
         score = healRules.emergencyFloor;
         reasons.push({ label: "瀕死者の回復を最低限確保", value: healRules.emergencyFloor, kind: "floor" });
       }
-      const random = this.randomInt(this.battle.data.ai.randomMin, this.battle.data.ai.randomMax);
-      score += random;
-      reasons.push({ label: "ランダム補正", value: random, kind: "add" });
-      return { action, targets, available: true, finalScore: Math.round(score), reasons, settings: this.describeAction(actor, action, targets) };
+      return { actorId: actor.id, action, targets, available: true, finalScore: Math.round(score), reasons, settings: this.describeAction(actor, action, targets), targetOptions: [] };
     }
 
     describeAction(actor, action, targets) {

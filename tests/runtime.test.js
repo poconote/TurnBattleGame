@@ -104,7 +104,9 @@ for (const file of ["data-store.js", "models.js", "battle-ai.js", "battle.js", "
   battle.actionQueue = [];
   const healDecision = battle.ai.decide(priest);
   const heals = healDecision.candidates.filter(candidate => candidate.action.type === "heal");
-  if (heals.length !== 6 || heals.some(candidate => candidate.targets.length !== 1)) throw new Error("単体回復が対象別に評価されていません。");
+  if (heals.length !== 2 || heals.some(candidate => candidate.targetOptions.length !== 3 || candidate.targets.length !== 1)) {
+    throw new Error("単体回復が技ごとの候補と対象別評価に分離されていません。");
+  }
   if (healDecision.selected.action.type !== "heal") throw new Error("重傷者がいるのに回復が選択されませんでした。");
 
   battle.characters.filter(enemy => enemy.side === "enemy").forEach(enemy => { enemy.maxHp = Math.max(200, enemy.maxHp); enemy.currentHp = enemy.maxHp; enemy.alive = true; enemy.resistances.fire = 1.25; });
@@ -120,8 +122,8 @@ for (const file of ["data-store.js", "models.js", "battle-ai.js", "battle.js", "
   if (!hyadoSettings.includes("基礎威力") || !hyadoSettings.includes("属性倍率") || !hyadoSettings.includes("予想ダメージ")) {
     throw new Error("AI診断に技の威力・属性倍率・予想ダメージが表示されませんでした。");
   }
-  const resistedHyado = magicDecision.candidates.find(candidate => candidate.action.id === "hyado" && candidate.targets[0]?.templateId === "slime");
-  if (!resistedHyado || !battle.ui.actionSettingRows(resistedHyado).includes("resistant-setting")) {
+  const resistedHyado = hyadoCandidate.targetOptions.find(option => option.templateId === "slime" && option.resistance < 1);
+  if (!resistedHyado || !battle.ui.actionSettingRows(hyadoCandidate).includes("resistant-setting")) {
     throw new Error("AI診断の耐性倍率に赤色表示用の状態が設定されませんでした。");
   }
   const giraScore = magicDecision.candidates.find(candidate => candidate.action.id === "gira")?.finalScore;
@@ -132,9 +134,11 @@ for (const file of ["data-store.js", "models.js", "battle-ai.js", "battle.js", "
   mage.actions = mage.allActions.filter(actionId => Number(mage.actionLevels[actionId] ?? 1) <= mage.level);
   const advancedDecision = battle.ai.decide(mage);
   const baikiltCandidates = advancedDecision.candidates.filter(candidate => candidate.action.id === "baikilt");
-  const baikiltWarrior = baikiltCandidates.find(candidate => candidate.targets[0]?.id === "warrior");
-  const baikiltPriest = baikiltCandidates.find(candidate => candidate.targets[0]?.id === "priest");
-  if (!baikiltWarrior || !baikiltPriest || baikiltWarrior.finalScore <= baikiltPriest.finalScore + 100) throw new Error("バイキルトで戦士の職業適性が優先されませんでした。");
+  const baikiltWarrior = baikiltCandidates[0]?.targetOptions.find(option => option.targetIds.includes("warrior"));
+  const baikiltPriest = baikiltCandidates[0]?.targetOptions.find(option => option.targetIds.includes("priest"));
+  if (baikiltCandidates.length !== 1 || !baikiltWarrior || !baikiltPriest || baikiltWarrior.score <= baikiltPriest.score + 100) {
+    throw new Error("バイキルトの1候補内で戦士の職業適性が優先されませんでした。");
+  }
   const flameSlash = battle.getAction("flameSlash");
   const normalAttack = battle.getAction("attack");
   const slime = battle.getCharacter("slime");
@@ -144,9 +148,11 @@ for (const file of ["data-store.js", "models.js", "battle-ai.js", "battle.js", "
   if (battle.estimatePhysicalDamage(warrior, golem, flameSlash) >= battle.estimatePhysicalDamage(warrior, golem, normalAttack)) throw new Error("炎耐性に炎斬りの属性倍率が反映されませんでした。");
   const warriorDecision = battle.ai.decide(warrior);
   const flameScores = warriorDecision.candidates.filter(candidate => candidate.action.id === "flameSlash");
-  const flameSlime = flameScores.find(candidate => candidate.targets[0]?.templateId === "slime");
-  const flameGolem = flameScores.find(candidate => candidate.targets[0]?.templateId === "golem");
-  if (!flameSlime || !flameGolem || flameSlime.finalScore <= flameGolem.finalScore) throw new Error(`AIが炎斬りの対象に弱点を優先しませんでした（${flameScores.map(candidate => candidate.targets[0]?.templateId).join(",")}）。`);
+  const flameSlime = flameScores[0]?.targetOptions.find(option => option.templateId === "slime");
+  const flameGolem = flameScores[0]?.targetOptions.find(option => option.templateId === "golem");
+  if (flameScores.length !== 1 || !flameSlime || !flameGolem || flameSlime.score <= flameGolem.score) {
+    throw new Error("AIが炎斬りの対象候補で弱点を優先しませんでした。");
+  }
   const editor = context.dqEditor;
   editor.open();
   editor.tab = "actions";
@@ -182,6 +188,23 @@ for (const file of ["data-store.js", "models.js", "battle-ai.js", "battle.js", "
   const duplicateSlimes = battle.characters.filter(unit => unit.side === "enemy");
   if (duplicateSlimes.length !== 2 || new Set(duplicateSlimes.map(unit => unit.id)).size !== 2 || duplicateSlimes.some(unit => unit.templateId !== "slime")) {
     throw new Error("同じ敵を複数体含む敵グループを生成できませんでした。");
+  }
+  const groupedMera = battle.ai.decide(battle.getCharacter("mage")).candidates.find(candidate => candidate.action.id === "mera");
+  if (!groupedMera || groupedMera.targetOptions.length !== 1 || groupedMera.targetOptions[0].targetIds.length !== 2) {
+    throw new Error("同条件のスライムA・Bが1回の対象評価へまとめられませんでした。");
+  }
+  duplicateSlimes[0].currentHp -= 1;
+  const splitMera = battle.ai.decide(battle.getCharacter("mage")).candidates.find(candidate => candidate.action.id === "mera");
+  if (!splitMera || splitMera.targetOptions.length !== 2) {
+    throw new Error("HPなどの戦況が異なる対象を別々に再評価できませんでした。");
+  }
+  const testingMage = battle.getCharacter("mage");
+  const savedMageActions = testingMage.actions;
+  testingMage.actions = ["mera"];
+  const selectedMera = battle.ai.decide(testingMage).selected;
+  testingMage.actions = savedMageActions;
+  if (!selectedMera.targetOptions[0].targetIds.includes(selectedMera.targets[0].id)) {
+    throw new Error("技の決定後に最高評価グループから実際の対象を選べませんでした。");
   }
   if (editor.store.getData().selectedEncounterId !== "slimePair") throw new Error("選択した敵グループを保存できませんでした。");
   console.log("Runtime, editor, encounters, duplicate enemies, levels, STEP, and AI scoring: OK");
