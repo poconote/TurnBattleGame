@@ -368,6 +368,7 @@ button:disabled { cursor: not-allowed; opacity: .45; }
 .result-next-battle[hidden] { display: none; }
 .result-next-battle label { color: var(--muted); font-size: 12px; }
 .result-next-battle select { width: 100%; padding: 11px 12px; border: 1px solid var(--line); border-radius: 10px; color: var(--text); background: var(--panel-2); }
+.result-next-battle small { color: var(--muted); font-size: 11px; line-height: 1.55; }
 .result-next-battle .primary-button { width: 100%; }
 
 .editor-overlay {

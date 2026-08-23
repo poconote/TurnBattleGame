@@ -42,7 +42,7 @@
       });
     }
 
-    initializeBattle(allies, clearLog) {
+    initializeBattle(allies, clearLog, transitionMessages = []) {
       const enemies = this.createEnemies();
       this.characters = [...allies, ...enemies];
       this.turn = 1;
@@ -59,7 +59,8 @@
         this.log.add("戦闘開始。味方AIの作戦を選んでください。", "system");
       } else {
         this.log.add(`── 連戦 ${this.battleNumber}：${this.getEncounter()?.name || "次の戦闘"} ──`, "turn");
-        this.log.add("味方のHP・MPを引き継いで次の戦闘を開始。強化効果と耐性学習はリセット。", "system");
+        transitionMessages.forEach(message => this.log.add(message, "heal"));
+        this.log.add("強化効果と耐性学習をリセットして次の戦闘を開始。", "system");
       }
       this.ui.hideResult();
       this.ui.clearDecision();
@@ -68,7 +69,7 @@
       this.ui.render();
     }
 
-    startConsecutiveBattle(encounterId = this.encounterId) {
+    startConsecutiveBattle(encounterId = this.encounterId, recoveryMode = "none") {
       if (!this.ended || !this.getLiving("ally").length) return false;
       if (this.data.encounters.some(encounter => encounter.id === encounterId)) {
         this.encounterId = encounterId;
@@ -86,9 +87,81 @@
           buff.stacks = 0;
         });
       });
+      const recoveryMessages = this.applyConsecutiveRecovery(allies, recoveryMode);
       this.battleNumber = Number(this.battleNumber || 1) + 1;
-      this.initializeBattle(allies, false);
+      this.initializeBattle(allies, false, recoveryMessages);
       return true;
+    }
+
+    applyConsecutiveRecovery(allies, mode) {
+      if (mode === "mp") {
+        const recovered = allies.reduce((sum, unit) => sum + Math.max(0, unit.maxMp - unit.currentMp), 0);
+        allies.forEach(unit => { unit.currentMp = unit.maxMp; });
+        return [`連戦前回復：MPのみ${recovered}回復。HPはそのまま引き継ぎ。`];
+      }
+      if (mode !== "hp") return ["連戦前回復：なし。現在のHP・MPをそのまま引き継ぎ。"];
+      const recovery = this.recoverHpWithMagic(allies);
+      if (!recovery.hpRecovered) {
+        const reason = recovery.remainingHp ? "回復呪文を使える味方またはMPが不足。" : "生存者のHPはすでに満タン。";
+        return [`連戦前回復：HP回復なし（${reason}）`];
+      }
+      const casts = recovery.casts.map(cast => `${cast.actorName}の${cast.actionName}×${cast.count}`).join("、");
+      const messages = [`連戦前回復：${casts}。HPを${recovery.hpRecovered}回復し、MPを${recovery.mpSpent}消費。`];
+      if (recovery.remainingHp) messages.push(`MP不足のため、残り${recovery.remainingHp}HPは回復できなかった。`);
+      return messages;
+    }
+
+    recoverHpWithMagic(allies) {
+      const castCounts = new Map();
+      let hpRecovered = 0;
+      let mpSpent = 0;
+      let safety = 0;
+      while (safety++ < 500) {
+        const damaged = allies.filter(unit => unit.alive && unit.currentHp < unit.maxHp);
+        if (!damaged.length) break;
+        const choices = [];
+        allies.filter(unit => unit.alive).forEach(actor => {
+          actor.actions.map(actionId => this.getAction(actionId))
+            .filter(action => action?.type === "heal" && ["allyOne", "allAllies", "self"].includes(action.target))
+            .forEach(action => {
+              const mpCost = Math.max(0, Number(action.mpCost || 0));
+              const power = Math.max(0, Number(action.power || 0));
+              if (!power || actor.currentMp < mpCost) return;
+              const targets = action.target === "self" ? damaged.filter(target => target === actor) : damaged;
+              if (!targets.length) return;
+              if (action.target === "allAllies") {
+                const effectiveHeal = targets.reduce((sum, target) => sum + Math.min(power, target.maxHp - target.currentHp), 0);
+                choices.push({ actor, action, targets, mpCost, power, effectiveHeal });
+              } else {
+                targets.forEach(target => choices.push({ actor, action, targets: [target], mpCost, power, effectiveHeal: Math.min(power, target.maxHp - target.currentHp) }));
+              }
+            });
+        });
+        if (!choices.length) break;
+        choices.sort((a, b) => {
+          const aEfficiency = a.mpCost ? a.effectiveHeal / a.mpCost : Infinity;
+          const bEfficiency = b.mpCost ? b.effectiveHeal / b.mpCost : Infinity;
+          return bEfficiency - aEfficiency || b.effectiveHeal - a.effectiveHeal || a.mpCost - b.mpCost;
+        });
+        const choice = choices[0];
+        choice.actor.currentMp -= choice.mpCost;
+        mpSpent += choice.mpCost;
+        choice.targets.forEach(target => {
+          const amount = Math.min(choice.power, target.maxHp - target.currentHp);
+          target.currentHp += amount;
+          hpRecovered += amount;
+        });
+        const key = `${choice.actor.id}:${choice.action.id}`;
+        const record = castCounts.get(key) || { actorName: choice.actor.name, actionName: this.actionName(choice.action), count: 0 };
+        record.count += 1;
+        castCounts.set(key, record);
+      }
+      return {
+        hpRecovered,
+        mpSpent,
+        casts: [...castCounts.values()],
+        remainingHp: allies.filter(unit => unit.alive).reduce((sum, unit) => sum + Math.max(0, unit.maxHp - unit.currentHp), 0),
+      };
     }
 
     getAction(id) { return this.data.actions.find(action => action.id === id); }

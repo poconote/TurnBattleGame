@@ -29,7 +29,10 @@
       document.querySelector("#reset-battle").addEventListener("click", () => this.battle.reset());
       document.querySelector("#result-close").addEventListener("click", () => this.hideResult());
       document.querySelector("#result-continue").addEventListener("click", () => {
-        this.battle.startConsecutiveBattle(document.querySelector("#result-encounter").value);
+        this.battle.startConsecutiveBattle(
+          document.querySelector("#result-encounter").value,
+          document.querySelector("#result-recovery").value,
+        );
       });
       document.querySelector("#clear-log").addEventListener("click", () => this.battle.log.clear());
       this.strategySelect.addEventListener("change", event => {
@@ -257,6 +260,7 @@
       nextBattle.hidden = !victory;
       encounter.innerHTML = this.battle.data.encounters.map(item => `<option value="${this.escape(item.id)}">Lv${Number(item.recommendedLevel || 1)} ${this.escape(item.name)}</option>`).join("");
       encounter.value = this.battle.encounterId;
+      document.querySelector("#result-recovery").value = "none";
       document.querySelector("#result-overlay").classList.remove("hidden");
     }
     hideResult() { document.querySelector("#result-overlay").classList.add("hidden"); }

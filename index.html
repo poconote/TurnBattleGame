@@ -151,7 +151,14 @@
       <div id="result-next-battle" class="result-next-battle">
         <label for="result-encounter">次の敵グループ</label>
         <select id="result-encounter"></select>
-        <button id="result-continue" class="primary-button">HP・MPを引き継いで連戦</button>
+        <label for="result-recovery">次戦前の回復</label>
+        <select id="result-recovery">
+          <option value="none">回復なし</option>
+          <option value="hp">HPのみ回復（回復呪文のMPを消費）</option>
+          <option value="mp">MPのみ全回復</option>
+        </select>
+        <small>HP回復では生存者が回復呪文を使います。戦闘不能者は復活しません。</small>
+        <button id="result-continue" class="primary-button">この設定で連戦</button>
       </div>
       <button id="result-close" class="secondary-button">ログを見る</button>
     </div>

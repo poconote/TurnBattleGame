@@ -54,7 +54,7 @@ if (!battleUiSource.includes('addEventListener("click", showCandidateSettings)')
 }
 const indexSource = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
 if (!indexSource.includes('<details class="action-settings-details">') || !indexSource.includes('id="action-setting-rows"')) throw new Error("技の設定値が折りたたみ表示になっていません。");
-if (!indexSource.includes('id="result-continue"') || !indexSource.includes('id="result-encounter"')) throw new Error("戦闘結果画面に連戦操作がありません。");
+if (!indexSource.includes('id="result-continue"') || !indexSource.includes('id="result-encounter"') || !indexSource.includes('id="result-recovery"')) throw new Error("戦闘結果画面に連戦・回復操作がありません。");
 
 vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js", "default-data.js"), "utf8"), context, { filename: "default-data.js" });
 context.DQ.setDefaultGameData(JSON.parse(fs.readFileSync(path.join(__dirname, "..", "data", "default-game-data.json"), "utf8")));
@@ -237,6 +237,7 @@ for (const file of ["data-store.js", "models.js", "battle-ai.js", "battle.js", "
   if (documentStub.querySelector("#result-next-battle").hidden || !documentStub.querySelector("#result-encounter").innerHTML.includes("resistanceLab")) {
     throw new Error("勝利時の連戦操作に敵グループが表示されませんでした。");
   }
+  if (documentStub.querySelector("#result-recovery").value !== "none") throw new Error("連戦前の回復方法が初期化されませんでした。");
   battle.ended = true;
   if (!battle.startConsecutiveBattle("resistanceLab")) throw new Error("勝利後に連戦を開始できませんでした。");
   if (battle.getCharacter("warrior").currentHp !== 37 || battle.getCharacter("priest").currentMp !== chainPriest.currentMp) {
@@ -248,6 +249,23 @@ for (const file of ["data-store.js", "models.js", "battle-ai.js", "battle.js", "
   }
   if (battle.encounterId !== "resistanceLab" || battle.getLiving("enemy").length !== 3 || battle.turn !== 1 || battle.battleNumber !== 2 || battle.strategy !== "aggressive" || battle.ended) {
     throw new Error("連戦の敵グループ・ターン・作戦が正しく初期化されませんでした。");
+  }
+  const hpRecoveryWarrior = battle.getCharacter("warrior");
+  const hpRecoveryPriest = battle.getCharacter("priest");
+  const hpBeforeRecovery = hpRecoveryWarrior.currentHp;
+  const mpBeforeHealing = hpRecoveryPriest.currentMp;
+  battle.ended = true;
+  if (!battle.startConsecutiveBattle("slimePair", "hp")) throw new Error("HP回復を指定して連戦できませんでした。");
+  if (battle.getCharacter("warrior").currentHp <= hpBeforeRecovery || battle.getCharacter("priest").currentMp >= mpBeforeHealing) {
+    throw new Error("連戦前のHP回復量に応じた回復呪文のMPが消費されませんでした。");
+  }
+  const mpRecoveryWarrior = battle.getCharacter("warrior");
+  mpRecoveryWarrior.currentHp = 42;
+  battle.characters.filter(unit => unit.side === "ally").forEach(unit => { unit.currentMp = 0; });
+  battle.ended = true;
+  if (!battle.startConsecutiveBattle("slimePair", "mp")) throw new Error("MP回復を指定して連戦できませんでした。");
+  if (battle.getCharacter("warrior").currentHp !== 42 || battle.characters.filter(unit => unit.side === "ally").some(unit => unit.currentMp !== unit.maxMp)) {
+    throw new Error("MPのみ回復でHPを維持したままMPを全回復できませんでした。");
   }
   battle.reset();
   if (battle.getCharacter("warrior").currentHp !== battle.getCharacter("warrior").maxHp || battle.getCharacter("priest").currentMp !== battle.getCharacter("priest").maxMp || battle.battleNumber !== 1) {
