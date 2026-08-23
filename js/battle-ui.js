@@ -21,6 +21,10 @@
       this.decisionEmpty = document.querySelector("#decision-empty");
       this.decisionContent = document.querySelector("#decision-content");
       this.candidateList = document.querySelector("#candidate-list");
+      this.detailOverlay = document.querySelector("#character-detail-overlay");
+      this.detailContent = document.querySelector("#character-detail-content");
+      this.detailTitle = document.querySelector("#character-detail-name");
+      this.detailCloseButton = document.querySelector("#character-detail-close");
     }
     bind() {
       this.stepButton.addEventListener("click", () => this.battle.ended ? this.battle.reset() : this.battle.stepAction());
@@ -35,6 +39,13 @@
         );
       });
       document.querySelector("#clear-log").addEventListener("click", () => this.battle.log.clear());
+      this.detailCloseButton.addEventListener("click", () => this.closeCharacterDetail());
+      this.detailOverlay.addEventListener("click", event => {
+        if (event.target === this.detailOverlay) this.closeCharacterDetail();
+      });
+      document.addEventListener("keydown", event => {
+        if (event.key === "Escape" && this.detailCharacterId) this.closeCharacterDetail();
+      });
       this.strategySelect.addEventListener("change", event => {
         this.battle.setStrategy(event.target.value);
         this.battle.log.add(`作戦を「${this.battle.getStrategy().name}」に変更した。`, "system");
@@ -61,10 +72,15 @@
       if (!this.battle.busy) this.setControlsDisabled(false);
       this.enemyParty.innerHTML = this.battle.characters.filter(unit => unit.side === "enemy").map(unit => this.card(unit)).join("");
       this.allyParty.innerHTML = this.battle.characters.filter(unit => unit.side === "ally").map(unit => this.card(unit)).join("");
-      this.allyParty.querySelectorAll(".character-card").forEach(card => card.addEventListener("click", () => {
-        const actor = this.battle.getCharacter(card.dataset.id);
-        if (actor?.lastDecision) this.showDecision(actor.lastDecision);
+      document.querySelectorAll(".card-focus-trigger").forEach(button => button.addEventListener("click", () => {
+        const actor = this.battle.getCharacter(button.dataset.characterId);
+        if (actor) this.openCharacterDetail(actor, button);
       }));
+      if (this.detailCharacterId) {
+        const detailActor = this.battle.getCharacter(this.detailCharacterId);
+        if (detailActor) this.updateCharacterDetail(detailActor);
+        else this.closeCharacterDetail(false);
+      }
       this.renderKnowledge();
     }
     card(unit) {
@@ -81,17 +97,15 @@
       }).join("");
       const reviveProtectionLabel = unit.side === "ally" && unit.alive && Number(unit.reviveProtectionUntilTurn || 0) >= this.battle.turn
         ? '<span class="state-badge">蘇生保護</span>' : "";
-      const popoverId = `status-${unit.id}`;
       return `<article class="character-card ${unit.alive ? "" : "dead"} ${this.selectedDecisionActor === unit.id ? "selected" : ""}" data-id="${this.escape(unit.id)}" data-role="${this.escape(unit.role)}">
-        <button type="button" class="card-focus-trigger" aria-label="${this.escape(`${unit.name}のステータスと使える技を表示`)}" aria-describedby="${this.escape(popoverId)}"></button>
+        <button type="button" class="card-focus-trigger" data-character-id="${this.escape(unit.id)}" aria-label="${this.escape(`${unit.name}のステータスと使える技を表示`)}"></button>
         <div class="character-visual"><div class="sprite">${this.escape(unit.icon)}</div></div>
         <div class="character-name-row"><span class="character-name">${this.escape(unit.name)}${unit.side === "ally" ? ` <small class="level-badge">Lv.${unit.level}</small>` : ""}</span><span class="state-badges">${buffLabels}${statusLabels}${reviveProtectionLabel}</span></div>
         <div class="stat-line"><div class="stat-values"><span>HP</span><b>${unit.currentHp} / ${unit.maxHp}</b></div><div class="bar"><span class="hp-bar ${hp < 25 ? "low" : ""}" style="width:${hp}%"></span></div></div>
         <div class="stat-line"><div class="stat-values"><span>MP</span><b>${unit.currentMp} / ${unit.maxMp}</b></div><div class="bar"><span class="mp-bar" style="width:${mp}%"></span></div></div>
-        ${unit.alive ? "" : '<div class="dead-label">戦闘不能</div>'}
-        ${this.statusPopover(unit, popoverId)}</article>`;
+        ${unit.alive ? "" : '<div class="dead-label">戦闘不能</div>'}</article>`;
     }
-    statusPopover(unit, popoverId) {
+    statusDetail(unit) {
       const statValue = (base, effective) => Math.round(base) === Math.round(effective)
         ? `${Math.round(base)}`
         : `${Math.round(base)} → ${Math.round(effective)}`;
@@ -115,9 +129,7 @@
       const formationLabel = unit.side === "ally" ? this.battle.ai.formationLabel(unit) : null;
       const formationWeight = unit.side === "ally" ? this.battle.ai.enemyFormationWeight(unit) : null;
       const statusRows = this.battle.statusEngine.list(unit).map(status => `<li><span>${this.escape(this.battle.statusEngine.definition(status.id).name)}</span><b>${status.turns > 0 ? `残り${status.turns}ターン` : "治療まで継続"}</b></li>`).join("");
-      return `<div id="${this.escape(popoverId)}" class="status-popover" role="tooltip">
-        <div class="status-popover-title"><span>STATUS</span><b>${this.escape(unit.name)}</b></div>
-        <dl class="status-detail-grid">
+      return `<dl class="status-detail-grid">
           <div><dt>HP</dt><dd>${unit.currentHp} / ${unit.maxHp}</dd></div>
           <div><dt>MP</dt><dd>${unit.currentMp} / ${unit.maxMp}</dd></div>
           <div><dt>攻撃力</dt><dd>${statValue(unit.attack, unit.effectiveAttack)}</dd></div>
@@ -129,8 +141,28 @@
         ${statusRows ? `<div class="status-action-title">状態異常</div><ul class="status-action-list">${statusRows}</ul>` : ""}
         ${unit.side === "enemy" ? `<div class="status-action-title">弱点・耐性倍率</div><ul class="status-resistance-list">${resistanceRows}</ul>` : ""}
         <div class="status-action-title">使える技</div>
-        <ul class="status-action-list">${actionRows || "<li><span>なし</span></li>"}</ul>
-      </div>`;
+        <ul class="status-action-list">${actionRows || "<li><span>なし</span></li>"}</ul>`;
+    }
+    openCharacterDetail(unit, returnFocus = null) {
+      this.detailCharacterId = unit.id;
+      this.detailReturnFocus = returnFocus || document.activeElement || null;
+      if (unit.side === "ally" && unit.lastDecision) this.showDecision(unit.lastDecision);
+      this.updateCharacterDetail(unit);
+      this.detailContent.scrollTop = 0;
+      this.detailOverlay.classList.remove("hidden");
+      document.body?.classList.add("detail-open");
+      this.detailCloseButton.focus?.();
+    }
+    updateCharacterDetail(unit) {
+      this.detailTitle.textContent = unit.name;
+      this.detailContent.innerHTML = this.statusDetail(unit);
+    }
+    closeCharacterDetail(restoreFocus = true) {
+      this.detailOverlay.classList.add("hidden");
+      document.body?.classList.remove("detail-open");
+      this.detailCharacterId = null;
+      if (restoreFocus) this.detailReturnFocus?.focus?.();
+      this.detailReturnFocus = null;
     }
     renderKnowledge() {
       const enemies = this.battle.characters.filter(unit => unit.side === "enemy").filter((enemy, index, all) => all.findIndex(item => item.templateId === enemy.templateId) === index);

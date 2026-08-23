@@ -4,7 +4,13 @@ const fs = require("node:fs");
 const vm = require("node:vm");
 const path = require("node:path");
 
-class FakeClassList { add() {} remove() {} toggle() {} }
+class FakeClassList {
+  constructor() { this.values = new Set(); }
+  add(...values) { values.forEach(value => this.values.add(value)); }
+  remove(...values) { values.forEach(value => this.values.delete(value)); }
+  toggle(value) { this.values.has(value) ? this.values.delete(value) : this.values.add(value); }
+  contains(value) { return this.values.has(value); }
+}
 class FakeElement {
   constructor(selector = "") {
     this.selector = selector;
@@ -24,11 +30,14 @@ class FakeElement {
   appendChild(child) { this.children.push(child); }
   querySelectorAll() { return []; }
   click() {}
+  focus() { documentStub.activeElement = this; }
 }
 
 const elements = new Map();
 const storage = new Map();
 const documentStub = {
+  activeElement: null,
+  body: new FakeElement("body"),
   querySelector(selector) {
     if (!elements.has(selector)) elements.set(selector, new FakeElement(selector));
     return elements.get(selector);
@@ -53,6 +62,10 @@ if (!battleUiSource.includes('addEventListener("click", showCandidateSettings)')
   throw new Error("AI診断の候補がクリック選択だけで切り替わる設定になっていません。");
 }
 const indexSource = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+const stylesSource = fs.readFileSync(path.join(__dirname, "..", "styles.css"), "utf8");
+if (!indexSource.includes('id="character-detail-overlay"') || !indexSource.includes('id="character-detail-close"') || !indexSource.includes('id="character-detail-content"')) throw new Error("キャラクター詳細モーダルがありません。");
+if (!battleUiSource.includes("event.target === this.detailOverlay") || !battleUiSource.includes('event.key === "Escape"')) throw new Error("キャラクター詳細を枠外クリックまたはEscで閉じられません。");
+if (!stylesSource.includes(".character-detail-content { min-height: 0; overflow-y: auto;")) throw new Error("キャラクター詳細の内部スクロールが設定されていません。");
 if (!indexSource.includes('<details class="action-settings-details">') || !indexSource.includes('id="action-setting-rows"')) throw new Error("技の設定値が折りたたみ表示になっていません。");
 if (!indexSource.includes('id="result-continue"') || !indexSource.includes('id="result-encounter"') || !indexSource.includes('id="result-recovery"')) throw new Error("戦闘結果画面に連戦・回復操作がありません。");
 if (!indexSource.includes('js/battle-events.js') || !indexSource.includes('js/status-engine.js') || indexSource.indexOf('js/status-engine.js') > indexSource.indexOf('js/effect-engine.js')) throw new Error("状態異常の依存順でスクリプトを読み込めません。");
@@ -146,12 +159,22 @@ for (const file of ["action-schema.js", "data-store.js", "models.js", "battle-ev
     throw new Error("行動順へ設定した素早さ乱数倍率が反映されませんでした。");
   }
   const warriorCard = battle.ui.card(warrior);
-  if (!warriorCard.includes("status-popover") || !warriorCard.includes("攻撃力") || !warriorCard.includes("使える技") || !warriorCard.includes("もろば斬り") || !warriorCard.includes("前衛") || !warriorCard.includes("狙われやすさ")) {
-    throw new Error("戦闘カードにステータスと習得済みの技が表示されませんでした。");
+  const warriorDetail = battle.ui.statusDetail(warrior);
+  if (!warriorCard.includes('data-character-id="warrior"') || warriorCard.includes("status-popover") || !warriorDetail.includes("攻撃力") || !warriorDetail.includes("使える技") || !warriorDetail.includes("もろば斬り") || !warriorDetail.includes("前衛") || !warriorDetail.includes("狙われやすさ")) {
+    throw new Error("戦闘カードのクリック用情報またはキャラクター詳細が正しく生成されませんでした。");
   }
-  const slimeCard = battle.ui.card(battle.getCharacter("slime"));
-  if (!slimeCard.includes("弱点・耐性倍率") || !slimeCard.includes("×1.20") || !slimeCard.includes("弱点")) {
-    throw new Error("敵カードに属性の弱点・耐性倍率が表示されませんでした。");
+  const slimeDetail = battle.ui.statusDetail(battle.getCharacter("slime"));
+  if (!slimeDetail.includes("弱点・耐性倍率") || !slimeDetail.includes("×1.20") || !slimeDetail.includes("弱点")) {
+    throw new Error("敵のキャラクター詳細に属性の弱点・耐性倍率が表示されませんでした。");
+  }
+  const detailTrigger = new FakeElement("warrior-detail-trigger");
+  battle.ui.openCharacterDetail(warrior, detailTrigger);
+  if (battle.ui.detailOverlay.classList.contains("hidden") || battle.ui.detailTitle.textContent !== warrior.name || !battle.ui.detailContent.innerHTML.includes("もろば斬り") || !documentStub.body.classList.contains("detail-open")) {
+    throw new Error("クリック時にキャラクター詳細モーダルを開けませんでした。");
+  }
+  battle.ui.closeCharacterDetail();
+  if (!battle.ui.detailOverlay.classList.contains("hidden") || documentStub.body.classList.contains("detail-open") || documentStub.activeElement !== detailTrigger) {
+    throw new Error("キャラクター詳細モーダルを閉じて元のカードへフォーカスを戻せませんでした。");
   }
   warrior.currentHp = warrior.maxHp - 1;
   priest.currentHp = Math.floor(priest.maxHp * 0.47);

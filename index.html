@@ -37,7 +37,7 @@
             <span class="section-kicker ally-kicker">YOUR PARTY</span>
             <h2>なかまたち</h2>
           </div>
-          <p class="card-help">マウスを重ねると能力・技／選ぶと直近の判断を表示</p>
+          <p class="card-help">カードをクリックすると能力・技を表示</p>
         </div>
         <div id="ally-party" class="party-grid ally-party" aria-label="味方パーティー"></div>
 
@@ -141,6 +141,16 @@
         <div id="knowledge-list" class="knowledge-list"></div>
       </section>
     </main>
+  </div>
+
+  <div id="character-detail-overlay" class="character-detail-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="character-detail-name">
+    <section class="character-detail-dialog">
+      <header class="character-detail-header">
+        <div><span>STATUS</span><h2 id="character-detail-name">キャラクター詳細</h2></div>
+        <button id="character-detail-close" class="icon-button" type="button" aria-label="キャラクター詳細を閉じる">×</button>
+      </header>
+      <div id="character-detail-content" class="character-detail-content"></div>
+    </section>
   </div>
 
   <div id="result-overlay" class="result-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="result-title">
