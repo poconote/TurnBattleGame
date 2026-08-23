@@ -194,9 +194,11 @@ h3 { font-size: 14px; }
   cursor: pointer;
 }
 .card-focus-trigger:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-.character-detail-overlay { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 20px; background: rgba(3,7,15,.82); backdrop-filter: blur(7px); }
+.character-detail-overlay { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 20px; background: transparent; }
 .character-detail-dialog { width: min(620px, 100%); max-height: calc(100vh - 40px); display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--cyan); border-radius: 16px; color: var(--text); background: #111b2f; box-shadow: 0 24px 70px rgba(0,0,0,.65); }
-.character-detail-header { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+.character-detail-header { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 16px; border-bottom: 1px solid var(--line); cursor: grab; user-select: none; touch-action: none; }
+.character-detail-dialog.dragging .character-detail-header { cursor: grabbing; }
+.character-detail-header .icon-button { cursor: pointer; }
 .character-detail-header span, .status-action-title { color: var(--cyan); font-size: 9px; font-weight: 800; letter-spacing: .12em; }
 .character-detail-header h2 { margin-top: 3px; font-size: 18px; }
 .character-detail-content { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 16px; }

@@ -25,6 +25,8 @@
       this.detailContent = document.querySelector("#character-detail-content");
       this.detailTitle = document.querySelector("#character-detail-name");
       this.detailCloseButton = document.querySelector("#character-detail-close");
+      this.detailDialog = document.querySelector(".character-detail-dialog");
+      this.detailHeader = document.querySelector(".character-detail-header");
     }
     bind() {
       this.stepButton.addEventListener("click", () => this.battle.ended ? this.battle.reset() : this.battle.stepAction());
@@ -46,6 +48,10 @@
       document.addEventListener("keydown", event => {
         if (event.key === "Escape" && this.detailCharacterId) this.closeCharacterDetail();
       });
+      this.detailHeader.addEventListener("pointerdown", event => this.startCharacterDetailDrag(event));
+      document.addEventListener("pointermove", event => this.moveCharacterDetail(event));
+      document.addEventListener("pointerup", event => this.endCharacterDetailDrag(event));
+      document.addEventListener("pointercancel", event => this.endCharacterDetailDrag(event));
       this.strategySelect.addEventListener("change", event => {
         this.battle.setStrategy(event.target.value);
         this.battle.log.add(`作戦を「${this.battle.getStrategy().name}」に変更した。`, "system");
@@ -149,6 +155,7 @@
       if (unit.side === "ally" && unit.lastDecision) this.showDecision(unit.lastDecision);
       this.updateCharacterDetail(unit);
       this.detailContent.scrollTop = 0;
+      this.resetCharacterDetailPosition();
       this.detailOverlay.classList.remove("hidden");
       document.body?.classList.add("detail-open");
       this.detailCloseButton.focus?.();
@@ -158,11 +165,54 @@
       this.detailContent.innerHTML = this.statusDetail(unit);
     }
     closeCharacterDetail(restoreFocus = true) {
+      this.endCharacterDetailDrag();
       this.detailOverlay.classList.add("hidden");
       document.body?.classList.remove("detail-open");
       this.detailCharacterId = null;
       if (restoreFocus) this.detailReturnFocus?.focus?.();
       this.detailReturnFocus = null;
+    }
+    startCharacterDetailDrag(event) {
+      if (!this.detailCharacterId || (event.button !== undefined && event.button !== 0) || event.target.closest?.("button")) return;
+      const rect = this.detailDialog.getBoundingClientRect();
+      this.detailDialog.style.position = "fixed";
+      this.detailDialog.style.width = `${rect.width}px`;
+      this.detailDialog.style.left = `${rect.left}px`;
+      this.detailDialog.style.top = `${rect.top}px`;
+      this.detailDrag = {
+        pointerId: event.pointerId,
+        offsetX: event.clientX - rect.left,
+        offsetY: event.clientY - rect.top,
+      };
+      this.detailDialog.classList.add("dragging");
+      this.detailHeader.setPointerCapture?.(event.pointerId);
+      event.preventDefault?.();
+    }
+    moveCharacterDetail(event) {
+      if (!this.detailDrag || event.pointerId !== this.detailDrag.pointerId) return;
+      const margin = 8;
+      const rect = this.detailDialog.getBoundingClientRect();
+      const viewportWidth = document.documentElement.clientWidth;
+      const viewportHeight = document.documentElement.clientHeight;
+      const maxLeft = Math.max(margin, viewportWidth - rect.width - margin);
+      const maxTop = Math.max(margin, viewportHeight - rect.height - margin);
+      const left = Math.min(maxLeft, Math.max(margin, event.clientX - this.detailDrag.offsetX));
+      const top = Math.min(maxTop, Math.max(margin, event.clientY - this.detailDrag.offsetY));
+      this.detailDialog.style.left = `${left}px`;
+      this.detailDialog.style.top = `${top}px`;
+      event.preventDefault?.();
+    }
+    endCharacterDetailDrag(event = null) {
+      if (!this.detailDrag || (event && event.pointerId !== this.detailDrag.pointerId)) return;
+      this.detailHeader.releasePointerCapture?.(this.detailDrag.pointerId);
+      this.detailDialog.classList.remove("dragging");
+      this.detailDrag = null;
+    }
+    resetCharacterDetailPosition() {
+      this.detailDialog.style.position = "";
+      this.detailDialog.style.width = "";
+      this.detailDialog.style.left = "";
+      this.detailDialog.style.top = "";
     }
     renderKnowledge() {
       const enemies = this.battle.characters.filter(unit => unit.side === "enemy").filter((enemy, index, all) => all.findIndex(item => item.templateId === enemy.templateId) === index);

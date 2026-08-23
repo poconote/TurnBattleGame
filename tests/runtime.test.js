@@ -23,6 +23,7 @@ class FakeElement {
     this.scrollTop = 0;
     this.textContent = "";
     this._innerHTML = "";
+    this.style = {};
   }
   set innerHTML(value) { this._innerHTML = String(value); }
   get innerHTML() { return this.textContent || this._innerHTML; }
@@ -31,6 +32,7 @@ class FakeElement {
   querySelectorAll() { return []; }
   click() {}
   focus() { documentStub.activeElement = this; }
+  getBoundingClientRect() { return this.rect || { left: 200, top: 100, width: 620, height: 700 }; }
 }
 
 const elements = new Map();
@@ -38,6 +40,7 @@ const storage = new Map();
 const documentStub = {
   activeElement: null,
   body: new FakeElement("body"),
+  documentElement: { clientWidth: 1200, clientHeight: 800 },
   querySelector(selector) {
     if (!elements.has(selector)) elements.set(selector, new FakeElement(selector));
     return elements.get(selector);
@@ -66,6 +69,7 @@ const stylesSource = fs.readFileSync(path.join(__dirname, "..", "styles.css"), "
 if (!indexSource.includes('id="character-detail-overlay"') || !indexSource.includes('id="character-detail-close"') || !indexSource.includes('id="character-detail-content"')) throw new Error("キャラクター詳細モーダルがありません。");
 if (!battleUiSource.includes("event.target === this.detailOverlay") || !battleUiSource.includes('event.key === "Escape"')) throw new Error("キャラクター詳細を枠外クリックまたはEscで閉じられません。");
 if (!stylesSource.includes(".character-detail-content { min-height: 0; overflow-y: auto;")) throw new Error("キャラクター詳細の内部スクロールが設定されていません。");
+if (/\.character-detail-overlay\s*\{[^}]*backdrop-filter/.test(stylesSource) || !battleUiSource.includes('addEventListener("pointerdown"') || !battleUiSource.includes("startCharacterDetailDrag")) throw new Error("背景をぼかさずキャラクター詳細をドラッグできる設定になっていません。");
 if (!indexSource.includes('<details class="action-settings-details">') || !indexSource.includes('id="action-setting-rows"')) throw new Error("技の設定値が折りたたみ表示になっていません。");
 if (!indexSource.includes('id="result-continue"') || !indexSource.includes('id="result-encounter"') || !indexSource.includes('id="result-recovery"')) throw new Error("戦闘結果画面に連戦・回復操作がありません。");
 if (!indexSource.includes('js/battle-events.js') || !indexSource.includes('js/status-engine.js') || indexSource.indexOf('js/status-engine.js') > indexSource.indexOf('js/effect-engine.js')) throw new Error("状態異常の依存順でスクリプトを読み込めません。");
@@ -172,6 +176,12 @@ for (const file of ["action-schema.js", "data-store.js", "models.js", "battle-ev
   if (battle.ui.detailOverlay.classList.contains("hidden") || battle.ui.detailTitle.textContent !== warrior.name || !battle.ui.detailContent.innerHTML.includes("もろば斬り") || !documentStub.body.classList.contains("detail-open")) {
     throw new Error("クリック時にキャラクター詳細モーダルを開けませんでした。");
   }
+  battle.ui.startCharacterDetailDrag({ pointerId: 1, button: 0, clientX: 320, clientY: 120, target: new FakeElement(), preventDefault() {} });
+  battle.ui.moveCharacterDetail({ pointerId: 1, clientX: 1000, clientY: 790, preventDefault() {} });
+  if (battle.ui.detailDialog.style.left !== "572px" || battle.ui.detailDialog.style.top !== "92px" || !battle.ui.detailDialog.classList.contains("dragging")) {
+    throw new Error("キャラクター詳細を画面内に収めながらドラッグ移動できませんでした。");
+  }
+  battle.ui.endCharacterDetailDrag({ pointerId: 1 });
   battle.ui.closeCharacterDetail();
   if (!battle.ui.detailOverlay.classList.contains("hidden") || documentStub.body.classList.contains("detail-open") || documentStub.activeElement !== detailTrigger) {
     throw new Error("キャラクター詳細モーダルを閉じて元のカードへフォーカスを戻せませんでした。");
