@@ -74,6 +74,11 @@ for (const file of ["data-store.js", "models.js", "battle-ai.js", "battle.js", "
   const priest = battle.getCharacter("priest");
   const warrior = battle.getCharacter("warrior");
   const mage = battle.getCharacter("mage");
+  const slowInitiative = battle.rollInitiative(warrior, 0);
+  const fastInitiative = battle.rollInitiative(warrior, 1);
+  if (slowInitiative !== warrior.effectiveSpeed * 0.75 || fastInitiative !== warrior.effectiveSpeed * 1.25) {
+    throw new Error("行動順へ設定した素早さ乱数倍率が反映されませんでした。");
+  }
   const warriorCard = battle.ui.card(warrior);
   if (!warriorCard.includes("status-popover") || !warriorCard.includes("攻撃力") || !warriorCard.includes("使える技") || !warriorCard.includes("炎斬り")) {
     throw new Error("戦闘カードにステータスと習得済みの技が表示されませんでした。");

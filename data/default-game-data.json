@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 9,
+  "schemaVersion": 10,
   "actions": [
     {
       "id": "attack",
@@ -1503,6 +1503,10 @@
     }
   ],
   "ai": {
+    "turnOrder": {
+      "minMultiplier": 0.75,
+      "maxMultiplier": 1.25
+    },
     "randomMin": -10,
     "randomMax": 10,
     "attack": {

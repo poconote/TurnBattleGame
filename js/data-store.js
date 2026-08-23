@@ -3,7 +3,7 @@
 
   const clone = value => JSON.parse(JSON.stringify(value));
   const STORAGE_KEY = "dq-ai-battle-data-v1";
-  const CURRENT_SCHEMA_VERSION = 9;
+  const CURRENT_SCHEMA_VERSION = 10;
 
   class GameDataStore {
     constructor(storageKey = STORAGE_KEY) {
@@ -142,6 +142,11 @@
       }
       if (errors.length) return errors;
       if (!data.ai || !Array.isArray(data.ai.heal?.thresholds)) errors.push("AI設定が不足しています。");
+      const orderMin = Number(data.ai?.turnOrder?.minMultiplier);
+      const orderMax = Number(data.ai?.turnOrder?.maxMultiplier);
+      if (!Number.isFinite(orderMin) || !Number.isFinite(orderMax) || orderMin <= 0 || orderMax <= 0 || orderMin > orderMax) {
+        errors.push("行動順の素早さ乱数倍率が不正です。");
+      }
       for (const key of ["actions", "jobs", "enemies", "encounters", "strategies"]) {
         const ids = data[key].map(item => item.id);
         if (ids.some(id => !id || !/^[A-Za-z][A-Za-z0-9_-]*$/.test(id))) errors.push(`${key}に使用できないIDがあります。`);

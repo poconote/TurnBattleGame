@@ -58,7 +58,7 @@ delete legacy.actions.find(action => action.id === "sukurlt").effectStat;
 delete legacy.ai.support.statValueDivisor;
 memory.set("legacy-data", JSON.stringify(legacy));
 const migrated = new context.DQ.GameDataStore("legacy-data").getData();
-if (migrated.schemaVersion !== 9 || !migrated.actions.some(action => action.id === "baikilt") || !migrated.actions.some(action => action.id === "flameSlash") || migrated.actions.find(action => action.id === "sukurlt").effectStat !== "defense" || !migrated.jobs[0].levelStats["20"] || migrated.enemies[0].levelStats || !migrated.encounters.length || migrated.jobs.find(job => job.id === "warrior").aiTraits.buffAffinity.attack !== 1.5 || migrated.jobs.find(job => job.id === "mage").actionLevels.baikilt !== 21) {
+if (migrated.schemaVersion !== 10 || migrated.ai.turnOrder.minMultiplier !== 0.75 || !migrated.actions.some(action => action.id === "baikilt") || !migrated.actions.some(action => action.id === "flameSlash") || migrated.actions.find(action => action.id === "sukurlt").effectStat !== "defense" || !migrated.jobs[0].levelStats["20"] || migrated.enemies[0].levelStats || !migrated.encounters.length || migrated.jobs.find(job => job.id === "warrior").aiTraits.buffAffinity.attack !== 1.5 || migrated.jobs.find(job => job.id === "mage").actionLevels.baikilt !== 21) {
   throw new Error("旧保存データを補助効果対応形式へ移行できませんでした。");
 }
 console.log("Data validation and persistence: OK");

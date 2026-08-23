@@ -23,7 +23,7 @@ vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js", "default-data.j
   const fetched = await context.DQ.fetchDefaultGameData();
   if (requestedUrl !== "data/default-game-data.json" || requestedOptions?.cache !== "no-store") throw new Error("標準JSONを正しい相対URLから取得していません。");
   context.DQ.setDefaultGameData(fetched);
-  if (context.DQ.DEFAULT_GAME_DATA.jobs.length !== 3 || context.DQ.DEFAULT_GAME_DATA.enemies.length < 15 || !context.DQ.DEFAULT_GAME_DATA.jobs[0].levelStats["24"]) {
+  if (context.DQ.DEFAULT_GAME_DATA.schemaVersion !== 10 || context.DQ.DEFAULT_GAME_DATA.ai.turnOrder.maxMultiplier !== 1.25 || context.DQ.DEFAULT_GAME_DATA.jobs.length !== 3 || context.DQ.DEFAULT_GAME_DATA.enemies.length < 15 || !context.DQ.DEFAULT_GAME_DATA.jobs[0].levelStats["24"]) {
     throw new Error("標準JSONから職業・敵・Lv別データを初期化できませんでした。");
   }
   fetched.jobs[0].name = "変更";

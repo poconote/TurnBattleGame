@@ -48,7 +48,8 @@
   };
 
   const AI_FIELDS = [
-    ["randomMin", "ランダム最小値"], ["randomMax", "ランダム最大値"],
+    ["turnOrder.minMultiplier", "行動順：素早さ倍率の最小値"], ["turnOrder.maxMultiplier", "行動順：素早さ倍率の最大値"],
+    ["randomMin", "行動評価：ランダム最小値"], ["randomMax", "行動評価：ランダム最大値"],
     ["attack.lowHpThreshold", "攻撃：瀕死判定HP率"], ["attack.lowHpBonus", "攻撃：瀕死敵への加点"], ["attack.lethalBonus", "攻撃：撃破見込み加点"],
     ["attack.elementWeakBonus", "物理スキル：弱点属性加点"], ["attack.elementResistPenalty", "物理スキル：属性耐性減点"],
     ["heal.wasteRate", "回復：過剰回復判定率"], ["heal.wastePenalty", "回復：過剰回復減点"], ["heal.unsafeRate", "回復後の危険HP率"],

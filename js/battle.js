@@ -70,8 +70,9 @@
       this.actionQueue = this.actionQueue.map(item => {
         const decision = this.ai.decide(item.actor);
         item.actor.lastDecision = decision;
-        return { actor: item.actor, decision };
+        return { actor: item.actor, decision, initiative: item.initiative ?? this.rollInitiative(item.actor) };
       }).filter(item => item.decision.selected);
+      this.sortActionQueue();
     }
 
     refreshData() {
@@ -144,10 +145,23 @@
       this.actionQueue = [...this.getLiving("ally"), ...this.getLiving("enemy")].map(actor => {
         const decision = this.ai.decide(actor);
         actor.lastDecision = decision;
-        return { actor, decision };
+        return { actor, decision, initiative: this.rollInitiative(actor) };
       }).filter(item => item.decision.selected);
+      this.sortActionQueue();
+    }
+
+    rollInitiative(actor, randomValue = Math.random()) {
+      const rules = this.data.ai.turnOrder || {};
+      const min = Number(rules.minMultiplier ?? 0.75);
+      const max = Number(rules.maxMultiplier ?? 1.25);
+      const low = Math.min(min, max);
+      const high = Math.max(min, max);
+      return actor.effectiveSpeed * (low + (high - low) * randomValue);
+    }
+
+    sortActionQueue() {
       this.actionQueue.sort((a, b) => Number(b.decision.selected.action.priority || 0) - Number(a.decision.selected.action.priority || 0)
-        || b.actor.effectiveSpeed - a.actor.effectiveSpeed || Math.random() - 0.5);
+        || b.initiative - a.initiative || Math.random() - 0.5);
     }
 
     finishTurn() {
