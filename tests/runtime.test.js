@@ -58,7 +58,7 @@ if (!indexSource.includes('id="result-continue"') || !indexSource.includes('id="
 
 vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js", "default-data.js"), "utf8"), context, { filename: "default-data.js" });
 context.DQ.setDefaultGameData(JSON.parse(fs.readFileSync(path.join(__dirname, "..", "data", "default-game-data.json"), "utf8")));
-for (const file of ["data-store.js", "models.js", "battle-ai.js", "battle.js", "battle-ui.js", "editor-ui.js", "main.js"]) {
+for (const file of ["action-schema.js", "data-store.js", "models.js", "target-resolver.js", "effect-engine.js", "action-executor.js", "battle-ai.js", "battle.js", "battle-ui.js", "editor-ui.js", "main.js"]) {
   vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js", file), "utf8"), context, { filename: file });
 }
 
@@ -80,6 +80,19 @@ for (const file of ["data-store.js", "models.js", "battle-ai.js", "battle.js", "
   const mage = battle.getCharacter("mage");
   const enemyActor = battle.getLiving("enemy")[0];
   const enemyAttack = battle.getAction("attack");
+  const facadeOnlyAttack = JSON.parse(JSON.stringify(enemyAttack));
+  facadeOnlyAttack.powerMultiplier = 99;
+  const effectMultiplier = facadeOnlyAttack.effects.find(effect => effect.kind === "damage").powerMultiplier;
+  const expectedFacadeIndependentDamage = Math.max(1, Math.round(warrior.effectiveAttack * effectMultiplier - enemyActor.effectiveDefense * 0.48));
+  if (battle.estimatePhysicalDamage(warrior, enemyActor, facadeOnlyAttack) !== expectedFacadeIndependentDamage) {
+    throw new Error("ダメージ計算がeffectsではなく旧形式の項目を参照しています。");
+  }
+  const editedMera = JSON.parse(JSON.stringify(battle.getAction("mera")));
+  editedMera.power = 123;
+  context.DQ.ActionSchema.syncEffectFromLegacy(editedMera, "power");
+  if (editedMera.effects.find(effect => effect.kind === "damage").power !== 123 || editedMera.power !== 123) {
+    throw new Error("技エディターの旧形式項目をeffectsへ同期できませんでした。");
+  }
   const tiedAllyTargets = [warrior, priest, mage].map(target => ({ score: 50, targets: [target] }));
   if (battle.ai.chooseBestTargetOption(enemyActor, enemyAttack, tiedAllyTargets, 0).targets[0] !== warrior
     || battle.ai.chooseBestTargetOption(enemyActor, enemyAttack, tiedAllyTargets, 0.99).targets[0] !== mage) {
@@ -151,9 +164,25 @@ for (const file of ["data-store.js", "models.js", "battle-ai.js", "battle.js", "
     throw new Error("バイキルトの1候補内で戦士の職業適性が優先されませんでした。");
   }
   const flameSlash = battle.getAction("flameSlash");
+  const doubleEdgedSlash = battle.getAction("doubleEdgedSlash");
   const normalAttack = battle.getAction("attack");
   const slime = battle.getCharacter("slime");
   const golem = battle.getCharacter("golem");
+  if (doubleEdgedSlash.effects.length !== 2 || doubleEdgedSlash.effects[0].kind !== "damage" || doubleEdgedSlash.effects[1].kind !== "recoil") {
+    throw new Error("複数効果を持つ技がeffects形式に変換されていません。");
+  }
+  const warriorHpBeforeEffects = warrior.currentHp;
+  const golemHpBeforeEffects = golem.currentHp;
+  warrior.currentHp = warrior.maxHp;
+  golem.currentHp = golem.maxHp;
+  const compositePreview = battle.effectEngine.previewAction(warrior, doubleEdgedSlash, [golem]);
+  const compositeResult = battle.effectEngine.applyAction(warrior, doubleEdgedSlash, [golem], () => 0.5);
+  const expectedRecoil = Math.round(compositePreview.totalExpectedDamage * doubleEdgedSlash.effects[1].rate);
+  if (compositeResult.totalDamage !== compositePreview.totalExpectedDamage || golem.maxHp - golem.currentHp !== compositePreview.totalExpectedDamage || warrior.maxHp - warrior.currentHp !== expectedRecoil) {
+    throw new Error("ダメージと反動の複数効果を順番に実行できませんでした。");
+  }
+  warrior.currentHp = warriorHpBeforeEffects;
+  golem.currentHp = golemHpBeforeEffects;
   if (!warrior.actions.includes("flameSlash") || warrior.maxMp < flameSlash.mpCost) throw new Error("戦士が炎斬りを使用できません。");
   if (battle.estimatePhysicalDamage(warrior, slime, flameSlash) <= battle.estimatePhysicalDamage(warrior, slime, normalAttack)) throw new Error("炎弱点に炎斬りの属性倍率が反映されませんでした。");
   if (battle.estimatePhysicalDamage(warrior, golem, flameSlash) >= battle.estimatePhysicalDamage(warrior, golem, normalAttack)) throw new Error("炎耐性に炎斬りの属性倍率が反映されませんでした。");
@@ -175,7 +204,7 @@ for (const file of ["data-store.js", "models.js", "battle-ai.js", "battle.js", "
   if (!battle.getCharacter("warrior").actions.includes("baikilt") || battle.turn !== turnBeforeSave) throw new Error("技を保存して現在の戦士へ割り当てられませんでした。");
   if (editor.store.getData().jobs.find(job => job.id === "warrior").levelStats["1"].maxHp === 999) throw new Error("個別保存で別項目の未保存変更まで保存されました。");
   const baikilt = battle.getAction("baikilt");
-  battle.executeSupport(mage, baikilt, [warrior]);
+  battle.actionExecutor.execute(mage, baikilt, [warrior]);
   if (warrior.effectiveAttack !== warrior.attack * 2 || warrior.buffs.attack.turns !== 4) throw new Error("バイキルトの攻撃力倍率が反映されませんでした。");
   if (battle.ai.decide(mage).selected.action.id === "baikilt") throw new Error("戦士強化後も低適性職へバイキルトを使用しようとしました。");
   const actionCount = editor.draft.actions.length;

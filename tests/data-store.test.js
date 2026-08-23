@@ -12,6 +12,7 @@ context.window = context;
 vm.createContext(context);
 vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js", "default-data.js"), "utf8"), context);
 context.DQ.setDefaultGameData(JSON.parse(fs.readFileSync(path.join(__dirname, "..", "data", "default-game-data.json"), "utf8")));
+vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js", "action-schema.js"), "utf8"), context);
 vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js", "data-store.js"), "utf8"), context);
 
 const store = new context.DQ.GameDataStore("test-data");
@@ -42,8 +43,13 @@ const invalidFormation = store.createDraft();
 invalidFormation.ai.targetSelection.enemyBackWeight = 0;
 if (!store.validate(invalidFormation).some(error => error.includes("隊列ウェイト"))) throw new Error("隊列ウェイトの不正値を検出できませんでした。");
 
+const invalidEffect = store.createDraft();
+invalidEffect.actions.find(action => action.id === "doubleEdgedSlash").effects.find(effect => effect.kind === "recoil").rate = 2;
+if (!store.validate(invalidEffect).some(error => error.includes("反動率"))) throw new Error("効果データの不正値を検出できませんでした。");
+
 const legacy = JSON.parse(JSON.stringify(context.DQ.DEFAULT_GAME_DATA));
 legacy.schemaVersion = 1;
+legacy.actions.forEach(action => { delete action.effects; });
 for (const actor of legacy.jobs) {
   Object.assign(actor, actor.levelStats["1"]);
   delete actor.level;
@@ -64,7 +70,7 @@ legacy.ai.turnOrder.minMultiplier = 0.8;
 delete legacy.ai.targetSelection;
 memory.set("legacy-data", JSON.stringify(legacy));
 const migrated = new context.DQ.GameDataStore("legacy-data").getData();
-if (migrated.schemaVersion !== 11 || migrated.ai.turnOrder.minMultiplier !== 0.8 || migrated.ai.targetSelection.enemyBackWeight !== 1 || !migrated.actions.some(action => action.id === "baikilt") || !migrated.actions.some(action => action.id === "flameSlash") || migrated.actions.find(action => action.id === "sukurlt").effectStat !== "defense" || !migrated.jobs[0].levelStats["20"] || migrated.enemies[0].levelStats || !migrated.encounters.length || migrated.jobs.find(job => job.id === "warrior").aiTraits.buffAffinity.attack !== 1.5 || migrated.jobs.find(job => job.id === "mage").actionLevels.baikilt !== 21) {
+if (migrated.schemaVersion !== 12 || migrated.ai.turnOrder.minMultiplier !== 0.8 || migrated.ai.targetSelection.enemyBackWeight !== 1 || !migrated.actions.some(action => action.id === "baikilt") || !migrated.actions.some(action => action.id === "flameSlash") || migrated.actions.find(action => action.id === "sukurlt").effectStat !== "defense" || migrated.actions.find(action => action.id === "sukurlt").effects[0].kind !== "modifyStat" || migrated.actions.some(action => !action.effects.length) || !migrated.jobs[0].levelStats["20"] || migrated.enemies[0].levelStats || !migrated.encounters.length || migrated.jobs.find(job => job.id === "warrior").aiTraits.buffAffinity.attack !== 1.5 || migrated.jobs.find(job => job.id === "mage").actionLevels.baikilt !== 21) {
   throw new Error("旧保存データを補助効果対応形式へ移行できませんでした。");
 }
 console.log("Data validation and persistence: OK");

@@ -182,7 +182,10 @@
       ];
       if (settings.element) rows.push(["属性", elementLabels[settings.element] || settings.element]);
       if (settings.type === "magic") rows.push(["基礎威力", settings.power]);
-      if (settings.type === "attack") rows.push(["技威力倍率", `×${Number(settings.powerMultiplier || 1).toFixed(2)}`]);
+      if (settings.type === "attack") {
+        rows.push(["技威力倍率", `×${Number(settings.powerMultiplier || 1).toFixed(2)}`]);
+        if (settings.recoilRate > 0) rows.push(["反動率", `${(Number(settings.recoilRate) * 100).toFixed(1)}%`]);
+      }
       if (settings.type === "heal") rows.push(["基礎回復量", settings.power]);
       if (settings.type === "support") {
         rows.push(["強化対象", statLabels[settings.effectStat] || settings.effectStat || "不明"]);

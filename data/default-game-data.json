@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 11,
+  "schemaVersion": 12,
   "actions": [
     {
       "id": "attack",
@@ -9,7 +9,18 @@
       "target": "enemyOne",
       "power": 0,
       "powerMultiplier": 1,
-      "baseScore": 40
+      "baseScore": 40,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "physical",
+          "powerMultiplier": 1,
+          "element": null,
+          "varianceMin": 0.88,
+          "varianceMax": 1.12
+        }
+      ]
     },
     {
       "id": "flameSlash",
@@ -21,7 +32,18 @@
       "power": 0,
       "powerMultiplier": 1.25,
       "element": "fire",
-      "baseScore": 48
+      "baseScore": 48,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "physical",
+          "powerMultiplier": 1.25,
+          "element": "fire",
+          "varianceMin": 0.88,
+          "varianceMax": 1.12
+        }
+      ]
     },
     {
       "id": "quickThrust",
@@ -32,7 +54,18 @@
       "power": 0,
       "powerMultiplier": 1,
       "priority": 100,
-      "baseScore": 43
+      "baseScore": 43,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "physical",
+          "powerMultiplier": 1,
+          "element": null,
+          "varianceMin": 0.88,
+          "varianceMax": 1.12
+        }
+      ]
     },
     {
       "id": "doubleEdgedSlash",
@@ -43,7 +76,23 @@
       "power": 0,
       "powerMultiplier": 1.6,
       "recoilRate": 0.16,
-      "baseScore": 58
+      "baseScore": 58,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "physical",
+          "powerMultiplier": 1.6,
+          "element": null,
+          "varianceMin": 0.88,
+          "varianceMax": 1.12
+        },
+        {
+          "kind": "recoil",
+          "target": "caster",
+          "rate": 0.16
+        }
+      ]
     },
     {
       "id": "heavyBlow",
@@ -53,7 +102,18 @@
       "target": "enemyOne",
       "power": 0,
       "powerMultiplier": 1.18,
-      "baseScore": 48
+      "baseScore": 48,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "physical",
+          "powerMultiplier": 1.18,
+          "element": null,
+          "varianceMin": 0.88,
+          "varianceMax": 1.12
+        }
+      ]
     },
     {
       "id": "hoimi",
@@ -62,7 +122,16 @@
       "mpCost": 3,
       "target": "allyOne",
       "power": 35,
-      "baseScore": 20
+      "baseScore": 20,
+      "effects": [
+        {
+          "kind": "heal",
+          "target": "selected",
+          "power": 35,
+          "varianceMin": 0.92,
+          "varianceMax": 1.08
+        }
+      ]
     },
     {
       "id": "behoimi",
@@ -71,7 +140,16 @@
       "mpCost": 5,
       "target": "allyOne",
       "power": 85,
-      "baseScore": 20
+      "baseScore": 20,
+      "effects": [
+        {
+          "kind": "heal",
+          "target": "selected",
+          "power": 85,
+          "varianceMin": 0.92,
+          "varianceMax": 1.08
+        }
+      ]
     },
     {
       "id": "scara",
@@ -85,7 +163,18 @@
       "effectMode": "add",
       "effectValue": 24,
       "duration": 4,
-      "maxStacks": 2
+      "maxStacks": 2,
+      "effects": [
+        {
+          "kind": "modifyStat",
+          "target": "selected",
+          "stat": "defense",
+          "mode": "add",
+          "value": 24,
+          "duration": 4,
+          "maxStacks": 2
+        }
+      ]
     },
     {
       "id": "sukurlt",
@@ -99,7 +188,18 @@
       "effectMode": "add",
       "effectValue": 14,
       "duration": 4,
-      "maxStacks": 2
+      "maxStacks": 2,
+      "effects": [
+        {
+          "kind": "modifyStat",
+          "target": "selected",
+          "stat": "defense",
+          "mode": "add",
+          "value": 14,
+          "duration": 4,
+          "maxStacks": 2
+        }
+      ]
     },
     {
       "id": "piorim",
@@ -113,7 +213,18 @@
       "effectMode": "add",
       "effectValue": 18,
       "duration": 4,
-      "maxStacks": 2
+      "maxStacks": 2,
+      "effects": [
+        {
+          "kind": "modifyStat",
+          "target": "selected",
+          "stat": "speed",
+          "mode": "add",
+          "value": 18,
+          "duration": 4,
+          "maxStacks": 2
+        }
+      ]
     },
     {
       "id": "baikilt",
@@ -127,7 +238,18 @@
       "effectMode": "multiply",
       "effectValue": 2,
       "duration": 4,
-      "maxStacks": 1
+      "maxStacks": 1,
+      "effects": [
+        {
+          "kind": "modifyStat",
+          "target": "selected",
+          "stat": "attack",
+          "mode": "multiply",
+          "value": 2,
+          "duration": 4,
+          "maxStacks": 1
+        }
+      ]
     },
     {
       "id": "mera",
@@ -137,7 +259,18 @@
       "target": "enemyOne",
       "power": 11,
       "element": "fire",
-      "baseScore": 34
+      "baseScore": 34,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "fixed",
+          "power": 11,
+          "element": "fire",
+          "varianceMin": 0.9,
+          "varianceMax": 1.1
+        }
+      ]
     },
     {
       "id": "hyado",
@@ -147,7 +280,18 @@
       "target": "enemyOne",
       "power": 30,
       "element": "ice",
-      "baseScore": 42
+      "baseScore": 42,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "fixed",
+          "power": 30,
+          "element": "ice",
+          "varianceMin": 0.9,
+          "varianceMax": 1.1
+        }
+      ]
     },
     {
       "id": "gira",
@@ -157,7 +301,18 @@
       "target": "allEnemies",
       "power": 23,
       "element": "fire",
-      "baseScore": 42
+      "baseScore": 42,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "fixed",
+          "power": 23,
+          "element": "fire",
+          "varianceMin": 0.9,
+          "varianceMax": 1.1
+        }
+      ]
     },
     {
       "id": "io",
@@ -167,7 +322,18 @@
       "target": "allEnemies",
       "power": 18,
       "element": "bang",
-      "baseScore": 41
+      "baseScore": 41,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "fixed",
+          "power": 18,
+          "element": "bang",
+          "varianceMin": 0.9,
+          "varianceMax": 1.1
+        }
+      ]
     },
     {
       "id": "begirama",
@@ -177,7 +343,18 @@
       "target": "allEnemies",
       "power": 39,
       "element": "fire",
-      "baseScore": 48
+      "baseScore": 48,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "fixed",
+          "power": 39,
+          "element": "fire",
+          "varianceMin": 0.9,
+          "varianceMax": 1.1
+        }
+      ]
     },
     {
       "id": "merami",
@@ -187,7 +364,18 @@
       "target": "enemyOne",
       "power": 63,
       "element": "fire",
-      "baseScore": 52
+      "baseScore": 52,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "fixed",
+          "power": 63,
+          "element": "fire",
+          "varianceMin": 0.9,
+          "varianceMax": 1.1
+        }
+      ]
     },
     {
       "id": "hyadaruko",
@@ -197,7 +385,18 @@
       "target": "allEnemies",
       "power": 48,
       "element": "ice",
-      "baseScore": 51
+      "baseScore": 51,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "fixed",
+          "power": 48,
+          "element": "ice",
+          "varianceMin": 0.9,
+          "varianceMax": 1.1
+        }
+      ]
     },
     {
       "id": "bagi",
@@ -207,7 +406,18 @@
       "target": "allEnemies",
       "power": 16,
       "element": "wind",
-      "baseScore": 39
+      "baseScore": 39,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "fixed",
+          "power": 16,
+          "element": "wind",
+          "varianceMin": 0.9,
+          "varianceMax": 1.1
+        }
+      ]
     },
     {
       "id": "bagima",
@@ -217,7 +427,18 @@
       "target": "allEnemies",
       "power": 40,
       "element": "wind",
-      "baseScore": 48
+      "baseScore": 48,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "fixed",
+          "power": 40,
+          "element": "wind",
+          "varianceMin": 0.9,
+          "varianceMax": 1.1
+        }
+      ]
     },
     {
       "id": "enemyMera",
@@ -228,7 +449,18 @@
       "target": "enemyOne",
       "power": 22,
       "element": "fire",
-      "baseScore": 44
+      "baseScore": 44,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "fixed",
+          "power": 22,
+          "element": "fire",
+          "varianceMin": 0.9,
+          "varianceMax": 1.1
+        }
+      ]
     },
     {
       "id": "zaki",
@@ -238,7 +470,15 @@
       "target": "enemyOne",
       "power": 0,
       "successRate": 0.4,
-      "baseScore": 50
+      "baseScore": 50,
+      "effects": [
+        {
+          "kind": "instantDeath",
+          "target": "selected",
+          "successRate": 0.4,
+          "resistanceKey": "instantDeath"
+        }
+      ]
     },
     {
       "id": "zaraki",
@@ -249,7 +489,15 @@
       "target": "allEnemies",
       "power": 0,
       "successRate": 0.25,
-      "baseScore": 46
+      "baseScore": 46,
+      "effects": [
+        {
+          "kind": "instantDeath",
+          "target": "selected",
+          "successRate": 0.25,
+          "resistanceKey": "instantDeath"
+        }
+      ]
     }
   ],
   "jobs": [

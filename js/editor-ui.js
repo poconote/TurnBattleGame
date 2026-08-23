@@ -233,6 +233,7 @@
           return;
         }
         this.setPath(item, path, value);
+        if (this.tab === "actions") DQ.ActionSchema.syncEffectFromLegacy(item, path);
         if (path === "id" && this.tab === "actions" && oldId !== value) {
           [...this.draft.jobs, ...this.draft.enemies].forEach(actor => {
             actor.actions = actor.actions.map(id => id === oldId ? value : id);
@@ -286,7 +287,7 @@
         jobs: { name: "新しい職業", icon: "新", enabled: false, level: 1, levelStats: { "1": { maxHp: 100, maxMp: 30, attack: 30, defense: 30, speed: 30 } }, actions: ["attack"], actionLevels: { attack: 1 }, aiTraits: { buffAffinity: { attack: 1, defense: 1, speed: 1 }, healPriority: 1, magicPriority: 1 } },
         enemies: { name: "新しい敵", icon: "敵", recommendedLevel: 1, maxHp: 20, maxMp: 0, attack: 10, defense: 8, speed: 8, actions: ["attack"], resistances: { fire: 1, ice: 1, wind: 1, bang: 1, instantDeath: 1 } },
         encounters: { name: "新しい敵グループ", recommendedLevel: 1, members: [{ enemyId: this.draft.enemies[0]?.id || "", count: 1 }] },
-        actions: { name: "新しい技", type: "attack", mpCost: 0, target: "enemyOne", power: 0, powerMultiplier: 1, baseScore: 40, effectStat: "", effectMode: "add", effectValue: 0, duration: 4, maxStacks: 1 },
+        actions: DQ.ActionSchema.ensureEffects({ name: "新しい技", type: "attack", mpCost: 0, target: "enemyOne", power: 0, powerMultiplier: 1, baseScore: 40, effectStat: "", effectMode: "add", effectValue: 0, duration: 4, maxStacks: 1 }),
         strategies: { name: "新しい作戦", attack: 1, heal: 1, magic: 1, support: 1, instantDeath: 1 },
       }[this.tab];
       base.id = this.uniqueId({ jobs: "job", enemies: "enemy", encounters: "encounter", actions: "action", strategies: "strategy" }[this.tab] || "item");

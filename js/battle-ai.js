@@ -1,7 +1,7 @@
 (function (DQ) {
   "use strict";
 
-  const isGroupTarget = action => action.target === "allAllies" || action.target === "allEnemies";
+  const isGroupTarget = action => DQ.TargetResolver.isGroup(action);
 
   class BattleAI {
     constructor(battle) { this.battle = battle; }
@@ -11,7 +11,7 @@
       for (const actionId of actor.actions) {
         const action = this.battle.getAction(actionId);
         if (!action) continue;
-        const targets = this.getTargets(actor, action);
+        const targets = this.battle.targetResolver.resolve(actor, action);
         if (actor.currentMp < action.mpCost) {
           candidates.push(this.unavailable(actor, action, targets, "MPが足りない"));
         } else if (!targets.length) {
@@ -39,13 +39,7 @@
     }
 
     getTargets(actor, action) {
-      const allies = this.battle.getLiving(actor.side);
-      const enemies = this.battle.getLiving(actor.side === "ally" ? "enemy" : "ally");
-      if (action.target === "self") return [actor];
-      if (action.target === "allyOne" || action.target === "allAllies") {
-        return action.type === "heal" ? allies.filter(unit => unit.currentHp < unit.maxHp) : allies;
-      }
-      return enemies;
+      return this.battle.targetResolver.resolve(actor, action);
     }
 
     evaluateSingleTargetAction(actor, action, targets) {
@@ -83,7 +77,8 @@
     groupEquivalentTargets(actor, action, targets) {
       const groups = new Map();
       targets.forEach(target => {
-        const resistanceKey = action.type === "instantDeath" ? "instantDeath" : action.element;
+        const primary = DQ.ActionSchema.getPrimaryEffect(action);
+        const resistanceKey = primary?.kind === "instantDeath" ? primary.resistanceKey || "instantDeath" : primary?.element;
         const signature = JSON.stringify({
           templateId: target.templateId,
           side: target.side,
@@ -185,40 +180,39 @@
     }
 
     describeAction(actor, action, targets) {
+      const primary = DQ.ActionSchema.getPrimaryEffect(action);
       const settings = {
         type: action.type,
         mpCost: Number(action.mpCost || 0),
         target: action.target,
         baseScore: Number(action.baseScore || 0),
-        power: Number(action.power || 0),
-        powerMultiplier: Number(action.powerMultiplier ?? 1),
-        element: action.element || null,
-        successRate: Number(action.successRate || 0),
-        effectStat: action.effectStat || null,
-        effectMode: action.effectMode || null,
-        effectValue: Number(action.effectValue || 0),
-        duration: Number(action.duration || 0),
-        maxStacks: Number(action.maxStacks || 0),
+        effects: DQ.cloneData(action.effects || []),
+        power: Number(primary?.power || 0),
+        powerMultiplier: Number(primary?.powerMultiplier ?? 1),
+        element: primary?.element || null,
+        successRate: Number(primary?.successRate || 0),
+        effectStat: primary?.stat || null,
+        effectMode: primary?.mode || null,
+        effectValue: Number(primary?.value || 0),
+        duration: Number(primary?.duration || 0),
+        maxStacks: Number(primary?.maxStacks || 0),
+        recoilRate: Number((action.effects || []).find(effect => effect.kind === "recoil")?.rate || 0),
         outcomes: [],
       };
+      const preview = this.battle.effectEngine.previewAction(actor, action, targets);
       settings.outcomes = targets.map(target => {
-        const resistance = action.element ? Number(target.resistances[action.element] ?? 1) : 1;
-        if (action.type === "magic") {
-          const expectedDamage = this.battle.estimateMagicDamage(action, target);
-          return { targetId: target.id, targetName: target.name, resistance, expectedDamage, damageMin: Math.max(1, Math.round(expectedDamage * 0.9)), damageMax: Math.max(1, Math.round(expectedDamage * 1.1)) };
-        }
-        if (action.type === "attack") {
-          const expectedDamage = this.battle.estimatePhysicalDamage(actor, target, action);
-          return { targetId: target.id, targetName: target.name, resistance, expectedDamage, damageMin: Math.max(1, Math.round(expectedDamage * 0.88)), damageMax: Math.max(1, Math.round(expectedDamage * 1.12)) };
-        }
-        if (action.type === "heal") {
-          const missingHp = Math.max(0, target.maxHp - target.currentHp);
-          return { targetId: target.id, targetName: target.name, expectedHeal: Math.min(missingHp, settings.power), healMin: Math.min(missingHp, Math.round(settings.power * 0.92)), healMax: Math.min(missingHp, Math.round(settings.power * 1.08)) };
-        }
-        if (action.type === "instantDeath") {
-          return { targetId: target.id, targetName: target.name, resistance: Number(target.resistances.instantDeath ?? 1), successRate: settings.successRate * Number(target.resistances.instantDeath ?? 1) };
-        }
-        return { targetId: target.id, targetName: target.name };
+        const outcome = { targetId: target.id, targetName: target.name };
+        preview.effects.forEach(result => result.outcomes.filter(item => item.target === target).forEach(item => Object.assign(outcome, {
+          resistance: item.resistance ?? outcome.resistance,
+          expectedDamage: item.expectedDamage ?? outcome.expectedDamage,
+          damageMin: item.damageMin ?? outcome.damageMin,
+          damageMax: item.damageMax ?? outcome.damageMax,
+          expectedHeal: item.expectedHeal ?? outcome.expectedHeal,
+          healMin: item.healMin ?? outcome.healMin,
+          healMax: item.healMax ?? outcome.healMax,
+          successRate: item.successRate ?? outcome.successRate,
+        })));
+        return outcome;
       });
       return settings;
     }
@@ -226,9 +220,10 @@
     evaluateAttack(actor, action, target, reasons) {
       const rules = this.battle.data.ai.attack;
       let bonus = 0;
+      const effect = DQ.ActionSchema.getPrimaryEffect(action, "damage");
       const damage = this.battle.estimatePhysicalDamage(actor, target, action);
-      if (action.element) {
-        const resistance = target.resistances[action.element] ?? 1;
+      if (effect?.element) {
+        const resistance = target.resistances[effect.element] ?? 1;
         if (resistance >= this.battle.data.ai.magic.weakThreshold) {
           bonus += rules.elementWeakBonus;
           reasons.push({ label: "物理スキルで弱点属性", value: rules.elementWeakBonus, kind: "add" });
@@ -246,6 +241,8 @@
     evaluateHeal(actor, action, target, reasons) {
       const rules = this.battle.data.ai.heal;
       let bonus = 0;
+      const effect = DQ.ActionSchema.getPrimaryEffect(action, "heal");
+      const power = Number(effect?.power || 0);
       rules.thresholds.forEach(rule => {
         if (target.hpRate < rule.rate) {
           bonus += Number(rule.score);
@@ -253,9 +250,9 @@
         }
       });
       const missing = target.maxHp - target.currentHp;
-      const wasted = Math.max(0, Number(action.power) - missing);
-      if (wasted > Number(action.power) * rules.wasteRate) { bonus += rules.wastePenalty; reasons.push({ label: "回復量の一部が無駄", value: rules.wastePenalty, kind: "add" }); }
-      const expectedRate = Math.min(target.maxHp, target.currentHp + Number(action.power)) / target.maxHp;
+      const wasted = Math.max(0, power - missing);
+      if (wasted > power * rules.wasteRate) { bonus += rules.wastePenalty; reasons.push({ label: "回復量の一部が無駄", value: rules.wastePenalty, kind: "add" }); }
+      const expectedRate = Math.min(target.maxHp, target.currentHp + power) / target.maxHp;
       if (target.hpRate < 0.25 && expectedRate < rules.unsafeRate) { bonus += rules.unsafePenalty; reasons.push({ label: "回復後も危険域", value: rules.unsafePenalty, kind: "add" }); }
       if (actor.currentMp / Math.max(1, actor.maxMp) > rules.mpEnoughRate) { bonus += rules.mpEnoughBonus; reasons.push({ label: "MP残量十分", value: rules.mpEnoughBonus, kind: "add" }); }
       return bonus;
@@ -264,9 +261,10 @@
     evaluateMagic(actor, action, targets, reasons) {
       const rules = this.battle.data.ai.magic;
       let bonus = 0;
-      const group = action.target === "allEnemies";
-      const weak = targets.filter(target => (target.resistances[action.element] ?? 1) >= rules.weakThreshold).length;
-      const resistant = targets.filter(target => (target.resistances[action.element] ?? 1) <= rules.resistThreshold).length;
+      const effect = DQ.ActionSchema.getPrimaryEffect(action, "damage");
+      const group = isGroupTarget(action);
+      const weak = targets.filter(target => (target.resistances[effect?.element] ?? 1) >= rules.weakThreshold).length;
+      const resistant = targets.filter(target => (target.resistances[effect?.element] ?? 1) <= rules.resistThreshold).length;
       const damages = targets.map(target => this.battle.estimateMagicDamage(action, target));
       const totalDamage = damages.reduce((sum, damage) => sum + damage, 0);
       if (weak) { const value = weak * rules.weakBonus; bonus += value; reasons.push({ label: `弱点属性${weak > 1 ? `（${weak}体）` : ""}`, value, kind: "add" }); }
@@ -283,10 +281,11 @@
     evaluateSupport(actor, action, targets, reasons) {
       const rules = this.battle.data.ai.support;
       let bonus = 0;
+      const effect = DQ.ActionSchema.getPrimaryEffect(action, "modifyStat");
       if (targets.length === 3) { bonus += rules.fullPartyBonus; reasons.push({ label: "味方3人生存", value: rules.fullPartyBonus, kind: "add" }); }
       const opponents = this.battle.getLiving(actor.side === "ally" ? "enemy" : "ally");
       if (Math.max(...opponents.map(unit => unit.attack)) >= rules.strongEnemyAttack) { bonus += rules.strongEnemyBonus; reasons.push({ label: "強力な物理攻撃の敵", value: rules.strongEnemyBonus, kind: "add" }); }
-      const stat = action.effectStat || "defense";
+      const stat = effect?.stat || "defense";
       const affinities = targets.map(target => Number(target.aiTraits.buffAffinity[stat] ?? 1));
       const affinity = affinities.reduce((sum, value) => sum + value, 0) / affinities.length;
       const affinityAdjustment = Math.round((affinity - 1) * 40);
@@ -294,7 +293,7 @@
         bonus += affinityAdjustment;
         reasons.push({ label: `${{ attack: "攻撃", defense: "守備", speed: "素早さ" }[stat] || stat}強化適性 ×${affinity.toFixed(2)}`, value: affinityAdjustment, kind: "add" });
       }
-      if (stat === "attack" && action.target === "allyOne") {
+      if (stat === "attack" && !isGroupTarget(action)) {
         const value = Math.round(targets[0].effectiveAttack * affinity / Math.max(1, rules.statValueDivisor || 1));
         bonus += value;
         reasons.push({ label: "対象の攻撃力を活かせる", value, kind: "add" });
@@ -315,7 +314,7 @@
       const values = targets.map(target => actor.side === "ally" ? this.battle.knowledge.get(target.templateId, "instantDeath") : 0);
       const learning = values.reduce((sum, value) => sum + value, 0) / values.length * rules.learningMultiplier;
       if (learning) { bonus += learning; reasons.push({ label: "即死の学習値", value: learning, kind: "add" }); }
-      if (action.target === "allEnemies") { const value = Math.max(0, targets.length - 1) * rules.extraTargetBonus; bonus += value; if (value) reasons.push({ label: `対象${targets.length}体`, value, kind: "add" }); }
+      if (isGroupTarget(action)) { const value = Math.max(0, targets.length - 1) * rules.extraTargetBonus; bonus += value; if (value) reasons.push({ label: `対象${targets.length}体`, value, kind: "add" }); }
       if (targets.every(target => target.hpRate < rules.lowEnemyHpRate)) { bonus += rules.lowEnemyHpPenalty; reasons.push({ label: "通常攻撃で倒せそう", value: rules.lowEnemyHpPenalty, kind: "add" }); }
       if (actor.currentMp / actor.maxMp < rules.lowMpRate) { bonus += rules.lowMpPenalty; reasons.push({ label: "MP残量が少ない", value: rules.lowMpPenalty, kind: "add" }); }
       return bonus;

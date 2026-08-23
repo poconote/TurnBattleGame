@@ -53,6 +53,9 @@
       this.busy = false;
       this.actionQueue = [];
       this.knowledge = new DQ.EnemyKnowledge(enemies);
+      this.targetResolver = new DQ.TargetResolver(this);
+      this.effectEngine = new DQ.EffectEngine(this);
+      this.actionExecutor = new DQ.ActionExecutor(this, this.effectEngine);
       this.ai = new DQ.BattleAI(this);
       if (clearLog) {
         this.log.clear();
@@ -124,8 +127,9 @@
           actor.actions.map(actionId => this.getAction(actionId))
             .filter(action => action?.type === "heal" && ["allyOne", "allAllies", "self"].includes(action.target))
             .forEach(action => {
+              const healEffect = DQ.ActionSchema.getPrimaryEffect(action, "heal");
               const mpCost = Math.max(0, Number(action.mpCost || 0));
-              const power = Math.max(0, Number(action.power || 0));
+              const power = Math.max(0, Number(healEffect?.power || 0));
               if (!power || actor.currentMp < mpCost) return;
               const targets = action.target === "self" ? damaged.filter(target => target === actor) : damaged;
               if (!targets.length) return;
@@ -202,12 +206,15 @@
     }
 
     estimatePhysicalDamage(actor, target, action) {
-      const multiplier = Number(action.powerMultiplier ?? (action.id === "attack" ? 1 : action.power || 1));
-      const resistance = action.element ? (target.resistances[action.element] ?? 1) : 1;
-      return Math.max(1, Math.round((actor.effectiveAttack * multiplier - target.effectiveDefense * 0.48) * resistance));
+      const effect = DQ.ActionSchema.getPrimaryEffect(action, "damage");
+      if (!effect) return 0;
+      return this.effectEngine.registry.get("damage").preview(this.effectEngine.createContext(actor, action, () => 0.5), effect, target).expectedDamage;
     }
     estimateMagicDamage(action, target) {
-      return Math.max(1, Math.round(Number(action.power) * (target.resistances[action.element] ?? 1)));
+      const effect = DQ.ActionSchema.getPrimaryEffect(action, "damage");
+      if (!effect) return 0;
+      const actor = this.characters.find(unit => unit.actions.includes(action.id)) || this.getLiving("ally")[0] || this.getLiving("enemy")[0];
+      return this.effectEngine.registry.get("damage").preview(this.effectEngine.createContext(actor, action, () => 0.5), effect, target).expectedDamage;
     }
 
     async runTurn() {
@@ -300,77 +307,21 @@
       const candidate = decision.selected;
       const action = candidate.action;
       let targets = candidate.targets.filter(target => target.alive);
-      if (!targets.length) targets = this.ai.getTargets(actor, action);
+      if (!targets.length) targets = this.targetResolver.resolve(actor, action);
       if (!targets.length) { this.log.add(`${actor.name}は行動しようとしたが、対象がいなかった。`, "system"); return; }
-      if (!DQ.isGroupTarget(action)) targets = [targets[0]];
+      if (!DQ.TargetResolver.isGroup(action)) targets = [targets[0]];
       actor.currentMp -= Number(action.mpCost);
       if (actor.side === "ally") this.ui.showDecision(decision);
       this.ui.markActing(actor.id, targets.map(target => target.id));
       await this.pause(150);
-      if (action.type === "attack") this.executeAttack(actor, action, targets[0]);
-      if (action.type === "heal") this.executeHeal(actor, action, targets[0]);
-      if (action.type === "magic") this.executeMagic(actor, action, targets);
-      if (action.type === "support") this.executeSupport(actor, action, targets);
-      if (action.type === "instantDeath") this.executeInstantDeath(actor, action, targets);
+      this.actionExecutor.execute(actor, action, targets);
       this.updateDeaths();
       this.ui.render();
       await this.pause(100);
     }
 
     actionName(action) { return action.battleName || action.name; }
-    executeAttack(actor, action, target) {
-      const damage = Math.max(1, Math.round(this.estimatePhysicalDamage(actor, target, action) * (0.88 + Math.random() * 0.24)));
-      target.currentHp = Math.max(0, target.currentHp - damage);
-      this.log.add(`${actor.name}の${this.actionName(action)}！ ${target.name}に${damage}ダメージ。`);
-      const recoil = Math.round(damage * Number(action.recoilRate || 0));
-      if (recoil > 0) {
-        actor.currentHp = Math.max(0, actor.currentHp - recoil);
-        this.log.add(`${actor.name}は反動で${recoil}ダメージを受けた。`, "danger");
-      }
-    }
-    executeHeal(actor, action, target) {
-      const amount = Math.min(target.maxHp - target.currentHp, Math.round(Number(action.power) * (0.92 + Math.random() * 0.16)));
-      target.currentHp += amount;
-      this.log.add(`${actor.name}は${this.actionName(action)}を唱えた。${target.name}のHPが${amount}回復。`, "heal");
-    }
-    executeMagic(actor, action, targets) {
-      this.log.add(`${actor.name}は${this.actionName(action)}を唱えた！`, "magic");
-      targets.forEach(target => {
-        const damage = Math.max(1, Math.round(this.estimateMagicDamage(action, target) * (0.9 + Math.random() * 0.2)));
-        target.currentHp = Math.max(0, target.currentHp - damage);
-        this.log.add(`${target.name}に${damage}ダメージ。`, "magic");
-      });
-    }
-    executeSupport(actor, action, targets) {
-      const stat = action.effectStat || "defense";
-      const mode = action.effectMode || "add";
-      const amount = Number(action.effectValue ?? action.power ?? 0);
-      const duration = Math.max(1, Number(action.duration || 4));
-      const maxStacks = Math.max(1, Number(action.maxStacks || 1));
-      targets.forEach(target => {
-        const buff = target.buffs[stat] || (target.buffs[stat] = { mode, value: mode === "multiply" ? 1 : 0, turns: 0, stacks: 0 });
-        buff.mode = mode;
-        if (mode === "multiply") buff.value = Math.max(buff.value, amount);
-        else if (buff.stacks < maxStacks) buff.value += amount;
-        buff.stacks = Math.min(maxStacks, buff.stacks + 1);
-        buff.turns = duration;
-      });
-      this.log.add(`${actor.name}は${this.actionName(action)}を唱えた。${targets.map(target => target.name).join("、")}の${this.statLabel(stat)}が上がった！`, "heal");
-    }
-
     statLabel(stat) { return { attack: "攻撃力", defense: "守備力", speed: "素早さ" }[stat] || stat; }
-    executeInstantDeath(actor, action, targets) {
-      this.log.add(`${actor.name}は${this.actionName(action)}を唱えた！`, "magic");
-      targets.forEach(target => {
-        const success = Math.random() < Number(action.successRate) * (target.resistances.instantDeath ?? 1);
-        if (success) { target.currentHp = 0; this.log.add(`${target.name}の息の根を止めた！`, "danger"); }
-        else this.log.add(`${target.name}には効かなかった。`, "system");
-        if (actor.side === "ally" && target.side === "enemy") {
-          const value = this.knowledge.update(target.templateId, "instantDeath", success ? 1 : -1);
-          this.log.add(`AI学習：${target.name}の即死有効度を ${value > 0 ? "+" : ""}${value} に更新。`, "learn");
-        }
-      });
-    }
 
     updateDeaths() {
       this.characters.forEach(unit => {

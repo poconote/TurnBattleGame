@@ -3,7 +3,7 @@
 
   const clone = value => JSON.parse(JSON.stringify(value));
   const STORAGE_KEY = "dq-ai-battle-data-v1";
-  const CURRENT_SCHEMA_VERSION = 11;
+  const CURRENT_SCHEMA_VERSION = 12;
 
   class GameDataStore {
     constructor(storageKey = STORAGE_KEY) {
@@ -29,7 +29,7 @@
       try {
         const raw = localStorage.getItem(this.storageKey);
         if (!raw) return clone(DQ.DEFAULT_GAME_DATA);
-        const parsed = this.migrate(JSON.parse(raw));
+        const parsed = this.normalize(this.migrate(JSON.parse(raw)));
         const errors = this.validate(parsed);
         if (errors.length) return clone(DQ.DEFAULT_GAME_DATA);
         localStorage.setItem(this.storageKey, JSON.stringify(parsed));
@@ -42,10 +42,16 @@
     getData() { return this.data; }
     createDraft() { return clone(this.data); }
 
+    normalize(data) {
+      if (data?.actions) data.actions.forEach(action => DQ.ActionSchema.ensureEffects(action));
+      return data;
+    }
+
     setData(nextData) {
-      const errors = this.validate(nextData);
+      const normalized = this.normalize(clone(nextData));
+      const errors = this.validate(normalized);
       if (errors.length) throw new Error(errors.join("\n"));
-      this.data = clone(nextData);
+      this.data = normalized;
       localStorage.setItem(this.storageKey, JSON.stringify(this.data));
       return this.data;
     }
@@ -131,6 +137,7 @@
       data.selectedEncounterId = data.encounters.some(encounter => encounter.id === data.selectedEncounterId)
         ? data.selectedEncounterId
         : data.encounters.some(encounter => encounter.id === defaults.selectedEncounterId) ? defaults.selectedEncounterId : data.encounters[0]?.id;
+      data.actions.forEach(action => DQ.ActionSchema.ensureEffects(action));
       data.schemaVersion = CURRENT_SCHEMA_VERSION;
       return data;
     }
@@ -206,9 +213,27 @@
       });
       const validTargets = new Set(["enemyOne", "allEnemies", "allyOne", "allAllies", "self"]);
       const validTypes = new Set(["attack", "heal", "magic", "support", "instantDeath"]);
+      const validEffectKinds = new Set(["damage", "heal", "modifyStat", "instantDeath", "recoil"]);
       data.actions.forEach(action => {
         if (!validTargets.has(action.target)) errors.push(`${action.name}の対象種別が不正です。`);
         if (!validTypes.has(action.type)) errors.push(`${action.name}の行動タイプが不正です。`);
+        if (!Array.isArray(action.effects) || !action.effects.length) errors.push(`${action.name}に効果が設定されていません。`);
+        (action.effects || []).forEach(effect => {
+          if (!validEffectKinds.has(effect.kind)) errors.push(`${action.name}に未対応の効果「${effect.kind || "未設定"}」があります。`);
+          if (!["selected", "caster"].includes(effect.target)) errors.push(`${action.name}の効果対象が不正です。`);
+          if (effect.kind === "damage") {
+            if (!["physical", "fixed"].includes(effect.formula)) errors.push(`${action.name}のダメージ計算式が不正です。`);
+            if (effect.formula === "physical" && (!Number.isFinite(Number(effect.powerMultiplier)) || Number(effect.powerMultiplier) <= 0)) errors.push(`${action.name}の物理攻撃倍率が不正です。`);
+            if (effect.formula === "fixed" && (!Number.isFinite(Number(effect.power)) || Number(effect.power) < 0)) errors.push(`${action.name}の固定ダメージ威力が不正です。`);
+          }
+          if (effect.kind === "heal" && (!Number.isFinite(Number(effect.power)) || Number(effect.power) < 0)) errors.push(`${action.name}の回復量が不正です。`);
+          if (effect.kind === "modifyStat") {
+            if (!["attack", "defense", "speed"].includes(effect.stat) || !["add", "multiply"].includes(effect.mode)) errors.push(`${action.name}の能力変化設定が不正です。`);
+            if (!Number.isFinite(Number(effect.value)) || !Number.isFinite(Number(effect.duration)) || !Number.isFinite(Number(effect.maxStacks)) || Number(effect.duration) < 1 || Number(effect.maxStacks) < 1) errors.push(`${action.name}の能力変化量・ターン・重ね掛け上限が不正です。`);
+          }
+          if (effect.kind === "instantDeath" && (!Number.isFinite(Number(effect.successRate)) || Number(effect.successRate) < 0 || Number(effect.successRate) > 1)) errors.push(`${action.name}の即死成功率は0～1で指定してください。`);
+          if (effect.kind === "recoil" && (!Number.isFinite(Number(effect.rate)) || Number(effect.rate) < 0 || Number(effect.rate) > 1)) errors.push(`${action.name}の反動率は0～1で指定してください。`);
+        });
         if (Number(action.mpCost) < 0) errors.push(`${action.name}の消費MPが不正です。`);
         if (action.successRate != null && (Number(action.successRate) < 0 || Number(action.successRate) > 1)) errors.push(`${action.name}の成功率は0～1で指定してください。`);
         if (action.recoilRate != null && (Number(action.recoilRate) < 0 || Number(action.recoilRate) > 1)) errors.push(`${action.name}の反動率は0～1で指定してください。`);
