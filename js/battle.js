@@ -14,6 +14,11 @@
       this.data = this.store.getData();
       const allies = this.data.jobs.filter(job => job.enabled).slice(0, 3)
         .map((job, formationIndex) => new DQ.Character(job, "ally", { formationIndex }));
+      this.battleNumber = 1;
+      this.initializeBattle(allies, true);
+    }
+
+    createEnemies() {
       const encounters = this.data.encounters || [];
       if (!encounters.some(encounter => encounter.id === this.encounterId)) {
         this.encounterId = encounters.some(encounter => encounter.id === this.data.selectedEncounterId)
@@ -26,7 +31,7 @@
       }).slice(0, 3);
       const totals = enemyTemplates.reduce((map, enemy) => map.set(enemy.id, (map.get(enemy.id) || 0) + 1), new Map());
       const occurrences = new Map();
-      const enemies = enemyTemplates.map(template => {
+      return enemyTemplates.map(template => {
         const index = (occurrences.get(template.id) || 0) + 1;
         occurrences.set(template.id, index);
         const duplicate = totals.get(template.id) > 1;
@@ -35,21 +40,55 @@
           name: `${template.battleName || template.name}${duplicate ? String.fromCharCode(64 + index) : ""}`,
         });
       });
+    }
+
+    initializeBattle(allies, clearLog) {
+      const enemies = this.createEnemies();
       this.characters = [...allies, ...enemies];
       this.turn = 1;
-      this.strategy = this.data.strategies[0]?.id || "balanced";
+      if (clearLog || !this.data.strategies.some(strategy => strategy.id === this.strategy)) {
+        this.strategy = this.data.strategies[0]?.id || "balanced";
+      }
       this.ended = false;
       this.busy = false;
       this.actionQueue = [];
       this.knowledge = new DQ.EnemyKnowledge(enemies);
       this.ai = new DQ.BattleAI(this);
-      this.log.clear();
-      this.log.add("戦闘開始。味方AIの作戦を選んでください。", "system");
+      if (clearLog) {
+        this.log.clear();
+        this.log.add("戦闘開始。味方AIの作戦を選んでください。", "system");
+      } else {
+        this.log.add(`── 連戦 ${this.battleNumber}：${this.getEncounter()?.name || "次の戦闘"} ──`, "turn");
+        this.log.add("味方のHP・MPを引き継いで次の戦闘を開始。強化効果と耐性学習はリセット。", "system");
+      }
       this.ui.hideResult();
       this.ui.clearDecision();
       this.ui.renderStrategyOptions();
       this.ui.renderEncounterOptions();
       this.ui.render();
+    }
+
+    startConsecutiveBattle(encounterId = this.encounterId) {
+      if (!this.ended || !this.getLiving("ally").length) return false;
+      if (this.data.encounters.some(encounter => encounter.id === encounterId)) {
+        this.encounterId = encounterId;
+        this.store.setSelectedEncounter(encounterId);
+      }
+      const allies = this.characters.filter(unit => unit.side === "ally");
+      allies.forEach(unit => {
+        unit.currentHp = Math.max(0, Math.min(unit.maxHp, unit.currentHp));
+        unit.currentMp = Math.max(0, Math.min(unit.maxMp, unit.currentMp));
+        unit.alive = unit.currentHp > 0;
+        unit.lastDecision = null;
+        Object.values(unit.buffs).forEach(buff => {
+          buff.value = buff.mode === "multiply" ? 1 : 0;
+          buff.turns = 0;
+          buff.stacks = 0;
+        });
+      });
+      this.battleNumber = Number(this.battleNumber || 1) + 1;
+      this.initializeBattle(allies, false);
+      return true;
     }
 
     getAction(id) { return this.data.actions.find(action => action.id === id); }

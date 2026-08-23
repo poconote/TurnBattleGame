@@ -28,6 +28,9 @@
       this.autoButton.addEventListener("click", () => this.battle.autoTimer ? this.battle.stopAuto() : this.battle.startAuto());
       document.querySelector("#reset-battle").addEventListener("click", () => this.battle.reset());
       document.querySelector("#result-close").addEventListener("click", () => this.hideResult());
+      document.querySelector("#result-continue").addEventListener("click", () => {
+        this.battle.startConsecutiveBattle(document.querySelector("#result-encounter").value);
+      });
       document.querySelector("#clear-log").addEventListener("click", () => this.battle.log.clear());
       this.strategySelect.addEventListener("change", event => {
         this.battle.setStrategy(event.target.value);
@@ -249,6 +252,11 @@
     showResult(victory, turns) {
       document.querySelector("#result-title").textContent = victory ? "勝利！" : "全滅……";
       document.querySelector("#result-message").textContent = `${turns}ターンで戦闘が終了しました。`;
+      const nextBattle = document.querySelector("#result-next-battle");
+      const encounter = document.querySelector("#result-encounter");
+      nextBattle.hidden = !victory;
+      encounter.innerHTML = this.battle.data.encounters.map(item => `<option value="${this.escape(item.id)}">Lv${Number(item.recommendedLevel || 1)} ${this.escape(item.name)}</option>`).join("");
+      encounter.value = this.battle.encounterId;
       document.querySelector("#result-overlay").classList.remove("hidden");
     }
     hideResult() { document.querySelector("#result-overlay").classList.add("hidden"); }

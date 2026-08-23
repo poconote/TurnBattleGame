@@ -54,6 +54,7 @@ if (!battleUiSource.includes('addEventListener("click", showCandidateSettings)')
 }
 const indexSource = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
 if (!indexSource.includes('<details class="action-settings-details">') || !indexSource.includes('id="action-setting-rows"')) throw new Error("技の設定値が折りたたみ表示になっていません。");
+if (!indexSource.includes('id="result-continue"') || !indexSource.includes('id="result-encounter"')) throw new Error("戦闘結果画面に連戦操作がありません。");
 
 vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js", "default-data.js"), "utf8"), context, { filename: "default-data.js" });
 context.DQ.setDefaultGameData(JSON.parse(fs.readFileSync(path.join(__dirname, "..", "data", "default-game-data.json"), "utf8")));
@@ -219,5 +220,38 @@ for (const file of ["data-store.js", "models.js", "battle-ai.js", "battle.js", "
     throw new Error("技の決定後に最高評価グループから実際の対象を選べませんでした。");
   }
   if (editor.store.getData().selectedEncounterId !== "slimePair") throw new Error("選択した敵グループを保存できませんでした。");
+  const chainWarrior = battle.getCharacter("warrior");
+  const chainPriest = battle.getCharacter("priest");
+  const chainMage = battle.getCharacter("mage");
+  chainWarrior.currentHp = 37;
+  chainPriest.currentMp = Math.max(0, chainPriest.currentMp - 7);
+  chainWarrior.buffs.attack.value = 2;
+  chainWarrior.buffs.attack.turns = 3;
+  chainWarrior.buffs.attack.stacks = 1;
+  chainMage.currentHp = 0;
+  chainMage.alive = false;
+  battle.strategy = "aggressive";
+  battle.ui.showResult(false, 3);
+  if (!documentStub.querySelector("#result-next-battle").hidden) throw new Error("全滅時にも連戦操作が表示されています。");
+  battle.ui.showResult(true, 3);
+  if (documentStub.querySelector("#result-next-battle").hidden || !documentStub.querySelector("#result-encounter").innerHTML.includes("resistanceLab")) {
+    throw new Error("勝利時の連戦操作に敵グループが表示されませんでした。");
+  }
+  battle.ended = true;
+  if (!battle.startConsecutiveBattle("resistanceLab")) throw new Error("勝利後に連戦を開始できませんでした。");
+  if (battle.getCharacter("warrior").currentHp !== 37 || battle.getCharacter("priest").currentMp !== chainPriest.currentMp) {
+    throw new Error("連戦で味方の現在HP・MPが引き継がれませんでした。");
+  }
+  if (battle.getCharacter("mage").alive || battle.getCharacter("mage").currentHp !== 0) throw new Error("連戦で戦闘不能状態が引き継がれませんでした。");
+  if (battle.getCharacter("warrior").buffs.attack.turns !== 0 || battle.getCharacter("warrior").buffs.attack.value !== 1) {
+    throw new Error("連戦開始時に一時的な強化効果が解除されませんでした。");
+  }
+  if (battle.encounterId !== "resistanceLab" || battle.getLiving("enemy").length !== 3 || battle.turn !== 1 || battle.battleNumber !== 2 || battle.strategy !== "aggressive" || battle.ended) {
+    throw new Error("連戦の敵グループ・ターン・作戦が正しく初期化されませんでした。");
+  }
+  battle.reset();
+  if (battle.getCharacter("warrior").currentHp !== battle.getCharacter("warrior").maxHp || battle.getCharacter("priest").currentMp !== battle.getCharacter("priest").maxMp || battle.battleNumber !== 1) {
+    throw new Error("通常リセットで全回復した新しい連戦を開始できませんでした。");
+  }
   console.log("Runtime, editor, encounters, duplicate enemies, levels, STEP, and AI scoring: OK");
 })().catch(error => { console.error(error); process.exitCode = 1; });
