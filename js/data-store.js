@@ -3,7 +3,7 @@
 
   const clone = value => JSON.parse(JSON.stringify(value));
   const STORAGE_KEY = "dq-ai-battle-data-v1";
-  const CURRENT_SCHEMA_VERSION = 12;
+  const CURRENT_SCHEMA_VERSION = 13;
 
   class GameDataStore {
     constructor(storageKey = STORAGE_KEY) {
@@ -28,14 +28,14 @@
     load() {
       try {
         const raw = localStorage.getItem(this.storageKey);
-        if (!raw) return clone(DQ.DEFAULT_GAME_DATA);
+        if (!raw) return this.normalize(clone(DQ.DEFAULT_GAME_DATA));
         const parsed = this.normalize(this.migrate(JSON.parse(raw)));
         const errors = this.validate(parsed);
-        if (errors.length) return clone(DQ.DEFAULT_GAME_DATA);
+        if (errors.length) return this.normalize(clone(DQ.DEFAULT_GAME_DATA));
         localStorage.setItem(this.storageKey, JSON.stringify(parsed));
         return parsed;
       } catch {
-        return clone(DQ.DEFAULT_GAME_DATA);
+        return this.normalize(clone(DQ.DEFAULT_GAME_DATA));
       }
     }
 
@@ -44,11 +44,12 @@
 
     normalize(data) {
       if (data?.actions) data.actions.forEach(action => DQ.ActionSchema.ensureEffects(action));
+      if (data?.enemies) data.enemies.forEach(enemy => { enemy.resistances = { fire: 1, ice: 1, wind: 1, bang: 1, instantDeath: 1, poison: 1, blind: 1, petrify: 1, ...(enemy.resistances || {}) }; });
       return data;
     }
 
     setData(nextData) {
-      const normalized = this.normalize(clone(nextData));
+      const normalized = this.normalize(this.migrate(clone(nextData)));
       const errors = this.validate(normalized);
       if (errors.length) throw new Error(errors.join("\n"));
       this.data = normalized;
@@ -67,7 +68,7 @@
       const errors = this.validate(defaults);
       if (errors.length) throw new Error(`GitHubの標準データが正しくありません。\n${errors.join("\n")}`);
       DQ.setDefaultGameData(defaults);
-      return clone(defaults);
+      return this.normalize(clone(defaults));
     }
 
     setSelectedEncounter(encounterId) {
@@ -97,7 +98,7 @@
       data.ai = clone(defaults.ai);
       for (const key of ["randomMin", "randomMax"]) if (oldAI[key] != null) data.ai[key] = oldAI[key];
       for (const key of ["turnOrder", "targetSelection"]) data.ai[key] = { ...data.ai[key], ...(oldAI[key] || {}) };
-      for (const key of ["attack", "heal", "magic", "support", "instantDeath"]) data.ai[key] = { ...data.ai[key], ...(oldAI[key] || {}) };
+      for (const key of ["attack", "heal", "magic", "support", "instantDeath", "status", "cure", "revive"]) data.ai[key] = { ...data.ai[key], ...(oldAI[key] || {}) };
       data.ai.support.activePenalty = Math.min(Number(data.ai.support.activePenalty ?? -120), -120);
 
       data.jobs.forEach(job => {
@@ -130,8 +131,16 @@
       for (const defaultEnemy of defaults.enemies) {
         const enemy = data.enemies.find(item => item.id === defaultEnemy.id);
         if (!enemy) data.enemies.push(clone(defaultEnemy));
-        else enemy.resistances = { ...clone(defaultEnemy.resistances), ...(enemy.resistances || {}) };
+        else {
+          enemy.resistances = { ...clone(defaultEnemy.resistances), ...(enemy.resistances || {}) };
+          enemy.actions = [...new Set([...(enemy.actions || []), ...defaultEnemy.actions])];
+        }
       }
+
+      data.strategies.forEach(strategy => {
+        const defaultStrategy = defaults.strategies.find(item => item.id === strategy.id);
+        for (const type of ["status", "cure", "revive"]) strategy[type] = Number(strategy[type] ?? defaultStrategy?.[type] ?? 1);
+      });
 
       data.encounters = Array.isArray(data.encounters) && data.encounters.length ? data.encounters : clone(defaults.encounters);
       data.selectedEncounterId = data.encounters.some(encounter => encounter.id === data.selectedEncounterId)
@@ -191,6 +200,10 @@
         for (const field of ["maxHp", "maxMp", "attack", "defense", "speed"]) {
           if (!Number.isFinite(Number(enemy[field])) || Number(enemy[field]) < 0) errors.push(`${enemy.name || enemy.id}の${field}が不正です。`);
         }
+        for (const resistance of ["fire", "ice", "wind", "bang", "instantDeath", "poison", "blind", "petrify"]) {
+          const value = Number(enemy.resistances?.[resistance] ?? 1);
+          if (!Number.isFinite(value) || value < 0) errors.push(`${enemy.name || enemy.id}の${resistance}耐性倍率が不正です。`);
+        }
         if (!Number.isInteger(Number(enemy.recommendedLevel)) || Number(enemy.recommendedLevel) < 1) errors.push(`${enemy.name || enemy.id}の出現目安Lvが不正です。`);
         (enemy.actions || []).forEach(id => { if (!actionIds.has(id)) errors.push(`${enemy.name}が存在しない技「${id}」を参照しています。`); });
       });
@@ -212,8 +225,9 @@
         }
       });
       const validTargets = new Set(["enemyOne", "allEnemies", "allyOne", "allAllies", "self"]);
-      const validTypes = new Set(["attack", "heal", "magic", "support", "instantDeath"]);
-      const validEffectKinds = new Set(["damage", "heal", "modifyStat", "instantDeath", "recoil"]);
+      const validTypes = new Set(["attack", "heal", "magic", "support", "instantDeath", "status", "cure", "revive"]);
+      const validEffectKinds = new Set(["damage", "heal", "modifyStat", "instantDeath", "recoil", "applyStatus", "cureStatus", "revive"]);
+      const validStatuses = new Set(["poison", "blind", "petrify"]);
       data.actions.forEach(action => {
         if (!validTargets.has(action.target)) errors.push(`${action.name}の対象種別が不正です。`);
         if (!validTypes.has(action.type)) errors.push(`${action.name}の行動タイプが不正です。`);
@@ -233,6 +247,14 @@
           }
           if (effect.kind === "instantDeath" && (!Number.isFinite(Number(effect.successRate)) || Number(effect.successRate) < 0 || Number(effect.successRate) > 1)) errors.push(`${action.name}の即死成功率は0～1で指定してください。`);
           if (effect.kind === "recoil" && (!Number.isFinite(Number(effect.rate)) || Number(effect.rate) < 0 || Number(effect.rate) > 1)) errors.push(`${action.name}の反動率は0～1で指定してください。`);
+          if (effect.kind === "applyStatus") {
+            if (!validStatuses.has(effect.status)) errors.push(`${action.name}の付与する状態異常が不正です。`);
+            if (!Number.isFinite(Number(effect.successRate)) || Number(effect.successRate) < 0 || Number(effect.successRate) > 1 || !Number.isFinite(Number(effect.duration)) || Number(effect.duration) < 0) errors.push(`${action.name}の状態異常成功率・ターンが不正です。`);
+            if (effect.status === "poison" && (!Number.isFinite(Number(effect.tickRate)) || Number(effect.tickRate) <= 0 || Number(effect.tickRate) > 1)) errors.push(`${action.name}の毒ダメージ率が不正です。`);
+            if (effect.status === "blind" && (!Number.isFinite(Number(effect.potency)) || Number(effect.potency) < 0 || Number(effect.potency) > 1)) errors.push(`${action.name}の幻惑命中率が不正です。`);
+          }
+          if (effect.kind === "cureStatus" && (!Array.isArray(effect.statuses) || !effect.statuses.length || effect.statuses.some(status => !validStatuses.has(status)))) errors.push(`${action.name}の治療対象状態が不正です。`);
+          if (effect.kind === "revive" && (!Number.isFinite(Number(effect.successRate)) || Number(effect.successRate) < 0 || Number(effect.successRate) > 1 || !Number.isFinite(Number(effect.hpRate)) || Number(effect.hpRate) <= 0 || Number(effect.hpRate) > 1)) errors.push(`${action.name}の蘇生成功率・HP率が不正です。`);
         });
         if (Number(action.mpCost) < 0) errors.push(`${action.name}の消費MPが不正です。`);
         if (action.successRate != null && (Number(action.successRate) < 0 || Number(action.successRate) > 1)) errors.push(`${action.name}の成功率は0～1で指定してください。`);
@@ -247,7 +269,7 @@
       });
       if (!data.strategies.length) errors.push("作戦を1件以上登録してください。");
       data.strategies.forEach(strategy => {
-        for (const type of ["attack", "heal", "magic", "support", "instantDeath"]) {
+        for (const type of ["attack", "heal", "magic", "support", "instantDeath", "status", "cure", "revive"]) {
           if (!Number.isFinite(Number(strategy[type])) || Number(strategy[type]) < 0) errors.push(`${strategy.name}の${type}倍率が不正です。`);
         }
       });

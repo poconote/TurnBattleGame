@@ -55,10 +55,13 @@ if (!battleUiSource.includes('addEventListener("click", showCandidateSettings)')
 const indexSource = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
 if (!indexSource.includes('<details class="action-settings-details">') || !indexSource.includes('id="action-setting-rows"')) throw new Error("技の設定値が折りたたみ表示になっていません。");
 if (!indexSource.includes('id="result-continue"') || !indexSource.includes('id="result-encounter"') || !indexSource.includes('id="result-recovery"')) throw new Error("戦闘結果画面に連戦・回復操作がありません。");
+if (!indexSource.includes('js/battle-events.js') || !indexSource.includes('js/status-engine.js') || indexSource.indexOf('js/status-engine.js') > indexSource.indexOf('js/effect-engine.js')) throw new Error("状態異常の依存順でスクリプトを読み込めません。");
+const editorUiSource = fs.readFileSync(path.join(__dirname, "..", "js", "editor-ui.js"), "utf8");
+if (!editorUiSource.includes('data-effect-action="add"') || !editorUiSource.includes('data-effect-path=')) throw new Error("複数効果エディターが実装されていません。");
 
 vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js", "default-data.js"), "utf8"), context, { filename: "default-data.js" });
 context.DQ.setDefaultGameData(JSON.parse(fs.readFileSync(path.join(__dirname, "..", "data", "default-game-data.json"), "utf8")));
-for (const file of ["action-schema.js", "data-store.js", "models.js", "target-resolver.js", "effect-engine.js", "action-executor.js", "battle-ai.js", "battle.js", "battle-ui.js", "editor-ui.js", "main.js"]) {
+for (const file of ["action-schema.js", "data-store.js", "models.js", "battle-events.js", "status-engine.js", "target-resolver.js", "effect-engine.js", "action-executor.js", "battle-ai.js", "battle.js", "battle-ui.js", "editor-ui.js", "main.js"]) {
   vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js", file), "utf8"), context, { filename: file });
 }
 
@@ -300,5 +303,82 @@ for (const file of ["action-schema.js", "data-store.js", "models.js", "target-re
   if (battle.getCharacter("warrior").currentHp !== battle.getCharacter("warrior").maxHp || battle.getCharacter("priest").currentMp !== battle.getCharacter("priest").maxMp || battle.battleNumber !== 1) {
     throw new Error("通常リセットで全回復した新しい連戦を開始できませんでした。");
   }
-  console.log("Runtime, editor, encounters, duplicate enemies, levels, STEP, and AI scoring: OK");
+
+  const statusWarrior = battle.getCharacter("warrior");
+  const statusPriest = battle.getCharacter("priest");
+  const statusEnemy = battle.getLiving("enemy")[0];
+  const poisonAttack = battle.getAction("poisonAttack");
+  const poisonResult = battle.effectEngine.applyAction(statusEnemy, poisonAttack, [statusWarrior], () => 0);
+  if (!statusWarrior.hasStatus("poison") || poisonResult.effects.length !== 2 || poisonResult.effects[1].outcomes[0].success !== true) {
+    throw new Error("複数効果の毒攻撃でダメージ後に毒を付与できませんでした。");
+  }
+  const hpBeforePoisonTick = statusWarrior.currentHp;
+  battle.events.emit("turnEnd", { turn: battle.turn });
+  if (hpBeforePoisonTick - statusWarrior.currentHp !== Math.max(1, Math.round(statusWarrior.maxHp * 0.08))) {
+    throw new Error("ターン終了時の毒ダメージが正しくありません。");
+  }
+
+  battle.statusEngine.clear(statusWarrior);
+  statusWarrior.currentHp = statusWarrior.maxHp;
+  battle.statusEngine.apply(statusWarrior, "blind", { duration: 4, potency: 0.55 });
+  const enemyHpBeforeBlindAttack = statusEnemy.currentHp;
+  const blindAttackResult = battle.effectEngine.applyAction(statusWarrior, battle.getAction("attack"), [statusEnemy], () => 0.99);
+  if (!blindAttackResult.effects[0].outcomes[0].cancelled || statusEnemy.currentHp !== enemyHpBeforeBlindAttack) {
+    throw new Error("幻惑中の物理攻撃ミスを効果直前に判定できませんでした。");
+  }
+
+  battle.statusEngine.clear(statusWarrior);
+  battle.statusEngine.apply(statusWarrior, "petrify", { duration: 0 });
+  const petrifyGate = battle.events.emit("beforeAction", { actor: statusWarrior, cancelled: false });
+  if (!petrifyGate.cancelled || battle.statusEngine.canAct(statusWarrior)) throw new Error("石化中の行動を停止できませんでした。");
+
+  battle.statusEngine.clear(statusWarrior);
+  battle.statusEngine.apply(statusWarrior, "poison", { tickRate: 0.08 });
+  const cureDecision = battle.ai.decide(statusPriest);
+  const kiariCandidate = cureDecision.candidates.find(candidate => candidate.action.id === "kiari");
+  const attackCandidateForCure = cureDecision.candidates.find(candidate => candidate.action.id === "attack");
+  if (!kiariCandidate?.available || kiariCandidate.targets[0] !== statusWarrior || kiariCandidate.finalScore <= attackCandidateForCure.finalScore || cureDecision.selected.action.id !== "kiari") {
+    throw new Error("AIが毒状態の味方にキアリーを優先できませんでした。");
+  }
+  battle.actionExecutor.execute(statusPriest, battle.getAction("kiari"), [statusWarrior]);
+  if (statusWarrior.hasStatus("poison")) throw new Error("キアリーで毒を治療できませんでした。");
+
+  statusWarrior.currentHp = 0;
+  statusWarrior.alive = false;
+  const reviveDecision = battle.ai.decide(statusPriest);
+  const zaorikuCandidate = reviveDecision.candidates.find(candidate => candidate.action.id === "zaoriku");
+  if (!zaorikuCandidate?.available || zaorikuCandidate.targets[0] !== statusWarrior || reviveDecision.selected.action.id !== "zaoriku") {
+    throw new Error("AIが戦闘不能の味方にザオリクを優先できませんでした。");
+  }
+  battle.actionExecutor.execute(statusPriest, battle.getAction("zaoriku"), [statusWarrior]);
+  if (!statusWarrior.alive || statusWarrior.currentHp !== statusWarrior.maxHp) throw new Error("ザオリクで最大HPまで蘇生できませんでした。");
+
+  const manusaEvaluation = battle.ai.evaluate(statusPriest, battle.getAction("manusa"), battle.getLiving("enemy"));
+  if (!manusaEvaluation.reasons.some(reason => reason.label.includes("幻惑付与見込み"))) throw new Error("AI判断に状態異常の成功見込みが表示されませんでした。");
+  editor.open();
+  const poisonEditorAction = editor.draft.actions.find(action => action.id === "poisonAttack");
+  const effectsHtml = editor.effectsEditorHtml(poisonEditorAction, "実行する効果");
+  if (!effectsHtml.includes("効果 2") || !effectsHtml.includes('data-effect-action="add"') || !effectsHtml.includes("状態異常付与")) {
+    throw new Error("複数効果エディターを表示できませんでした。");
+  }
+  const healAndCure = {
+    id: "healAndCureTest", name: "全体回復治療", type: "heal", target: "allAllies", mpCost: 8, baseScore: 25,
+    effects: [
+      { kind: "heal", target: "selected", power: 50, varianceMin: 1, varianceMax: 1 },
+      { kind: "cureStatus", target: "selected", statuses: ["poison"] },
+    ],
+  };
+  statusPriest.currentHp = Math.max(1, statusPriest.maxHp - 40);
+  battle.statusEngine.apply(statusWarrior, "poison", { tickRate: 0.08 });
+  const combinedTargets = battle.targetResolver.resolve(statusPriest, healAndCure);
+  const combinedEvaluation = battle.ai.evaluate(statusPriest, healAndCure, combinedTargets);
+  battle.effectEngine.applyAction(statusPriest, healAndCure, combinedTargets, () => 0.5);
+  if (combinedTargets.length !== 2 || statusPriest.currentHp !== statusPriest.maxHp || statusWarrior.hasStatus("poison") || !combinedEvaluation.reasons.some(reason => reason.label.includes("毒を治療"))) {
+    throw new Error("全体HP回復と毒治療を組み合わせた複数効果を評価・実行できませんでした。");
+  }
+  statusEnemy.currentHp = 1;
+  battle.statusEngine.apply(statusEnemy, "poison", { tickRate: 0.08 });
+  battle.finishTurn();
+  if (statusEnemy.alive || statusEnemy.currentHp !== 0) throw new Error("ターン終了イベント後に毒による戦闘不能を確定できませんでした。");
+  console.log("Runtime, statuses, revival, multiple effects, editor, encounters, levels, STEP, and AI scoring: OK");
 })().catch(error => { console.error(error); process.exitCode = 1; });

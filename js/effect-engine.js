@@ -25,16 +25,19 @@
         const base = effect.formula === "physical"
           ? context.actor.effectiveAttack * Number(effect.powerMultiplier ?? 1) - target.effectiveDefense * 0.48
           : Number(effect.power || 0);
-        const expectedDamage = Math.max(1, Math.round(base * resistance));
+        const hitDamage = Math.max(1, Math.round(base * resistance));
+        const accuracy = effect.formula === "physical" && context.actor.hasStatus?.("blind")
+          ? Math.max(0, Math.min(1, Number(context.actor.statuses.blind.potency ?? 0.55))) : 1;
+        const expectedDamage = Math.max(1, Math.round(hitDamage * accuracy));
         const minRate = Number(effect.varianceMin ?? (effect.formula === "physical" ? 0.88 : 0.9));
         const maxRate = Number(effect.varianceMax ?? (effect.formula === "physical" ? 1.12 : 1.1));
         context.lastExpectedDamage = expectedDamage;
         context.totalExpectedDamage += expectedDamage;
-        return { target, resistance, expectedDamage, damageMin: Math.max(1, Math.round(expectedDamage * minRate)), damageMax: Math.max(1, Math.round(expectedDamage * maxRate)) };
+        return { target, resistance, accuracy, hitDamage, expectedDamage, damageMin: Math.max(1, Math.round(hitDamage * minRate)), damageMax: Math.max(1, Math.round(hitDamage * maxRate)) };
       },
       apply(context, effect, target) {
         const preview = this.preview({ ...context, totalExpectedDamage: 0 }, effect, target);
-        const damage = Math.max(1, Math.round(preview.expectedDamage * variance(effect, effect.formula === "physical" ? 0.88 : 0.9, effect.formula === "physical" ? 1.12 : 1.1, context.random())));
+        const damage = Math.max(1, Math.round(preview.hitDamage * variance(effect, effect.formula === "physical" ? 0.88 : 0.9, effect.formula === "physical" ? 1.12 : 1.1, context.random())));
         target.currentHp = Math.max(0, target.currentHp - damage);
         context.lastDamage = damage;
         context.totalDamage += damage;
@@ -77,8 +80,52 @@
       },
       apply(context, effect, target) {
         const preview = this.preview(context, effect, target);
+        if (!target.alive || target.currentHp <= 0) return { ...preview, success: false, skipped: true };
         const success = context.random() < preview.successRate;
         if (success) target.currentHp = 0;
+        return { ...preview, success };
+      },
+    })
+    .register("applyStatus", {
+      preview(context, effect, target) {
+        const resistanceKey = effect.resistanceKey || effect.status;
+        const resistance = Number(target.resistances[resistanceKey] ?? 1);
+        const successRate = Math.max(0, Math.min(1, Number(effect.successRate || 0) * resistance));
+        return { target, status: effect.status, resistance, successRate, alreadyAffected: target.hasStatus(effect.status) };
+      },
+      apply(context, effect, target) {
+        const preview = this.preview(context, effect, target);
+        if (!target.alive || target.currentHp <= 0) return { ...preview, success: false, skipped: true };
+        const success = context.random() < preview.successRate;
+        const applied = success ? context.battle.statusEngine.apply(target, effect.status, effect) : null;
+        return { ...preview, success, refreshed: Boolean(applied?.refreshed) };
+      },
+    })
+    .register("cureStatus", {
+      preview(context, effect, target) {
+        const statuses = (effect.statuses || []).filter(statusId => target.hasStatus(statusId));
+        return { target, statuses };
+      },
+      apply(context, effect, target) {
+        const preview = this.preview(context, effect, target);
+        const curedStatuses = preview.statuses.filter(statusId => context.battle.statusEngine.remove(target, statusId));
+        return { target, statuses: preview.statuses, curedStatuses };
+      },
+    })
+    .register("revive", {
+      preview(context, effect, target) {
+        const successRate = Math.max(0, Math.min(1, Number(effect.successRate ?? 1)));
+        const hpRate = Math.max(0.01, Math.min(1, Number(effect.hpRate ?? 1)));
+        return { target, successRate, hpRate, reviveHp: Math.max(1, Math.round(target.maxHp * hpRate)) };
+      },
+      apply(context, effect, target) {
+        const preview = this.preview(context, effect, target);
+        const success = !target.alive && context.random() < preview.successRate;
+        if (success) {
+          target.currentHp = preview.reviveHp;
+          target.alive = true;
+          context.battle.statusEngine.clear(target);
+        }
         return { ...preview, success };
       },
     })
@@ -116,7 +163,13 @@
       const context = this.createContext(actor, action, random);
       const effects = (action.effects || []).map(effect => ({
         effect,
-        outcomes: this.targetsFor(effect, actor, selectedTargets).map(target => this.registry.get(effect.kind).apply(context, effect, target)),
+        outcomes: this.targetsFor(effect, actor, selectedTargets).map(target => {
+          const event = this.battle.events.emit("beforeEffect", { actor, action, effect, target, random, cancelled: false });
+          if (event.cancelled) return { target, cancelled: true, reason: event.reason };
+          const outcome = this.registry.get(effect.kind).apply(context, effect, target);
+          this.battle.events.emit("afterEffect", { actor, action, effect, target, outcome, random, cancelled: false });
+          return outcome;
+        }),
       }));
       return { effects, totalDamage: context.totalDamage };
     }

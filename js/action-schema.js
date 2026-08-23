@@ -7,6 +7,29 @@
     heal: "heal",
     support: "modifyStat",
     instantDeath: "instantDeath",
+    status: "applyStatus",
+    cure: "cureStatus",
+    revive: "revive",
+  };
+
+  const createEffect = kind => ({
+    damage: { kind: "damage", target: "selected", formula: "physical", powerMultiplier: 1, power: 20, element: null, varianceMin: 0.88, varianceMax: 1.12 },
+    heal: { kind: "heal", target: "selected", power: 35, varianceMin: 0.92, varianceMax: 1.08 },
+    modifyStat: { kind: "modifyStat", target: "selected", stat: "defense", mode: "add", value: 15, duration: 4, maxStacks: 2 },
+    instantDeath: { kind: "instantDeath", target: "selected", successRate: 0.4, resistanceKey: "instantDeath" },
+    recoil: { kind: "recoil", target: "caster", rate: 0.15 },
+    applyStatus: { kind: "applyStatus", target: "selected", status: "poison", successRate: 0.5, resistanceKey: "poison", duration: 0, potency: 1, tickRate: 0.08 },
+    cureStatus: { kind: "cureStatus", target: "selected", statuses: ["poison"] },
+    revive: { kind: "revive", target: "selected", successRate: 1, hpRate: 1 },
+  }[kind] || { kind, target: "selected" });
+
+  const normalizeEffect = effect => {
+    const normalized = { ...createEffect(effect.kind), ...effect };
+    if (normalized.kind === "cureStatus") {
+      normalized.statuses = [...new Set(Array.isArray(normalized.statuses) ? normalized.statuses : [normalized.status].filter(Boolean))];
+      delete normalized.status;
+    }
+    return normalized;
   };
 
   const createPrimaryEffect = action => {
@@ -60,6 +83,9 @@
         resistanceKey: "instantDeath",
       };
     }
+    if (action.type === "status") return { ...createEffect("applyStatus"), status: action.status || "poison", successRate: Number(action.successRate ?? 0.5), resistanceKey: action.status || "poison" };
+    if (action.type === "cure") return { ...createEffect("cureStatus"), statuses: [action.status || "poison"] };
+    if (action.type === "revive") return { ...createEffect("revive"), successRate: Number(action.successRate ?? 1), hpRate: Number(action.hpRate ?? 1) };
     return null;
   };
 
@@ -89,6 +115,16 @@
       action.maxStacks = Number(primary.maxStacks || 0);
     }
     if (primary.kind === "instantDeath") action.successRate = Number(primary.successRate || 0);
+    if (primary.kind === "applyStatus") {
+      action.status = primary.status;
+      action.successRate = Number(primary.successRate || 0);
+      action.duration = Number(primary.duration || 0);
+    }
+    if (primary.kind === "cureStatus") action.status = primary.statuses?.[0] || "";
+    if (primary.kind === "revive") {
+      action.successRate = Number(primary.successRate ?? 1);
+      action.hpRate = Number(primary.hpRate ?? 1);
+    }
     const recoil = (action.effects || []).find(effect => effect.kind === "recoil");
     action.recoilRate = Number(recoil?.rate || 0);
     return action;
@@ -100,6 +136,7 @@
       action.effects = primary ? [primary] : [];
       if (Number(action.recoilRate || 0) > 0) action.effects.push({ kind: "recoil", target: "caster", rate: Number(action.recoilRate) });
     }
+    action.effects = action.effects.map(normalizeEffect);
     return syncLegacyFacade(action);
   };
 
@@ -138,5 +175,5 @@
     return syncLegacyFacade(action);
   };
 
-  DQ.ActionSchema = { primaryKindByType, createPrimaryEffect, getPrimaryEffect, ensureEffects, syncLegacyFacade, syncEffectFromLegacy };
+  DQ.ActionSchema = { primaryKindByType, createEffect, normalizeEffect, createPrimaryEffect, getPrimaryEffect, ensureEffects, syncLegacyFacade, syncEffectFromLegacy };
 })(window.DQ = window.DQ || {});

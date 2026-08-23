@@ -75,11 +75,15 @@
         const value = effect.mode === "multiply" ? `×${effect.value}` : `+${effect.value}`;
         return `<span class="state-badge">${label}${value} ${effect.turns}</span>`;
       }).join("");
+      const statusLabels = this.battle.statusEngine.list(unit).map(status => {
+        const definition = this.battle.statusEngine.definition(status.id);
+        return `<span class="state-badge status ${this.escape(status.id)}">${this.escape(definition.badge)}${status.turns > 0 ? ` ${status.turns}` : ""}</span>`;
+      }).join("");
       const popoverId = `status-${unit.id}`;
       return `<article class="character-card ${unit.alive ? "" : "dead"} ${this.selectedDecisionActor === unit.id ? "selected" : ""}" data-id="${this.escape(unit.id)}" data-role="${this.escape(unit.role)}">
         <button type="button" class="card-focus-trigger" aria-label="${this.escape(`${unit.name}のステータスと使える技を表示`)}" aria-describedby="${this.escape(popoverId)}"></button>
         <div class="character-visual"><div class="sprite">${this.escape(unit.icon)}</div></div>
-        <div class="character-name-row"><span class="character-name">${this.escape(unit.name)}${unit.side === "ally" ? ` <small class="level-badge">Lv.${unit.level}</small>` : ""}</span><span class="state-badges">${buffLabels}</span></div>
+        <div class="character-name-row"><span class="character-name">${this.escape(unit.name)}${unit.side === "ally" ? ` <small class="level-badge">Lv.${unit.level}</small>` : ""}</span><span class="state-badges">${buffLabels}${statusLabels}</span></div>
         <div class="stat-line"><div class="stat-values"><span>HP</span><b>${unit.currentHp} / ${unit.maxHp}</b></div><div class="bar"><span class="hp-bar ${hp < 25 ? "low" : ""}" style="width:${hp}%"></span></div></div>
         <div class="stat-line"><div class="stat-values"><span>MP</span><b>${unit.currentMp} / ${unit.maxMp}</b></div><div class="bar"><span class="mp-bar" style="width:${mp}%"></span></div></div>
         ${unit.alive ? "" : '<div class="dead-label">戦闘不能</div>'}
@@ -97,7 +101,7 @@
         return `<li class="${available ? "" : "unavailable"}"><span>${this.escape(action.battleName || action.name)}</span><b>MP ${mpCost}${available ? "" : "・不足"}</b></li>`;
       }).join("");
       const resistanceRows = unit.side === "enemy" ? Object.entries(unit.resistances).map(([element, multiplier]) => {
-        const labels = { fire: "炎", ice: "氷", wind: "風", bang: "爆発", instantDeath: "即死" };
+        const labels = { fire: "炎", ice: "氷", wind: "風", bang: "爆発", instantDeath: "即死", poison: "毒", blind: "幻惑", petrify: "石化" };
         const value = Number(multiplier);
         const state = value >= 1.15 ? "weak" : value > 1 ? "slightly-weak" : value <= 0.75 ? "strong-resistant" : value < 1 ? "resistant" : "normal";
         const stateLabel = { weak: "弱点", "slightly-weak": "やや弱点", "strong-resistant": "強耐性", resistant: "耐性", normal: "通常" }[state];
@@ -105,6 +109,7 @@
       }).join("") : "";
       const formationLabel = unit.side === "ally" ? this.battle.ai.formationLabel(unit) : null;
       const formationWeight = unit.side === "ally" ? this.battle.ai.enemyFormationWeight(unit) : null;
+      const statusRows = this.battle.statusEngine.list(unit).map(status => `<li><span>${this.escape(this.battle.statusEngine.definition(status.id).name)}</span><b>${status.turns > 0 ? `残り${status.turns}ターン` : "治療まで継続"}</b></li>`).join("");
       return `<div id="${this.escape(popoverId)}" class="status-popover" role="tooltip">
         <div class="status-popover-title"><span>STATUS</span><b>${this.escape(unit.name)}</b></div>
         <dl class="status-detail-grid">
@@ -116,6 +121,7 @@
           ${unit.side === "ally" ? `<div><dt>レベル</dt><dd>${unit.level}</dd></div>` : ""}
           ${unit.side === "ally" ? `<div><dt>隊列</dt><dd>${formationLabel}</dd></div><div><dt>狙われやすさ</dt><dd>×${formationWeight}</dd></div>` : ""}
         </dl>
+        ${statusRows ? `<div class="status-action-title">状態異常</div><ul class="status-action-list">${statusRows}</ul>` : ""}
         ${unit.side === "enemy" ? `<div class="status-action-title">弱点・耐性倍率</div><ul class="status-resistance-list">${resistanceRows}</ul>` : ""}
         <div class="status-action-title">使える技</div>
         <ul class="status-action-list">${actionRows || "<li><span>なし</span></li>"}</ul>
@@ -170,7 +176,7 @@
     actionSettingRows(candidate) {
       const action = candidate.action;
       const settings = candidate.settings || {};
-      const typeLabels = { attack: "物理攻撃", heal: "回復", magic: "攻撃魔法", support: "補助", instantDeath: "即死" };
+      const typeLabels = { attack: "物理攻撃", heal: "回復", magic: "攻撃魔法", support: "補助", instantDeath: "即死", status: "状態異常", cure: "状態治療", revive: "蘇生" };
       const targetLabels = { enemyOne: "敵1体", allEnemies: "敵全体", allyOne: "味方1人", allAllies: "味方全体", self: "自分" };
       const elementLabels = { fire: "炎", ice: "氷", wind: "風", bang: "爆発" };
       const statLabels = { attack: "攻撃力", defense: "守備力", speed: "素早さ" };
@@ -194,6 +200,26 @@
         rows.push(["最大重ね掛け", settings.maxStacks]);
       }
       if (settings.type === "instantDeath") rows.push(["基本成功率", `${(Number(settings.successRate) * 100).toFixed(1)}%`]);
+      const effectLabels = { damage: "ダメージ", heal: "HP回復", modifyStat: "能力変化", instantDeath: "即死", recoil: "反動", applyStatus: "状態異常付与", cureStatus: "状態異常治療", revive: "蘇生" };
+      const statusLabels = { poison: "毒", blind: "幻惑", petrify: "石化" };
+      (settings.effectPreviews || []).forEach((preview, index) => {
+        const effect = preview.effect;
+        rows.push([`効果${index + 1}`, effectLabels[effect.kind] || effect.kind]);
+        if (effect.kind === "applyStatus") {
+          rows.push(["付与状態", statusLabels[effect.status] || effect.status]);
+          rows.push(["基本成功率", `${(Number(effect.successRate) * 100).toFixed(1)}%`]);
+          if (effect.status === "poison") rows.push(["毒ダメージ", `毎ターン最大HPの${(Number(effect.tickRate) * 100).toFixed(1)}%`]);
+          if (effect.status === "blind") rows.push(["幻惑中の物理命中率", `${(Number(effect.potency) * 100).toFixed(1)}%`]);
+          rows.push(["持続", Number(effect.duration) > 0 ? `${effect.duration}ターン` : "治療まで継続"]);
+        }
+        if (effect.kind === "cureStatus") rows.push(["治療対象", effect.statuses.map(status => statusLabels[status] || status).join("・")]);
+        if (effect.kind === "revive") rows.push(["蘇生設定", `成功${(Number(effect.successRate) * 100).toFixed(1)}% / HP${(Number(effect.hpRate) * 100).toFixed(1)}%`]);
+        preview.outcomes.forEach(outcome => {
+          if (effect.kind === "applyStatus") rows.push([`成功見込み（${outcome.targetName}）`, `${(Number(outcome.successRate) * 100).toFixed(1)}%`, Number(outcome.resistance) < 1 ? "resistant-setting" : ""]);
+          if (effect.kind === "cureStatus" && outcome.statuses?.length) rows.push([`治療（${outcome.targetName}）`, outcome.statuses.map(status => statusLabels[status] || status).join("・")]);
+          if (effect.kind === "revive") rows.push([`復活HP（${outcome.targetName}）`, outcome.reviveHp]);
+        });
+      });
       const showTargetOptions = (candidate.targetOptions || []).length > 1
         || (candidate.targetOptions || []).some(option => option.targetIds?.length > 1);
       if (showTargetOptions) {

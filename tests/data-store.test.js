@@ -47,6 +47,14 @@ const invalidEffect = store.createDraft();
 invalidEffect.actions.find(action => action.id === "doubleEdgedSlash").effects.find(effect => effect.kind === "recoil").rate = 2;
 if (!store.validate(invalidEffect).some(error => error.includes("反動率"))) throw new Error("効果データの不正値を検出できませんでした。");
 
+const invalidStatusEffect = store.createDraft();
+invalidStatusEffect.actions.find(action => action.id === "manusa").effects[0].status = "sleep";
+if (!store.validate(invalidStatusEffect).some(error => error.includes("状態異常"))) throw new Error("未対応の状態異常を検出できませんでした。");
+
+const invalidReviveEffect = store.createDraft();
+invalidReviveEffect.actions.find(action => action.id === "zaoriku").effects[0].hpRate = 2;
+if (!store.validate(invalidReviveEffect).some(error => error.includes("蘇生"))) throw new Error("蘇生効果の不正値を検出できませんでした。");
+
 const legacy = JSON.parse(JSON.stringify(context.DQ.DEFAULT_GAME_DATA));
 legacy.schemaVersion = 1;
 legacy.actions.forEach(action => { delete action.effects; });
@@ -64,13 +72,19 @@ delete legacy.encounters;
 delete legacy.selectedEncounterId;
 legacy.actions = legacy.actions.filter(action => action.id !== "baikilt");
 legacy.jobs.find(job => job.id === "mage").actions = legacy.jobs.find(job => job.id === "mage").actions.filter(id => id !== "baikilt");
+const statusActionIds = new Set(["poisonAttack", "petrifyingAttack", "manusa", "kiari", "zaoriku"]);
+legacy.actions = legacy.actions.filter(action => !statusActionIds.has(action.id));
+for (const actor of [...legacy.jobs, ...legacy.enemies]) {
+  actor.actions = actor.actions.filter(id => !statusActionIds.has(id));
+  if (actor.actionLevels) for (const id of statusActionIds) delete actor.actionLevels[id];
+}
 delete legacy.actions.find(action => action.id === "sukurlt").effectStat;
 delete legacy.ai.support.statValueDivisor;
 legacy.ai.turnOrder.minMultiplier = 0.8;
 delete legacy.ai.targetSelection;
 memory.set("legacy-data", JSON.stringify(legacy));
 const migrated = new context.DQ.GameDataStore("legacy-data").getData();
-if (migrated.schemaVersion !== 12 || migrated.ai.turnOrder.minMultiplier !== 0.8 || migrated.ai.targetSelection.enemyBackWeight !== 1 || !migrated.actions.some(action => action.id === "baikilt") || !migrated.actions.some(action => action.id === "flameSlash") || migrated.actions.find(action => action.id === "sukurlt").effectStat !== "defense" || migrated.actions.find(action => action.id === "sukurlt").effects[0].kind !== "modifyStat" || migrated.actions.some(action => !action.effects.length) || !migrated.jobs[0].levelStats["20"] || migrated.enemies[0].levelStats || !migrated.encounters.length || migrated.jobs.find(job => job.id === "warrior").aiTraits.buffAffinity.attack !== 1.5 || migrated.jobs.find(job => job.id === "mage").actionLevels.baikilt !== 21) {
+if (migrated.schemaVersion !== 13 || migrated.ai.turnOrder.minMultiplier !== 0.8 || migrated.ai.targetSelection.enemyBackWeight !== 1 || !migrated.actions.some(action => action.id === "baikilt") || !migrated.actions.some(action => action.id === "flameSlash") || !migrated.actions.some(action => action.id === "zaoriku") || migrated.actions.find(action => action.id === "sukurlt").effectStat !== "defense" || migrated.actions.find(action => action.id === "sukurlt").effects[0].kind !== "modifyStat" || migrated.actions.some(action => !action.effects.length) || !migrated.jobs[0].levelStats["20"] || migrated.enemies[0].levelStats || !migrated.encounters.length || migrated.jobs.find(job => job.id === "warrior").aiTraits.buffAffinity.attack !== 1.5 || migrated.jobs.find(job => job.id === "mage").actionLevels.baikilt !== 21 || migrated.jobs.find(job => job.id === "priest").actionLevels.zaoriku !== 20 || migrated.enemies.find(enemy => enemy.id === "bubbleSlime").resistances.poison !== 1 || migrated.strategies.some(strategy => strategy.revive == null)) {
   throw new Error("旧保存データを補助効果対応形式へ移行できませんでした。");
 }
 console.log("Data validation and persistence: OK");

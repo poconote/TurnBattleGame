@@ -61,6 +61,9 @@
           healMin: outcome.healMin,
           healMax: outcome.healMax,
           successRate: outcome.successRate,
+          status: outcome.status,
+          curableStatuses: outcome.curableStatuses,
+          reviveHp: outcome.reviveHp,
           formationLabel: this.formationLabel(group.targets[0]),
           targetWeight: this.enemyFormationWeight(group.targets[0]),
           evaluated,
@@ -77,8 +80,9 @@
     groupEquivalentTargets(actor, action, targets) {
       const groups = new Map();
       targets.forEach(target => {
-        const primary = DQ.ActionSchema.getPrimaryEffect(action);
-        const resistanceKey = primary?.kind === "instantDeath" ? primary.resistanceKey || "instantDeath" : primary?.element;
+        const resistanceKeys = (action.effects || []).map(effect => effect.kind === "instantDeath"
+          ? effect.resistanceKey || "instantDeath"
+          : effect.kind === "applyStatus" ? effect.resistanceKey || effect.status : effect.element).filter(Boolean);
         const signature = JSON.stringify({
           templateId: target.templateId,
           side: target.side,
@@ -88,7 +92,9 @@
           attack: target.effectiveAttack,
           defense: target.effectiveDefense,
           speed: target.effectiveSpeed,
-          resistance: resistanceKey ? Number(target.resistances[resistanceKey] ?? 1) : 1,
+          alive: target.alive,
+          resistances: Object.fromEntries(resistanceKeys.map(key => [key, Number(target.resistances[key] ?? 1)])),
+          statuses: target.statuses,
           buffs: target.buffs,
           buffAffinity: target.aiTraits?.buffAffinity,
           knowledge: actor.side === "ally" && action.type === "instantDeath" ? this.battle.knowledge.get(target.templateId, "instantDeath") : 0,
@@ -155,12 +161,15 @@
       let score = Number(action.baseScore || 0);
       const reasons = [{ label: "基本評価", value: score, kind: "add" }];
       if (action.type === "attack") score += this.evaluateAttack(actor, action, targets[0], reasons);
-      if (action.type === "heal") score += this.evaluateHeal(actor, action, targets[0], reasons);
+      if (action.type === "heal") score += this.evaluateHeal(actor, action, targets, reasons);
       if (action.type === "magic") score += this.evaluateMagic(actor, action, targets, reasons);
       if (action.type === "support") score += this.evaluateSupport(actor, action, targets, reasons);
       if (action.type === "instantDeath") score += this.evaluateInstantDeath(actor, action, targets, reasons);
+      if ((action.effects || []).some(effect => effect.kind === "applyStatus")) score += this.evaluateStatus(actor, action, targets, reasons);
+      if ((action.effects || []).some(effect => effect.kind === "cureStatus")) score += this.evaluateCure(action, targets, reasons);
+      if ((action.effects || []).some(effect => effect.kind === "revive")) score += this.evaluateRevive(actor, action, targets, reasons);
 
-      const roleMultiplier = action.type === "heal" ? actor.aiTraits.healPriority : action.type === "magic" ? actor.aiTraits.magicPriority : 1;
+      const roleMultiplier = ["heal", "cure", "revive"].includes(action.type) ? actor.aiTraits.healPriority : action.type === "magic" ? actor.aiTraits.magicPriority : 1;
       if (roleMultiplier !== 1) {
         score *= roleMultiplier;
         reasons.push({ label: "職業適性", value: roleMultiplier, kind: "multiply" });
@@ -172,7 +181,7 @@
       reasons.push({ label: `作戦「${strategy?.name || "補正なし"}」`, value: multiplier, kind: "multiply" });
 
       const healRules = this.battle.data.ai.heal;
-      if (action.type === "heal" && targets[0].hpRate <= healRules.emergencyRate && score < healRules.emergencyFloor) {
+      if (action.type === "heal" && targets.some(target => target.hpRate <= healRules.emergencyRate) && score < healRules.emergencyFloor) {
         score = healRules.emergencyFloor;
         reasons.push({ label: "瀕死者の回復を最低限確保", value: healRules.emergencyFloor, kind: "floor" });
       }
@@ -197,9 +206,14 @@
         duration: Number(primary?.duration || 0),
         maxStacks: Number(primary?.maxStacks || 0),
         recoilRate: Number((action.effects || []).find(effect => effect.kind === "recoil")?.rate || 0),
+        effectPreviews: [],
         outcomes: [],
       };
       const preview = this.battle.effectEngine.previewAction(actor, action, targets);
+      settings.effectPreviews = preview.effects.map(({ effect, outcomes }) => ({
+        effect: DQ.cloneData(effect),
+        outcomes: outcomes.map(item => ({ ...item, target: undefined, targetId: item.target.id, targetName: item.target.name })),
+      }));
       settings.outcomes = targets.map(target => {
         const outcome = { targetId: target.id, targetName: target.name };
         preview.effects.forEach(result => result.outcomes.filter(item => item.target === target).forEach(item => Object.assign(outcome, {
@@ -211,6 +225,9 @@
           healMin: item.healMin ?? outcome.healMin,
           healMax: item.healMax ?? outcome.healMax,
           successRate: item.successRate ?? outcome.successRate,
+          status: item.status ?? outcome.status,
+          curableStatuses: item.statuses ?? outcome.curableStatuses,
+          reviveHp: item.reviveHp ?? outcome.reviveHp,
         })));
         return outcome;
       });
@@ -238,22 +255,24 @@
       return bonus;
     }
 
-    evaluateHeal(actor, action, target, reasons) {
+    evaluateHeal(actor, action, targets, reasons) {
       const rules = this.battle.data.ai.heal;
       let bonus = 0;
       const effect = DQ.ActionSchema.getPrimaryEffect(action, "heal");
       const power = Number(effect?.power || 0);
-      rules.thresholds.forEach(rule => {
-        if (target.hpRate < rule.rate) {
-          bonus += Number(rule.score);
-          reasons.push({ label: `HP ${Math.round(rule.rate * 100)}%未満`, value: Number(rule.score), kind: "add" });
-        }
+      targets.forEach(target => {
+        rules.thresholds.forEach(rule => {
+          if (target.hpRate < rule.rate) {
+            bonus += Number(rule.score);
+            reasons.push({ label: `${targets.length > 1 ? `${target.name}：` : ""}HP ${Math.round(rule.rate * 100)}%未満`, value: Number(rule.score), kind: "add" });
+          }
+        });
+        const missing = target.maxHp - target.currentHp;
+        const wasted = Math.max(0, power - missing);
+        if (wasted > power * rules.wasteRate) { bonus += rules.wastePenalty; reasons.push({ label: `${targets.length > 1 ? `${target.name}：` : ""}回復量の一部が無駄`, value: rules.wastePenalty, kind: "add" }); }
+        const expectedRate = Math.min(target.maxHp, target.currentHp + power) / target.maxHp;
+        if (target.hpRate < 0.25 && expectedRate < rules.unsafeRate) { bonus += rules.unsafePenalty; reasons.push({ label: `${targets.length > 1 ? `${target.name}：` : ""}回復後も危険域`, value: rules.unsafePenalty, kind: "add" }); }
       });
-      const missing = target.maxHp - target.currentHp;
-      const wasted = Math.max(0, power - missing);
-      if (wasted > power * rules.wasteRate) { bonus += rules.wastePenalty; reasons.push({ label: "回復量の一部が無駄", value: rules.wastePenalty, kind: "add" }); }
-      const expectedRate = Math.min(target.maxHp, target.currentHp + power) / target.maxHp;
-      if (target.hpRate < 0.25 && expectedRate < rules.unsafeRate) { bonus += rules.unsafePenalty; reasons.push({ label: "回復後も危険域", value: rules.unsafePenalty, kind: "add" }); }
       if (actor.currentMp / Math.max(1, actor.maxMp) > rules.mpEnoughRate) { bonus += rules.mpEnoughBonus; reasons.push({ label: "MP残量十分", value: rules.mpEnoughBonus, kind: "add" }); }
       return bonus;
     }
@@ -317,6 +336,70 @@
       if (isGroupTarget(action)) { const value = Math.max(0, targets.length - 1) * rules.extraTargetBonus; bonus += value; if (value) reasons.push({ label: `対象${targets.length}体`, value, kind: "add" }); }
       if (targets.every(target => target.hpRate < rules.lowEnemyHpRate)) { bonus += rules.lowEnemyHpPenalty; reasons.push({ label: "通常攻撃で倒せそう", value: rules.lowEnemyHpPenalty, kind: "add" }); }
       if (actor.currentMp / actor.maxMp < rules.lowMpRate) { bonus += rules.lowMpPenalty; reasons.push({ label: "MP残量が少ない", value: rules.lowMpPenalty, kind: "add" }); }
+      return bonus;
+    }
+
+    evaluateStatus(actor, action, targets, reasons) {
+      const rules = this.battle.data.ai.status;
+      const standalone = !(action.effects || []).some(effect => ["damage", "heal", "modifyStat", "instantDeath", "revive"].includes(effect.kind));
+      let bonus = 0;
+      for (const effect of action.effects.filter(item => item.kind === "applyStatus")) {
+        for (const target of targets) {
+          const label = this.battle.statusEngine.definition(effect.status).name;
+          if (target.hasStatus(effect.status)) {
+            const value = standalone ? Number(rules.alreadyAffectedPenalty) : 0;
+            bonus += value;
+            if (value) reasons.push({ label: `${target.name}はすでに${label}`, value, kind: "add" });
+            continue;
+          }
+          const rate = Math.max(0, Math.min(1, Number(effect.successRate || 0) * Number(target.resistances[effect.resistanceKey || effect.status] ?? 1)));
+          const baseValue = Number(rules[`${effect.status}Value`] || 0);
+          let situationalValue = 0;
+          if (effect.status === "blind") situationalValue += target.effectiveAttack / Math.max(1, Number(rules.blindAttackDivisor || 4));
+          if (effect.status === "poison") situationalValue += target.currentHp / Math.max(1, Number(rules.poisonHpDivisor || 20));
+          const value = Math.round((baseValue + situationalValue) * rate);
+          bonus += value;
+          reasons.push({ label: `${label}付与見込み ${(rate * 100).toFixed(0)}%`, value, kind: "add" });
+        }
+      }
+      return bonus;
+    }
+
+    evaluateCure(action, targets, reasons) {
+      const rules = this.battle.data.ai.cure;
+      let bonus = 0;
+      for (const effect of action.effects.filter(item => item.kind === "cureStatus")) {
+        for (const target of targets) {
+          const statuses = effect.statuses.filter(statusId => target.hasStatus(statusId));
+          statuses.forEach(statusId => {
+            const value = Number(rules[`${statusId}Value`] || 0);
+            bonus += value;
+            reasons.push({ label: `${target.name}の${this.battle.statusEngine.definition(statusId).name}を治療`, value, kind: "add" });
+          });
+          if (statuses.length > 1) {
+            bonus += Number(rules.multiStatusBonus || 0);
+            reasons.push({ label: "複数の状態異常を同時治療", value: Number(rules.multiStatusBonus || 0), kind: "add" });
+          }
+        }
+      }
+      return bonus;
+    }
+
+    evaluateRevive(actor, action, targets, reasons) {
+      const rules = this.battle.data.ai.revive;
+      let bonus = 0;
+      for (const effect of action.effects.filter(item => item.kind === "revive")) {
+        for (const target of targets.filter(unit => !unit.alive)) {
+          const rate = Math.max(0, Math.min(1, Number(effect.successRate ?? 1)));
+          const value = Math.round((Number(rules.downAllyBonus || 0) + target.maxHp / Math.max(1, Number(rules.maxHpDivisor || 2))) * rate);
+          bonus += value;
+          reasons.push({ label: `${target.name}をHP${Math.round(target.maxHp * Number(effect.hpRate ?? 1))}で蘇生`, value, kind: "add" });
+          if (this.battle.getBattleCapable(actor.side).length <= 1) {
+            bonus += Number(rules.lastStandingBonus || 0);
+            reasons.push({ label: "残り1人のため蘇生を優先", value: Number(rules.lastStandingBonus || 0), kind: "add" });
+          }
+        }
+      }
       return bonus;
     }
 

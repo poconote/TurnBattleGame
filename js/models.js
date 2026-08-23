@@ -28,8 +28,9 @@
       this.aiTraits.buffAffinity = { attack: 1, defense: 1, speed: 1, ...(this.aiTraits.buffAffinity || {}) };
       this.aiTraits.healPriority = Number(this.aiTraits.healPriority ?? 1);
       this.aiTraits.magicPriority = Number(this.aiTraits.magicPriority ?? 1);
-      this.resistances = { fire: 1, ice: 1, wind: 1, bang: 1, instantDeath: 1, ...(data.resistances || {}) };
+      this.resistances = { fire: 1, ice: 1, wind: 1, bang: 1, instantDeath: 1, poison: 1, blind: 1, petrify: 1, ...(data.resistances || {}) };
       this.alive = true;
+      this.statuses = {};
       this.buffs = {
         attack: { mode: "multiply", value: 1, turns: 0, stacks: 0 },
         defense: { mode: "add", value: 0, turns: 0, stacks: 0 },
@@ -47,6 +48,7 @@
     get effectiveAttack() { return this.effectiveStat("attack"); }
     get effectiveDefense() { return this.effectiveStat("defense"); }
     get effectiveSpeed() { return this.effectiveStat("speed"); }
+    hasStatus(statusId) { return Boolean(this.statuses[statusId]); }
   }
 
   class EnemyKnowledge {

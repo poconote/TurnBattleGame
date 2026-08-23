@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 12,
+  "schemaVersion": 13,
   "actions": [
     {
       "id": "attack",
@@ -498,6 +498,117 @@
           "resistanceKey": "instantDeath"
         }
       ]
+    },
+    {
+      "id": "poisonAttack",
+      "name": "毒攻撃",
+      "type": "attack",
+      "mpCost": 0,
+      "target": "enemyOne",
+      "powerMultiplier": 0.9,
+      "baseScore": 38,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "physical",
+          "powerMultiplier": 0.9,
+          "element": null,
+          "varianceMin": 0.88,
+          "varianceMax": 1.12
+        },
+        {
+          "kind": "applyStatus",
+          "target": "selected",
+          "status": "poison",
+          "successRate": 0.45,
+          "resistanceKey": "poison",
+          "duration": 0,
+          "potency": 1,
+          "tickRate": 0.08
+        }
+      ]
+    },
+    {
+      "id": "petrifyingAttack",
+      "name": "石化攻撃",
+      "type": "attack",
+      "mpCost": 0,
+      "target": "enemyOne",
+      "powerMultiplier": 0.8,
+      "baseScore": 34,
+      "effects": [
+        {
+          "kind": "damage",
+          "target": "selected",
+          "formula": "physical",
+          "powerMultiplier": 0.8,
+          "element": null,
+          "varianceMin": 0.88,
+          "varianceMax": 1.12
+        },
+        {
+          "kind": "applyStatus",
+          "target": "selected",
+          "status": "petrify",
+          "successRate": 0.22,
+          "resistanceKey": "petrify",
+          "duration": 0,
+          "potency": 1,
+          "tickRate": 0.08
+        }
+      ]
+    },
+    {
+      "id": "manusa",
+      "name": "マヌーサ",
+      "type": "status",
+      "mpCost": 4,
+      "target": "allEnemies",
+      "baseScore": 35,
+      "effects": [
+        {
+          "kind": "applyStatus",
+          "target": "selected",
+          "status": "blind",
+          "successRate": 0.65,
+          "resistanceKey": "blind",
+          "duration": 4,
+          "potency": 0.55,
+          "tickRate": 0.08
+        }
+      ]
+    },
+    {
+      "id": "kiari",
+      "name": "キアリー",
+      "type": "cure",
+      "mpCost": 3,
+      "target": "allyOne",
+      "baseScore": 20,
+      "effects": [
+        {
+          "kind": "cureStatus",
+          "target": "selected",
+          "statuses": ["poison"]
+        }
+      ]
+    },
+    {
+      "id": "zaoriku",
+      "name": "ザオリク",
+      "type": "revive",
+      "mpCost": 20,
+      "target": "allyOne",
+      "baseScore": 55,
+      "effects": [
+        {
+          "kind": "revive",
+          "target": "selected",
+          "successRate": 1,
+          "hpRate": 1
+        }
+      ]
     }
   ],
   "jobs": [
@@ -707,20 +818,26 @@
       "actions": [
         "attack",
         "hoimi",
+        "kiari",
+        "manusa",
         "bagi",
         "piorim",
         "behoimi",
         "bagima",
-        "zaki"
+        "zaki",
+        "zaoriku"
       ],
       "actionLevels": {
         "attack": 1,
         "hoimi": 1,
+        "kiari": 5,
+        "manusa": 6,
         "bagi": 5,
         "piorim": 10,
         "behoimi": 14,
         "bagima": 20,
-        "zaki": 22
+        "zaki": 22,
+        "zaoriku": 20
       },
       "aiTraits": {
         "buffAffinity": {
@@ -1209,12 +1326,13 @@
       "icon": "蝶",
       "recommendedLevel": 4,
       "maxHp": 20,
-      "maxMp": 0,
+      "maxMp": 8,
       "attack": 13,
       "defense": 10,
       "speed": 19,
       "actions": [
-        "attack"
+        "attack",
+        "manusa"
       ],
       "resistances": {
         "fire": 1.15,
@@ -1257,7 +1375,8 @@
       "defense": 13,
       "speed": 17,
       "actions": [
-        "attack"
+        "attack",
+        "poisonAttack"
       ],
       "resistances": {
         "fire": 1.2,
@@ -1300,7 +1419,8 @@
       "defense": 15,
       "speed": 25,
       "actions": [
-        "attack"
+        "attack",
+        "poisonAttack"
       ],
       "resistances": {
         "fire": 1.15,
@@ -1344,7 +1464,8 @@
       "speed": 13,
       "actions": [
         "attack",
-        "heavyBlow"
+        "heavyBlow",
+        "petrifyingAttack"
       ],
       "resistances": {
         "fire": 1.25,
@@ -1430,7 +1551,8 @@
       "speed": 22,
       "actions": [
         "attack",
-        "heavyBlow"
+        "heavyBlow",
+        "petrifyingAttack"
       ],
       "resistances": {
         "fire": 1.25,
@@ -1729,7 +1851,10 @@
       "heal": 1,
       "magic": 1,
       "support": 1,
-      "instantDeath": 1
+      "instantDeath": 1,
+      "status": 1,
+      "cure": 1,
+      "revive": 1
     },
     {
       "id": "aggressive",
@@ -1738,7 +1863,10 @@
       "heal": 0.55,
       "magic": 1.5,
       "support": 0.45,
-      "instantDeath": 1.35
+      "instantDeath": 1.35,
+      "status": 0.8,
+      "cure": 0.55,
+      "revive": 0.8
     },
     {
       "id": "defensive",
@@ -1747,7 +1875,10 @@
       "heal": 1.7,
       "magic": 0.65,
       "support": 1.5,
-      "instantDeath": 0.5
+      "instantDeath": 0.5,
+      "status": 1.15,
+      "cure": 1.7,
+      "revive": 1.8
     }
   ],
   "ai": {
@@ -1830,6 +1961,25 @@
       "lowEnemyHpPenalty": -35,
       "lowMpRate": 0.2,
       "lowMpPenalty": -25
+    },
+    "status": {
+      "poisonValue": 38,
+      "blindValue": 52,
+      "petrifyValue": 105,
+      "alreadyAffectedPenalty": -140,
+      "blindAttackDivisor": 4,
+      "poisonHpDivisor": 20
+    },
+    "cure": {
+      "poisonValue": 115,
+      "blindValue": 90,
+      "petrifyValue": 190,
+      "multiStatusBonus": 35
+    },
+    "revive": {
+      "downAllyBonus": 190,
+      "maxHpDivisor": 2,
+      "lastStandingBonus": 80
     }
   }
 }

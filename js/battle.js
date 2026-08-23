@@ -53,6 +53,8 @@
       this.busy = false;
       this.actionQueue = [];
       this.knowledge = new DQ.EnemyKnowledge(enemies);
+      this.events = new DQ.BattleEvents();
+      this.statusEngine = new DQ.StatusEngine(this, this.events);
       this.targetResolver = new DQ.TargetResolver(this);
       this.effectEngine = new DQ.EffectEngine(this);
       this.actionExecutor = new DQ.ActionExecutor(this, this.effectEngine);
@@ -84,6 +86,7 @@
         unit.currentMp = Math.max(0, Math.min(unit.maxMp, unit.currentMp));
         unit.alive = unit.currentHp > 0;
         unit.lastDecision = null;
+        this.statusEngine?.clear(unit);
         Object.values(unit.buffs).forEach(buff => {
           buff.value = buff.mode === "multiply" ? 1 : 0;
           buff.turns = 0;
@@ -173,6 +176,7 @@
     getStrategy() { return this.data.strategies.find(strategy => strategy.id === this.strategy) || this.data.strategies[0]; }
     getBalancedStrategy() { return this.data.strategies.find(strategy => strategy.id === "balanced") || { name: "補正なし" }; }
     getLiving(side) { return this.characters.filter(unit => unit.side === side && unit.alive); }
+    getBattleCapable(side) { return this.characters.filter(unit => unit.side === side && this.statusEngine.canAct(unit)); }
     getCharacter(id) { return this.characters.find(unit => unit.id === id); }
 
     setEncounter(encounterId) {
@@ -268,6 +272,12 @@
     }
 
     decideAtActionTime(actor) {
+      const event = this.events.emit("beforeAction", { actor, cancelled: false });
+      if (event.cancelled) {
+        actor.lastDecision = null;
+        this.log.add(event.message || `${actor.name}は行動できない。`, "system");
+        return { actorId: actor.id, turn: this.turn, strategy: this.strategy, selected: null, candidates: [], cancelled: true };
+      }
       const decision = this.ai.decide(actor);
       actor.lastDecision = decision;
       return decision;
@@ -287,6 +297,7 @@
     }
 
     finishTurn() {
+      this.events.emit("turnEnd", { turn: this.turn });
       this.characters.forEach(unit => Object.entries(unit.buffs).forEach(([stat, buff]) => {
         if (buff.turns > 0 && --buff.turns === 0) {
           buff.value = buff.mode === "multiply" ? 1 : 0;
@@ -294,7 +305,9 @@
           if (unit.alive) this.log.add(`${unit.name}の${this.statLabel(stat)}が元に戻った。`, "system");
         }
       }));
-      this.turn += 1;
+      this.updateDeaths();
+      this.checkBattleEnd();
+      if (!this.ended) this.turn += 1;
     }
 
     showStrategyDecision() {
@@ -306,7 +319,7 @@
     async executeDecision(actor, decision) {
       const candidate = decision.selected;
       const action = candidate.action;
-      let targets = candidate.targets.filter(target => target.alive);
+      let targets = candidate.targets.filter(target => this.targetResolver.isEligible(actor, action, target));
       if (!targets.length) targets = this.targetResolver.resolve(actor, action);
       if (!targets.length) { this.log.add(`${actor.name}は行動しようとしたが、対象がいなかった。`, "system"); return; }
       if (!DQ.TargetResolver.isGroup(action)) targets = [targets[0]];
@@ -314,7 +327,8 @@
       if (actor.side === "ally") this.ui.showDecision(decision);
       this.ui.markActing(actor.id, targets.map(target => target.id));
       await this.pause(150);
-      this.actionExecutor.execute(actor, action, targets);
+      const result = this.actionExecutor.execute(actor, action, targets);
+      this.events.emit("afterAction", { actor, action, targets, result });
       this.updateDeaths();
       this.ui.render();
       await this.pause(100);
@@ -325,12 +339,17 @@
 
     updateDeaths() {
       this.characters.forEach(unit => {
-        if (unit.alive && unit.currentHp <= 0) { unit.alive = false; unit.currentHp = 0; this.log.add(`${unit.name}は戦闘不能になった。`, "danger"); }
+        if (unit.alive && unit.currentHp <= 0) {
+          unit.alive = false;
+          unit.currentHp = 0;
+          this.events.emit("afterDeath", { target: unit });
+          this.log.add(`${unit.name}は戦闘不能になった。`, "danger");
+        }
       });
     }
     checkBattleEnd() {
-      const allies = this.getLiving("ally");
-      const enemies = this.getLiving("enemy");
+      const allies = this.getBattleCapable("ally");
+      const enemies = this.getBattleCapable("enemy");
       if (allies.length && enemies.length) return;
       this.ended = true;
       this.stopAuto();
